@@ -10,7 +10,7 @@ Module de traitement des donnees lapi
 import matplotlib #pour éviter le message d'erreurrelatif a rcParams
 import pandas as pd
 import geopandas as gp
-from Martin_Perso import Connexion_Transfert as ct
+import Connexion_Transfert as ct
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     with ct.ConnexionBdd('gti_lapi') as c : 
