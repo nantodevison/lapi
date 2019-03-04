@@ -59,7 +59,7 @@ def temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
 CREER DES VISUALISATION
 #pour faire un plot dans altair via le jupyter lab
 #on isol les colonnes de date et des tps de parcours dans une nouvelle df
-pour_image=cam1_cam2_passages_filtres[['created_x','tps_parcours']].copy()
+pour_image=cam1_cam2_passages_filtres[['created_x','tps_parcours',l_x]].copy()
 #on converti le timedelta en integer
 pour_image.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours
 #on crée le chart de altair
@@ -67,7 +67,9 @@ chart = alt.Chart(pour_image)
 #cree l'image
 alt.Chart(pour_image).mark_point().encode(
     x='created_x',
-    y='hoursminutes(tps_parcours)'
+    y='hoursminutes(tps_parcours),
+    color='l_x',
+    shape='l_x'
 )
 """
     
