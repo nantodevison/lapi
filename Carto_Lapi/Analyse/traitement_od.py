@@ -19,10 +19,10 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
         return df
         
 
-def temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
+def df_temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
     """fonction de calcul du temps moyen de parcours entre 2 cameras
     en entree : dataframe : le dataframe format pandas qui contient les données
-                date_debut : string decrivant une date avec Y M D H M S : 
+                date_debut : string decrivant une date avec Y-M-D H:M:S : 
                  date de part d'analyse du temp moyen           
                 duree : integer : duree en minute
                  c'est le temps entre lequel on va regarder le temps mpyen : de 7h à 7h et 30 min par exemple
@@ -54,22 +54,26 @@ def temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
     cam1_cam2_passages_filtres=cam1_cam2_passages_filtres.reset_index()
     cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
     resultat=cam1_cam2_passages_filtres['tps_parcours'].mean() #calcul du temps moyen #on pourrait aussi faire des calculs sur des precnetiles ou autres
-    return resultat
+    
+    #isoler les vl et pl
+    df_tps_parcours_vlpl=cam1_cam2_passages_filtres.loc[cam1_cam2_passages_filtres.loc[:,'l_x'].isin([0,1])]
+    
+    return cam1_cam2_passages_filtres, df_tps_parcours_vlpl
 """
 CREER DES VISUALISATION
 #pour faire un plot dans altair via le jupyter lab
 #on isol les colonnes de date et des tps de parcours dans une nouvelle df
-pour_image=cam1_cam2_passages_filtres[['created_x','tps_parcours',l_x]].copy()
-#on converti le timedelta en integer
+pour_image=cam1_cam2_passages_filtres[['created_x','tps_parcours','l_x']].copy()
+#on converti le timedelta en date relative à une journée qui commence à 00:00 et n'afficher que h et minutes
 pour_image.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours
 #on crée le chart de altair
 chart = alt.Chart(pour_image)
 #cree l'image
 alt.Chart(pour_image).mark_point().encode(
     x='created_x',
-    y='hoursminutes(tps_parcours),
-    color='l_x',
-    shape='l_x'
+    y='hoursminutes(tps_parcours)',
+    color='l_x:N',
+    shape='l_x:N'
 )
 """
     
