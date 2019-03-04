@@ -6,14 +6,11 @@ Created on 27 fev. 2019
 Module de traitement des donnees lapi
 
 '''
-"""TO DO : 
-faire le filtre des données dont e type est -1
-caractériser les incertitude dans les df : %de fiabilite pourrie, % de type de vehicule =-1
-"""
 
 import matplotlib #pour éviter le message d'erreurrelatif a rcParams
 import pandas as pd
-import Connexion_Transfert as ct
+import geopandas as gp
+from Martin_Perso import Connexion_Transfert as ct
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     with ct.ConnexionBdd('gti_lapi') as c : 
@@ -22,7 +19,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
         return df
         
 
-def df_temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
+def temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
     """fonction de calcul du temps moyen de parcours entre 2 cameras
     en entree : dataframe : le dataframe format pandas qui contient les données
                 date_debut : string decrivant une date avec Y M D H M S : 
@@ -31,10 +28,6 @@ def df_temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
                  c'est le temps entre lequel on va regarder le temps mpyen : de 7h à 7h et 30 min par exemple
                 camera1 : integer : camera de debut
                 camera2 : integer : camera de fin
-    en sortie : une dataframe tout vehicule confondus 
-                une dataframe vl
-                une dataframe pl
-                attributs : horaires de passage, camera_ids, fiabilites des 2 cameras,  champs de diff Vl-PL, pays, tps parcours
     """
     df=df.set_index('created').sort_index()
     date_debut=pd.to_datetime(date_debut)
@@ -59,40 +52,7 @@ def df_temps_parcours_moyen(df, date_debut, duree, camera1, camera2):
     cam1_cam2_passages_filtres=cam1_cam2_passages[date_debut:date_debut+pd.Timedelta(hours=2)]
     #on ressort la colonne de tempsde l'index et on cree la colonne des differentiel de temps
     cam1_cam2_passages_filtres=cam1_cam2_passages_filtres.reset_index()
-    #creer la colonne des differentiel de temps
-    cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] 
-    
-    #isoler les vl
-    tps_parcours_vl=cam1_cam2_passages_filtres.loc[cam1_cam2_passages_filtres.loc[:,'l_x']==0]
-    tps_parcours_pl=cam1_cam2_passages_filtres.loc[cam1_cam2_passages_filtres.loc[:,'l_x']==1]
-    
-    return cam1_cam2_passages_filtres, tps_parcours_vl, tps_parcours_pl
-
-def filtrer_fiabilite_plaque(df, fiabilite):
-    """
-    filtrer des df selon la fiabilite de la plaque d'immatriculation
-    en entre : fiabilite : integer : entre 0 le moins fiable et 100 le plus fiable
-    en sortie : df filtree sans les plques les moins fiables
-    """
-    liste_nom_col=[element for element in df.columns if element[:9]=='fiability']
-    test_fibb=df[liste_nom_col].copy()
-    # amodifier pour obtenir une liste avec que des true la ou aucun des valeur <50
-    #test.ge(50).any(axis=1)
-    
-
-"""
-CREER DES VISUALISATION
-#pour faire un plot dans altair via le jupyter lab
-#on isol les colonnes de date et des tps de parcours dans une nouvelle df
-pour_image=cam1_cam2_passages_filtres[['created_x','tps_parcours']].copy()
-#on converti le timedelta en datetime relatif à un jour a partir de minuit, car altair (JSON en fait) ne gere pas les timedeltas
-pour_image.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours
-#on crée le chart de altair
-chart = alt.Chart(pour_image)
-#cree l'image
-alt.Chart(pour_image).mark_point().encode(
-    x='created_x',
-    y='hoursminutes(tps_parcours)'
-)
-"""
+    cam1_cam2_passages_filtres['diff']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
+    resultat=cam1_cam2_passages_filtres['diff'].mean() #calcul du temps moyen #on pourrait aussi faire des calculs sur des precnetiles ou autres
+    return resultat
     
