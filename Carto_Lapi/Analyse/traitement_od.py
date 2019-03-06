@@ -97,10 +97,10 @@ class df_tps_parcours():
                 camera2 : integer : camera de fin
         """
         self.df=df
-        self.df, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df,date_debut, duree, temps_max_autorise, camera1, camera2
+        self.df, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df, duree, temps_max_autorise, camera1, camera2
         
         #j'en fais un attribut car util edans la fonction recherche_trajet_indirect
-        self.date_debut=pd.to_datetime(self.date_debut)
+        self.date_debut=pd.to_datetime(date_debut)
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree) 
         
         self.df_tps_parcours_brut=self.df_temps_parcours_bruts()
@@ -171,7 +171,7 @@ class df_tps_parcours():
         cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.camera2]
         #on trie puis on ajoute un filtre surle temps entre les 2 camera.
         cam1_cam2_passages=cam1_puis_cam2.set_index('created_y').sort_index()
-        cam1_cam2_passages_filtres=cam1_cam2_passages[date_debut:date_debut+pd.Timedelta(hours=self.temps_max_autorise)]
+        cam1_cam2_passages_filtres=cam1_cam2_passages[self.date_debut:self.date_debut+pd.Timedelta(hours=self.temps_max_autorise)]
         #on ressort la colonne de tempsde l'index et on cree la colonne des differentiel de temps
         cam1_cam2_passages_filtres=cam1_cam2_passages_filtres.reset_index()
         cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
@@ -211,18 +211,38 @@ class df_tps_parcours():
         
         return  graph_stat_trie, graph_tps_bruts
         
-def recherche_trajet_indirect(df_trajet_1, cam1_trajet2, cam2_trajet2):
+def recherche_trajet_indirect(df_global, df_trajet_1, cam1_trajet2, cam2_trajet2):
     """
     Recherche des vehicules passés entre 2 cameras qui sont ensuite passés entre 2 autres
     en entrée : 
-     - df_trajet_1 : dataframe : df_tps_parcours_pl_final issus de la classe df_source pour le tajet 1
+     - df_trajet_1 : dataframe : objet issus de la classe df_source pour le tajet 1
      - cam1_trajet2 : integer : amera 1 du deuxeime trajet
      - cam2_trajet2 : integer : camera 2 du deuxieme trajet
     """
     # rechercher le temps de parcours mini et max d'un pl passé entre 8h et 9h entre camera 19 et 4
     timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.min()
-    timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.max()
+    timedelta_max=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.max()
+    # on en déduit les timestamp debut et fin de localisation de ces pl sur la camera 1 du trajet 2
+    timestamp_mini=df_trajet_1.date_debut+timedelta_min
+    timestamp_maxi=df_trajet_1.date_fin+timedelta_max
+    duree=(((timestamp_maxi-timestamp_mini).seconds)//60)+1 #partie entere de la division plus 1 minutes
     
+    #calcul des temps de parcours entre les deux cameras 
+    df_tps_parcours_trajet_2=df_tps_parcours(df_global,timestamp_mini, duree, 14, 4,5 ).df_tps_parcours_pl_final
+    
+    #recherche des trajets commmuns
+    df_transit=pd.merge(df_trajet_1.df_tps_parcours_pl_final,df_tps_parcours_trajet_2,on='immat')
+    df_transit['tps_parcours_total']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+    dico_rename=({'created_x_x':'date_cam_1','created_y_x':'date_cam_2',
+                  'created_x_y':'date_cam_3','created_y_y':'date_cam_4',
+                  'camera_id_x_x':'cam_1','camera_id_y_x':'cam_2',
+                  'camera_id_x_y':'cam_3','camera_id_y_y':'cam_4'})
+    df_transit=(df_transit.rename(columns=dico_rename).drop(['fiability_x_x','fiability_x_y','fiability_y_x', 'fiability_y_y','fiability_x', 'fiability_y',
+                                                             'l_x_x','l_x_y','l_y_x','l_y_y','l_x','l_y', 
+                                                             'state_x_x', 'state_x_y','state_y_x', 'state_y_y',
+                                                             'tps_parcours_x','tps_parcours_y'],axis=1))
+
+    return df_transit
     
     
     
