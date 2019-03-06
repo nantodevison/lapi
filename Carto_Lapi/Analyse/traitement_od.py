@@ -31,28 +31,28 @@ class df_source():
         - un df pour chaque attribut avec 
         """
         self.df=df
-        self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok, self.df_pl_ok=self.df_filtrees(self)
-        self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self)             
+        self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok, self.df_pl_ok=self.df_filtrees()
+        self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats()             
         
-    def df_filtrees(self,df):
+    def df_filtrees(self):
         """isole les df depuis la df source
         A RENESEIGNER LES DF QUI SORTENT"""
         #Dataframes intermediaires 
-        df_vlpl=df.loc[df.loc[:,'l']!=-1]
-        df_tv_plaques_ok=df.loc[df.loc[:,'fiability']==True]
-        df_veh_ok=df.loc[(df.loc[:,'l']!=-1) & (df.loc[:,'fiability']==True)]
-        df_vl_ok=df.loc[(df.loc[:,'l']==0) & (df.loc[:,'fiability']==True)]
-        df_pl_ok=df.loc[(df.loc[:,'l']==1) & (self.df.loc[:,'fiability']==True)]
+        df_vlpl=self.df.loc[self.df.loc[:,'l']!=-1]
+        df_tv_plaques_ok=self.df.loc[self.df.loc[:,'fiability']>=80]
+        df_veh_ok=self.df.loc[(self.df.loc[:,'l']!=-1) & (self.df.loc[:,'fiability']>=80)]
+        df_vl_ok=self.df.loc[(self.df.loc[:,'l']==0) & (self.df.loc[:,'fiability']>=80)]
+        df_pl_ok=self.df.loc[(self.df.loc[:,'l']==1) & (self.df.loc[:,'fiability']>=80)]
         return df_vlpl, df_tv_plaques_ok, df_veh_ok, df_vl_ok, df_pl_ok 
-            def stats (self,df):
+            def stats (self):
         """les stats issue des df_filtrees
         A RENESEIGNER LES DF QUI SORTENT"""
-        nb_tv_tot=len(df)
-        nb_tv_plaque_ok=len(df_tv_plaques_ok)
-        nb_vlpl=len(df_vlpl)
-        nb_veh_ok=len(df_veh_ok)                      
-        nb_vl_ok=len(df_vl_ok)
-        nb_pl_ok=len(df_pl_ok)
+        nb_tv_tot=len(self.df)
+        nb_tv_plaque_ok=len(self.df_tv_plaques_ok)
+        nb_vlpl=len(self.df_vlpl)
+        nb_veh_ok=len(self.df_veh_ok)                      
+        nb_vl_ok=len(self.df_vl_ok)
+        nb_pl_ok=len(self.df_pl_ok)
         return nb_tv_tot, nb_tv_plaque_ok, nb_vlpl, nb_veh_ok, nb_vl_ok, nb_pl_ok
             def plot_graphs(self):
         """cree et retourne les charts de altair pour un certines nombres de graph"""
@@ -69,7 +69,7 @@ class df_source():
                                             sort=alt.EncodingSortField(field='value',op='mean')))
         return  graph_stat_trie
 
-class df_tps_parcours(df_source):
+class df_tps_parcours():
     """
     Classe decrivant les df des temps de parcours 
     attributs : 
@@ -88,11 +88,12 @@ class df_tps_parcours(df_source):
                 camera1 : integer : camera de debut
                 camera2 : integer : camera de fin
         """
-        df_source.__init__(self, df)
+        self.df=df
         self.df,self.date_debut, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df,date_debut, duree, temps_max_autorise, camera1, camera2
-        self.df_tps_parcours_brut=self.df_temps_parcours_moyen()
-        self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok, self.df_pl_ok=self.df_filtrees(df_tps_parcours_brut)
-        self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.df_tps_parcours_brut.stats() 
+        self.df_tps_parcours_brut=self.df_temps_parcours_bruts()
+        """self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,"""
+        self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
+        self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
     
         #filtre statistique : on en garde que ce qui est les 90 % de temps les plus rapides
         self.tps_vl_90_qtl=self.df_vl_ok.tps_parcours.quantile(0.9)
@@ -100,11 +101,33 @@ class df_tps_parcours(df_source):
         
         
         #df finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
-        self.df_tps_parcours_vl_final=self.df_vl_ok.loc[(self.df_tps_parcours_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]
-        self.df_tps_parcours_pl_final=self.df_pl_ok.loc[(self.df_tps_parcours_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]
+        self.df_tps_parcours_vl_final=self.df_vl_ok.loc[(self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]
+        self.df_tps_parcours_pl_final=self.df_pl_ok.loc[(self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]
     
+    def df_filtrees(self,df):
+        """isole les df depuis la df source
+        A RENESEIGNER LES DF QUI SORTENT"""
+        #Dataframes intermediaires 
+        df_vlpl=df.loc[df.loc[:,'l']!=-1]
+        df_tv_plaques_ok=df.loc[df.loc[:,'fiability']==True]
+        df_veh_ok=df.loc[(df.loc[:,'l']!=-1) & (df.loc[:,'fiability']==True)]
+        df_vl_ok=df.loc[(df.loc[:,'l']==0) & (df.loc[:,'fiability']==True)]
+        df_pl_ok=df.loc[(df.loc[:,'l']==1) & (df.loc[:,'fiability']==True)]
+        return df_vlpl, df_tv_plaques_ok, df_veh_ok, df_vl_ok, df_pl_ok 
+        
+
+    def stats (self,df):
+        """les stats issue des df_filtrees
+        A RENESEIGNER LES DF QUI SORTENT"""
+        nb_tv_tot=len(df)
+        nb_tv_plaque_ok=len(self.df_tv_plaques_ok)
+        nb_vlpl=len(self.df_vlpl)
+        nb_veh_ok=len(self.df_veh_ok)                      
+        nb_vl_ok=len(self.df_vl_ok)
+        nb_pl_ok=len(self.df_pl_ok)
+        return nb_tv_tot, nb_tv_plaque_ok, nb_vlpl, nb_veh_ok, nb_vl_ok, nb_pl_ok
     
-    def df_temps_parcours_moyen(self):
+    def df_temps_parcours_bruts(self):
         """fonction de calcul du temps moyen de parcours entre 2 cameras
         en entree : dataframe : le dataframe format pandas qui contient les données
                     date_debut : string decrivant une date avec Y-M-D H:M:S : 
@@ -158,7 +181,7 @@ class df_tps_parcours(df_source):
         
         #graph des stats de df
         stats_df=pd.DataFrame([{'type': 'nb_tv_tot', 'value':self.nb_tv_tot},{'type': 'nb_tv_plaque_ok', 'value':self.nb_tv_plaque_ok},
-                               {'type': 'nb_type_identifie', 'value':self.nb_type_identifie},{'type': 'nb_veh_ok', 'value':self.nb_veh_ok},
+                               {'type': 'nb_vlpl', 'value':self.nb_vlpl},{'type': 'nb_veh_ok', 'value':self.nb_veh_ok},
                                {'type': 'nb_vl_ok', 'value':self.nb_vl_ok},{'type': 'nb_pl_ok', 'value':self.nb_pl_ok}])
         graph_stat=alt.Chart(stats_df).mark_bar().encode(
             x='type',
@@ -168,7 +191,7 @@ class df_tps_parcours(df_source):
                                             sort=alt.EncodingSortField(field='value',op='mean')))
         
         #graph des temps de parcours sur df non filtree
-        tps_parcours_bruts=self.df[['created_x','tps_parcours','l']].copy() #copier les données avec juste ce qu'il faut
+        tps_parcours_bruts=self.df_tps_parcours_brut[['created_x','tps_parcours','l']].copy() #copier les données avec juste ce qu'il faut
         tps_parcours_bruts.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours_bruts.tps_parcours #refernce à une journée à 00:00 car timedeltas non geres par altair (json en general)
         graph_tps_bruts=alt.Chart(tps_parcours_bruts).mark_point().encode(
                                 x='created_x',
