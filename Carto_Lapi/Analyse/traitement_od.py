@@ -66,8 +66,16 @@ class df_source():
             y='value',
             color='type')
         graph_stat_trie = graph_stat.encode(alt.X(field='type', type='nominal',
-                                            sort=alt.EncodingSortField(field='value',op='mean')))
-        return  graph_stat_trie
+                                            sort=alt.EncodingSortField(field='value',op='mean'))).properties(width=100)
+        
+        #graph de la fiabilte de la plaque dans le temps
+        stat_fiability = self.df.loc[:,['created', 'fiability']].copy().set_index('created').sort_index()
+        stat_fiability=stat_fiability.groupby(pd.Grouper(freq='5Min')).mean().reset_index()
+        graph_fiab=alt.Chart(stat_fiability).mark_line().encode(
+            alt.X('created'),
+            alt.Y('fiability',scale=alt.Scale(zero=False))).interactive()
+        
+        return  graph_stat_trie, graph_fiab
 
 class df_tps_parcours():
     """
@@ -82,16 +90,20 @@ class df_tps_parcours():
         """
         constrcuteur
         en entree : dataframe : le dataframe format pandas qui contient les données
-                date_debut : string decrivant une date avec Y-M-D HH:MM:SS : date de part d'analyse du temp moyen           
+                date_debut : string ou pd.timestamps decrivant une date avec Y-M-D HH:MM:SS  : date de part d'analyse du temp moyen           
                 duree : integer : duree en minute : c'est le temps entre lequel on va regarder le temps mpyen : de 7h à 7h et 30 min par exemple
                 temps_max_autorise : integer : le nb heure max entre la camerade debut et de fin
                 camera1 : integer : camera de debut
                 camera2 : integer : camera de fin
         """
         self.df=df
-        self.df,self.date_debut, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df,date_debut, duree, temps_max_autorise, camera1, camera2
+        self.df, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df,date_debut, duree, temps_max_autorise, camera1, camera2
+        
+        #j'en fais un attribut car util edans la fonction recherche_trajet_indirect
+        self.date_debut=pd.to_datetime(self.date_debut)
+        self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree) 
+        
         self.df_tps_parcours_brut=self.df_temps_parcours_bruts()
-        """self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,"""
         self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
         self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
     
@@ -139,9 +151,7 @@ class df_tps_parcours():
                     camera2 : integer : camera de fin
         """
         df2=self.df.set_index('created').sort_index()
-        date_debut=pd.to_datetime(self.date_debut)
-        date_fin=date_debut+pd.Timedelta(minutes=self.duree)#creer une date 30 min plus tard que la date de départ
-        df_duree=df2.loc[date_debut:date_fin]#filtrer la df #filtrer la df sur 30 min
+        df_duree=df2.loc[self.date_debut:self.date_fin]
         
         #trouver tt les bagnoles passée par cam1 dont la 2eme camera est cam2
         #isoler camera 1
@@ -183,12 +193,12 @@ class df_tps_parcours():
         stats_df=pd.DataFrame([{'type': 'nb_tv_tot', 'value':self.nb_tv_tot},{'type': 'nb_tv_plaque_ok', 'value':self.nb_tv_plaque_ok},
                                {'type': 'nb_vlpl', 'value':self.nb_vlpl},{'type': 'nb_veh_ok', 'value':self.nb_veh_ok},
                                {'type': 'nb_vl_ok', 'value':self.nb_vl_ok},{'type': 'nb_pl_ok', 'value':self.nb_pl_ok}])
-        graph_stat=alt.Chart(stats_df).mark_bar().encode(
+        graph_stat=alt.Chart(stats_df).mark_bar(size=20).encode(
             x='type',
             y='value',
             color='type')
         graph_stat_trie = graph_stat.encode(alt.X(field='type', type='nominal',
-                                            sort=alt.EncodingSortField(field='value',op='mean')))
+                                            sort=alt.EncodingSortField(field='value',op='mean'))).properties()
         
         #graph des temps de parcours sur df non filtree
         tps_parcours_bruts=self.df_tps_parcours_brut[['created_x','tps_parcours','l']].copy() #copier les données avec juste ce qu'il faut
@@ -197,35 +207,38 @@ class df_tps_parcours():
                                 x='created_x',
                                 y='hoursminutes(tps_parcours)',
                                 color='l:N',
-                                shape='l:N')
+                                shape='l:N').interactive()
         
         return  graph_stat_trie, graph_tps_bruts
         
-
-"""
-pour faiire la caractérisation des données on pourrait faire une classe qui : 
- - donne le nb total de vehicul
- - nb de vl
- - nb de pl
- - nb de plaques mal lues
-
-
-
-
-CREER DES VISUALISATION
-#pour faire un plot dans altair via le jupyter lab
-#on isol les colonnes de date et des tps de parcours dans une nouvelle df
-pour_image=cam1_cam2_passages_filtres[['created_x','tps_parcours','l_x']].copy()
-#on converti le timedelta en date relative à une journée qui commence à 00:00 et n'afficher que h et minutes
-pour_image.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours
-#on crée le chart de altair
-chart = alt.Chart(pour_image)
-#cree l'image
-alt.Chart(pour_image).mark_point().encode(
-    x='created_x',
-    y='hoursminutes(tps_parcours)',
-    color='l_x:N',
-    shape='l_x:N'
-)
-"""
+def recherche_trajet_indirect(df_trajet_1, cam1_trajet2, cam2_trajet2):
+    """
+    Recherche des vehicules passés entre 2 cameras qui sont ensuite passés entre 2 autres
+    en entrée : 
+     - df_trajet_1 : dataframe : df_tps_parcours_pl_final issus de la classe df_source pour le tajet 1
+     - cam1_trajet2 : integer : amera 1 du deuxeime trajet
+     - cam2_trajet2 : integer : camera 2 du deuxieme trajet
+    """
+    # rechercher le temps de parcours mini et max d'un pl passé entre 8h et 9h entre camera 19 et 4
+    timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.min()
+    timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.max()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+     
     
