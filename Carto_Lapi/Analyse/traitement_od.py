@@ -240,6 +240,7 @@ def recherche_trajet_indirect(df_global, df_trajet_1, temps_max_autorise, cam1_t
      - cam1_trajet2 : integer : amera 1 du deuxeime trajet
      - cam2_trajet2 : integer : camera 2 du deuxieme trajet
     """
+    # 1er test : si la dataframe source est vide
     # rechercher le temps de parcours mini et max d'un pl passé entre 8h et 9h entre camera 19 et 4
     timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.min()
     timedelta_max=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.max()
