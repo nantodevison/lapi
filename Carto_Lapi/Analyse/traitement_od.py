@@ -13,6 +13,11 @@ import geopandas as gp
 import Connexion_Transfert as ct
 import altair as alt
 
+dico_renommage={'created_x':'date_cam_1','camera_id_x':'cam_1', 'created_y':'date_cam_2','camera_id_y':'cam_2'}
+liste_trajet=(pd.DataFrame({'o_d':['A63-A10','A63-A10','A63-A10'],
+                            'trajets':[[19,4,5],[19,5],[19,1,5]], 
+                            'type_trajet' :['indirect','direct', 'indirect']}))
+
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     with ct.ConnexionBdd('gti_lapi') as c : 
         requete=f"select camera_id, created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
@@ -113,8 +118,10 @@ class df_tps_parcours():
         
         
         #df finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
-        self.df_tps_parcours_vl_final=self.df_vl_ok.loc[(self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]
-        self.df_tps_parcours_pl_final=self.df_pl_ok.loc[(self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]
+        self.df_tps_parcours_vl_final=(self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
+                                        (self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]).rename(columns=dico_renommage)
+        self.df_tps_parcours_pl_final=(self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
+                                        (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]).rename(columns=dico_renommage)
     
     def df_filtrees(self,df):
         """isole les df depuis la df source
@@ -166,7 +173,7 @@ class df_tps_parcours():
         cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]
         # on regroupe les attributs dedescription de type etde fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi
         cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self. test_unicite_type([x['l_x'],x['l_y']]), axis=1)
-        cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 80 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
+        cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 50 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on ne garde que les passage le plus rapide devant la camera 2
         cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.camera2]
         #on trie puis on ajoute un filtre surle temps entre les 2 camera.
@@ -200,18 +207,32 @@ class df_tps_parcours():
         graph_stat_trie = graph_stat.encode(alt.X(field='type', type='nominal',
                                             sort=alt.EncodingSortField(field='value',op='mean'))).properties()
         
-        #graph des temps de parcours sur df non filtree
+        #graph des temps de parcours sur df non filtree, selection possible sur type de veh
         tps_parcours_bruts=self.df_tps_parcours_brut[['created_x','tps_parcours','l']].copy() #copier les données avec juste ce qu'il faut
         tps_parcours_bruts.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours_bruts.tps_parcours #refernce à une journée à 00:00 car timedeltas non geres par altair (json en general)
-        graph_tps_bruts=alt.Chart(tps_parcours_bruts).mark_point().encode(
-                                x='created_x',
-                                y='hoursminutes(tps_parcours)',
-                                color='l:N',
-                                shape='l:N').interactive()
         
-        return  graph_stat_trie, graph_tps_bruts
+        selection = alt.selection_multi(fields=['l'])
+        color = alt.condition(selection,
+                      alt.Color('l:N', legend=None),
+                      alt.value('lightgray'))
+                
+        graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
+                        x='created_x',
+                        y='hoursminutes(tps_parcours)',
+                        color=color,
+                        shape='l',
+                        tooltip='tps_parcours')
         
-def recherche_trajet_indirect(df_global, df_trajet_1, cam1_trajet2, cam2_trajet2):
+        legend_graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
+                y=alt.Y('l', axis=alt.Axis(orient='right')),
+                color=color,
+                shape='l',
+                ).add_selection(
+                selection)
+                
+        return  graph_stat_trie, graph_tps_bruts, legend_graph_tps_bruts
+        
+def recherche_trajet_indirect(df_global, df_trajet_1, temps_max_autorise, cam1_trajet2, cam2_trajet2):
     """
     Recherche des vehicules passés entre 2 cameras qui sont ensuite passés entre 2 autres
     en entrée : 
@@ -228,37 +249,15 @@ def recherche_trajet_indirect(df_global, df_trajet_1, cam1_trajet2, cam2_trajet2
     duree=(((timestamp_maxi-timestamp_mini).seconds)//60)+1 #partie entere de la division plus 1 minutes
     
     #calcul des temps de parcours entre les deux cameras 
-    df_tps_parcours_trajet_2=df_tps_parcours(df_global,timestamp_mini, duree, 14, 4,5 ).df_tps_parcours_pl_final
+    df_tps_parcours_trajet_2=df_tps_parcours(df_global,timestamp_mini, duree, temps_max_autorise, cam1_trajet2,cam2_trajet2).df_tps_parcours_pl_final
     
     #recherche des trajets commmuns
     df_transit=pd.merge(df_trajet_1.df_tps_parcours_pl_final,df_tps_parcours_trajet_2,on='immat')
-    df_transit['tps_parcours_total']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
-    dico_rename=({'created_x_x':'date_cam_1','created_y_x':'date_cam_2',
-                  'created_x_y':'date_cam_3','created_y_y':'date_cam_4',
-                  'camera_id_x_x':'cam_1','camera_id_y_x':'cam_2',
-                  'camera_id_x_y':'cam_3','camera_id_y_y':'cam_4'})
-    df_transit=(df_transit.rename(columns=dico_rename).drop(['fiability_x_x','fiability_x_y','fiability_y_x', 'fiability_y_y','fiability_x', 'fiability_y',
-                                                             'l_x_x','l_x_y','l_y_x','l_y_y','l_x','l_y', 
-                                                             'state_x_x', 'state_x_y','state_y_x', 'state_y_y',
-                                                             'tps_parcours_x','tps_parcours_y'],axis=1))
+    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+    dico_rename=({'date_cam_1_x':'date_cam_1',
+                  'date_cam_2_y':'date_cam_2',
+                  'cam_1_x':'cam_1',
+                  'cam_2_y':'cam_2'})
+    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]#.drop(['date_cam_2_x','cam_2_x'])
 
     return df_transit
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-     
-    
