@@ -231,34 +231,46 @@ class df_tps_parcours():
                 selection)
                 
         return  graph_stat_trie, graph_tps_bruts, legend_graph_tps_bruts
-        
-def recherche_trajet_indirect(df_global, df_trajet_1, temps_max_autorise, cam1_trajet2, cam2_trajet2):
-    """
-    Recherche des vehicules passés entre 2 cameras qui sont ensuite passés entre 2 autres
-    en entrée : 
-     - df_trajet_1 : dataframe : objet issus de la classe df_source pour le tajet 1
-     - cam1_trajet2 : integer : amera 1 du deuxeime trajet
-     - cam2_trajet2 : integer : camera 2 du deuxieme trajet
-    """
-    # 1er test : si la dataframe source est vide
-    # rechercher le temps de parcours mini et max d'un pl passé entre 8h et 9h entre camera 19 et 4
-    timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.min()
-    timedelta_max=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.max()
-    # on en déduit les timestamp debut et fin de localisation de ces pl sur la camera 1 du trajet 2
-    timestamp_mini=df_trajet_1.date_debut+timedelta_min
-    timestamp_maxi=df_trajet_1.date_fin+timedelta_max
-    duree=(((timestamp_maxi-timestamp_mini).seconds)//60)+1 #partie entere de la division plus 1 minutes
-    
-    #calcul des temps de parcours entre les deux cameras 
-    df_tps_parcours_trajet_2=df_tps_parcours(df_global,timestamp_mini, duree, temps_max_autorise, cam1_trajet2,cam2_trajet2).df_tps_parcours_pl_final
-    
-    #recherche des trajets commmuns
-    df_transit=pd.merge(df_trajet_1.df_tps_parcours_pl_final,df_tps_parcours_trajet_2,on='immat')
-    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
-    dico_rename=({'date_cam_1_x':'date_cam_1',
-                  'date_cam_2_y':'date_cam_2',
-                  'cam_1_x':'cam_1',
-                  'cam_2_y':'cam_2'})
-    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]#.drop(['date_cam_2_x','cam_2_x'])
 
-    return df_transit
+class trajet_indirect(df_tps_parcours):
+    """
+    classe pour les trajets passant par plus de 2 cameras
+    """
+    
+    def __init__(self,df, date_debut, duree, temps_max_autorise, camera1, camera2,*cameras):
+        """
+        constructeur. se base sur classe df_tps_parcours
+        """
+        df_tps_parcours.__init__(self, df, date_debut, duree, temps_max_autorise, camera1, camera2)
+        self.cameras_suivantes=cameras
+        
+    def recherche_trajet_indirect(self):
+        """
+        Recherche des vehicules passés entre 2 cameras qui sont ensuite passés entre 2 autres
+        en entrée : 
+         - df_trajet_1 : dataframe : objet issus de la classe df_source pour le tajet 1
+         - cam1_trajet2 : integer : amera 1 du deuxeime trajet
+         - cam2_trajet2 : integer : camera 2 du deuxieme trajet
+        """
+        # 1er test : si la dataframe source est vide
+        # rechercher le temps de parcours mini et max d'un pl passé entre 8h et 9h entre camera 19 et 4
+        timedelta_min=self.df_tps_parcours_pl_final.tps_parcours.min()
+        timedelta_max=self.df_tps_parcours_pl_final.tps_parcours.max()
+        # on en déduit les timestamp debut et fin de localisation de ces pl sur la camera 1 du trajet 2
+        timestamp_mini=self.date_debut+timedelta_min
+        timestamp_maxi=self.date_fin+timedelta_max
+        duree=(((timestamp_maxi-timestamp_mini).seconds)//60)+1 #partie entere de la division plus 1 minutes
+        
+        #calcul des temps de parcours entre les deux cameras 
+        df_tps_parcours_trajet_2=df_tps_parcours(self.df,timestamp_mini, duree, self.temps_max_autorise, self.camera2,self.cameras_suivantes[0]).df_tps_parcours_pl_final
+        
+        #recherche des trajets commmuns
+        df_transit=pd.merge(self.df_tps_parcours_pl_final,df_tps_parcours_trajet_2,on='immat')
+        df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+        dico_rename=({'date_cam_1_x':'date_cam_1',
+                      'date_cam_2_y':'date_cam_2',
+                      'cam_1_x':'cam_1',
+                      'cam_2_y':'cam_2'})
+        df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]#.drop(['date_cam_2_x','cam_2_x'])
+        
+        return df_transit, df_tps_parcours_trajet_2
