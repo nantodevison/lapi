@@ -101,14 +101,16 @@ class df_tps_parcours():
                 camera1 : integer : camera de debut
                 camera2 : integer : camera de fin
         """
-        self.df=df
         self.df, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df, duree, temps_max_autorise, camera1, camera2
         
         #j'en fais un attribut car util edans la fonction recherche_trajet_indirect
         self.date_debut=pd.to_datetime(date_debut)
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree) 
         
+        #base pour resultats
         self.df_tps_parcours_brut=self.df_temps_parcours_bruts()
+        
+        #resultats intermediaires
         self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
         self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
     
@@ -117,11 +119,18 @@ class df_tps_parcours():
         self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)
         
         
-        #df finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
+        #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=(self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
                                         (self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]).rename(columns=dico_renommage)
         self.df_tps_parcours_pl_final=(self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
                                         (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]).rename(columns=dico_renommage)
+        
+        #resultats finaux : temps de parcours min et max et autres indicatuers utiles si ce trajet direct est partie d'un trajet indirect
+        self.timedelta_min=self.df_tps_parcours_pl_final.tps_parcours.min()
+        self.timedelta_max=self.df_tps_parcours_pl_final.tps_parcours.max()
+        self.timestamp_mini=self.date_debut+self.timedelta_min
+        self.timestamp_maxi=self.date_fin+self.timedelta_max
+        self.duree_trajet_future=(((self.timestamp_maxi-self.timestamp_mini).seconds)//60)+1
     
     def df_filtrees(self,df):
         """isole les df depuis la df source
@@ -232,17 +241,25 @@ class df_tps_parcours():
                 
         return  graph_stat_trie, graph_tps_bruts, legend_graph_tps_bruts
 
-class trajet_indirect(df_tps_parcours):
+class trajet_indirect():
     """
     classe pour les trajets passant par plus de 2 cameras
     """
     
-    def __init__(self,df, date_debut, duree, temps_max_autorise, camera1, camera2,*cameras):
+    def __init__(self,df, date_debut, duree, temps_max_autorise, *cameras):
         """
         constructeur. se base sur classe df_tps_parcours
         """
-        df_tps_parcours.__init__(self, df, date_debut, duree, temps_max_autorise, camera1, camera2)
+
         self.cameras_suivantes=cameras
+        self.df, self.duree, self.temps_max_autorise=df, duree, temps_max_autorise
+        self.nb_cam=len(cameras)
+        
+        #pour chaque couple de camera
+            #calculer les temps de parcours et autres attributs issus de df_tps_parcours selon les resultats du precedent
+            #stocker l'objet comme une nouvelle entree du dico qui va regrouper toute les instances cree
+        #puis faire un merge final
+            
         
     def recherche_trajet_indirect(self):
         """
