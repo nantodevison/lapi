@@ -19,7 +19,7 @@ liste_trajet=(pd.DataFrame({'o_d':['A63-A10','A63-A10','A63-A10'],
                             'type_trajet' :['indirect','direct', 'indirect']}))
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
-    with ct.ConnexionBdd('gti_lapi') as c : 
+    with ct.ConnexionBdd('lapi') as c : 
         requete=f"select camera_id, created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
