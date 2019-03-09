@@ -286,11 +286,17 @@ class trajet_indirect():
         On trouve les vehicules passés par les différentes cameras du dico_traj_directs
         """
         #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
-        
+        for a, val_dico in enumerate(self.dico_traj_directs):
+            if a<=len(self.dico_traj_directs)-2:
+                variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
+                if 'df_transit' in locals() : 
+                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
+                else : 
+                    df_transit=pd.merge(self.dico_traj_directs[variab].df_tps_parcours_pl_final,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
+                
         
         
         #recherche des trajets commmuns
-        df_transit=pd.merge(self.df_tps_parcours_pl_final,df_tps_parcours_trajet_2,on='immat')
         df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
         dico_rename=({'date_cam_1_x':'date_cam_1',
                       'date_cam_2_y':'date_cam_2',
@@ -298,4 +304,4 @@ class trajet_indirect():
                       'cam_2_y':'cam_2'})
         df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]#.drop(['date_cam_2_x','cam_2_x'])
         
-        return df_transit, df_tps_parcours_trajet_2
+        return df_transit
