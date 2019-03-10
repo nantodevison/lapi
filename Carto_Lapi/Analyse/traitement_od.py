@@ -289,14 +289,13 @@ class trajet_indirect():
         for a, val_dico in enumerate(self.dico_traj_directs):
             if a<=len(self.dico_traj_directs)-2:
                 variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
-                if 'df_transit' in locals() : 
-                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
+                if 'df_transit' not in locals() :
+                    df_transit=pd.merge(self.dico_traj_directs[variab].df_tps_parcours_pl_final,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')  
+                    
                 else : 
-                    df_transit=pd.merge(self.dico_traj_directs[variab].df_tps_parcours_pl_final,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
-                
-        
-        
-        #recherche des trajets commmuns
+                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
+
+        #ajout temps de parcours et mise en forme
         df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
         dico_rename=({'date_cam_1_x':'date_cam_1',
                       'date_cam_2_y':'date_cam_2',
