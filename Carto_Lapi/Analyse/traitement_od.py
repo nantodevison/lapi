@@ -110,6 +110,7 @@ class trajet_direct():
         #base pour resultats
         self.df_tps_parcours_brut=self.df_temps_parcours_bruts()
         
+        
         #resultats intermediaires
         self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
         self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
