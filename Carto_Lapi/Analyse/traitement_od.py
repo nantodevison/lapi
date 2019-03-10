@@ -82,7 +82,7 @@ class df_source():
         
         return  graph_stat_trie, graph_fiab
 
-class df_tps_parcours():
+class trajet_direct():
     """
     Classe decrivant les df des temps de parcours 
     attributs : 
@@ -124,6 +124,8 @@ class df_tps_parcours():
                                         (self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]).rename(columns=dico_renommage)
         self.df_tps_parcours_pl_final=(self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
                                         (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]).rename(columns=dico_renommage)
+        if not self.df_tps_parcours_pl_final.empty: #je met un if car sinon ça me modifie le empty et cree le bordel par la suite
+            self.df_tps_parcours_pl_final['cameras']=str([self.camera1,self.camera2])
         
         #resultats finaux : temps de parcours min et max et autres indicatuers utiles si ce trajet direct est partie d'un trajet indirect
         self.timedelta_min=self.df_tps_parcours_pl_final.tps_parcours.min()
@@ -248,7 +250,7 @@ class trajet_indirect():
     
     def __init__(self,df, date_debut, duree, temps_max_autorise, cameras):
         """
-        constructeur. se base sur classe df_tps_parcours
+        constructeur. se base sur classe trajet_direct
         """
 
         self.cameras_suivantes=cameras
@@ -261,23 +263,23 @@ class trajet_indirect():
 
     def liste_trajets_directs(self):
         """
-        pour obtenir un dico contenant les instances de df_tps_parcours pour chaque trajet éleémentaires
+        pour obtenir un dico contenant les instances de trajet_direct pour chaque trajet éleémentaires
         """  
         dico_traj_directs={}    
         #pour chaque couple de camera
         for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
             #initialisation du nom de variables pour le dico resultat 
             nom_variable='trajet'+str(indice)
-            #calculer les temps de parcours et autres attributs issus de df_tps_parcours selon les resultats du precedent
+            #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
             if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
-                trajet=df_tps_parcours(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
+                trajet=trajet_direct(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
             else : 
                 cle_traj_prec='trajet'+str(indice-1)
-                trajet=(df_tps_parcours(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
+                trajet=(trajet_direct(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
                                          dico_traj_directs[cle_traj_prec].duree_traj_fut,self.temps_max_autorise,
                                          couple_cam[0], couple_cam[1]))
             dico_traj_directs[nom_variable]=trajet
-            if trajet.df_tps_parcours_pl_final.empty :
+            if trajet.df_tps_parcours_pl_final.empty : #des qu'un des trajets elementaires est vide on s'arret, et on retourne le dico avec un vide
                 return dico_traj_directs
         
         return dico_traj_directs
@@ -289,7 +291,7 @@ class trajet_indirect():
         """
         #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
         long_dico=len(self.dico_traj_directs)
-        if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par df_tps_parcours dans ce cas
+        if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
             return self.dico_traj_directs['trajet0'].df_tps_parcours_pl_final
         for a, val_dico in enumerate(self.dico_traj_directs):
             if a<=len(self.dico_traj_directs)-2:
@@ -309,5 +311,6 @@ class trajet_indirect():
                       'cam_1_x':'cam_1',
                       'cam_2_y':'cam_2'})
         df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]
+        df_transit['cameras']=str(self.cameras_suivantes)
         
         return df_transit
