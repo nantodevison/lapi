@@ -246,7 +246,7 @@ class trajet_indirect():
     classe pour les trajets passant par plus de 2 cameras
     """
     
-    def __init__(self,df, date_debut, duree, temps_max_autorise, *cameras):
+    def __init__(self,df, date_debut, duree, temps_max_autorise, cameras):
         """
         constructeur. se base sur classe df_tps_parcours
         """
@@ -301,6 +301,6 @@ class trajet_indirect():
                       'date_cam_2_y':'date_cam_2',
                       'cam_1_x':'cam_1',
                       'cam_2_y':'cam_2'})
-        df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]#.drop(['date_cam_2_x','cam_2_x'])
+        df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]
         
         return df_transit
