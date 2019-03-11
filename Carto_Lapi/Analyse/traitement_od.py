@@ -12,6 +12,7 @@ import pandas as pd
 import geopandas as gp
 import Connexion_Transfert as ct
 import altair as alt
+import os
 
 dico_renommage={'created_x':'date_cam_1','camera_id_x':'cam_1', 'created_y':'date_cam_2','camera_id_y':'cam_2'}
 liste_trajet=(pd.DataFrame({'o_d':['A63-A10','A63-A10','A63-A10'],
@@ -134,6 +135,7 @@ class trajet_direct():
         self.timestamp_mini=self.date_debut+self.timedelta_min
         self.timestamp_maxi=self.date_fin+self.timedelta_max
         self.duree_traj_fut=(((self.timestamp_maxi-self.timestamp_mini).seconds)//60)+1
+               
     
     def df_filtrees(self,df):
         """isole les df depuis la df source
@@ -261,7 +263,18 @@ class trajet_direct():
         
         #graph des temps de parcours PL  
                 
-        return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts,graph_prctl
+        return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_prctl
+
+    def exporter_graph(self,path,o_d,graph):
+        """
+        Fonction pour exporter automatiquement certains graphs
+        """
+        date=self.date_debut.strftime("%Y-%m-%d")
+        heures=self.date_debut.strftime("%Hh")+'-'+self.date_fin.strftime("%Hh")
+        os.makedirs(os.path.join(path,o_d, date),exist_ok=True)
+        path=os.path.join(os.path.join(path,o_d, date),'_'.join([heures,str(self.camera1),str(self.camera2)])+'.png' )
+        graph.save(path, scale_factor=2.0)
+        
 
 class trajet_indirect():
     """
@@ -334,3 +347,12 @@ class trajet_indirect():
         df_transit['cameras']=str(self.cameras_suivantes)
         
         return df_transit
+    
+    def exporter_graph(self,path,o_d) :
+        """
+        fonction d'export des graphes en se basant sur la fonction homonyme de la classe trajet_direct
+        """
+        for trajet in self.dico_traj_directs.values() :
+            trajet.exporter_graph(path,o_d,trajet.plot_graphs()[2])
+        
+        
