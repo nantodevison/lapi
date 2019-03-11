@@ -82,7 +82,7 @@ class df_source():
         
         return  graph_stat_trie, graph_fiab
 
-class df_tps_parcours():
+class trajet_direct():
     """
     Classe decrivant les df des temps de parcours 
     attributs : 
@@ -101,14 +101,17 @@ class df_tps_parcours():
                 camera1 : integer : camera de debut
                 camera2 : integer : camera de fin
         """
-        self.df=df
         self.df, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df, duree, temps_max_autorise, camera1, camera2
         
         #j'en fais un attribut car util edans la fonction recherche_trajet_indirect
         self.date_debut=pd.to_datetime(date_debut)
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree) 
         
+        #base pour resultats
         self.df_tps_parcours_brut=self.df_temps_parcours_bruts()
+        
+        
+        #resultats intermediaires
         self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
         self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
     
@@ -117,11 +120,20 @@ class df_tps_parcours():
         self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)
         
         
-        #df finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
+        #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=(self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
                                         (self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]).rename(columns=dico_renommage)
         self.df_tps_parcours_pl_final=(self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
                                         (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]).rename(columns=dico_renommage)
+        if not self.df_tps_parcours_pl_final.empty: #je met un if car sinon ça me modifie le empty et cree le bordel par la suite
+            self.df_tps_parcours_pl_final['cameras']=str([self.camera1,self.camera2])
+        
+        #resultats finaux : temps de parcours min et max et autres indicatuers utiles si ce trajet direct est partie d'un trajet indirect
+        self.timedelta_min=self.df_tps_parcours_pl_final.tps_parcours.min()
+        self.timedelta_max=self.df_tps_parcours_pl_final.tps_parcours.max()
+        self.timestamp_mini=self.date_debut+self.timedelta_min
+        self.timestamp_maxi=self.date_fin+self.timedelta_max
+        self.duree_traj_fut=(((self.timestamp_maxi-self.timestamp_mini).seconds)//60)+1
     
     def df_filtrees(self,df):
         """isole les df depuis la df source
@@ -182,7 +194,7 @@ class df_tps_parcours():
         #on ressort la colonne de tempsde l'index et on cree la colonne des differentiel de temps
         cam1_cam2_passages_filtres=cam1_cam2_passages_filtres.reset_index()
         cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
-     
+        
         return cam1_cam2_passages_filtres
 
     def test_unicite_type(self,liste_l):
@@ -231,34 +243,75 @@ class df_tps_parcours():
                 selection)
                 
         return  graph_stat_trie, graph_tps_bruts, legend_graph_tps_bruts
-        
-def recherche_trajet_indirect(df_global, df_trajet_1, temps_max_autorise, cam1_trajet2, cam2_trajet2):
-    """
-    Recherche des vehicules passés entre 2 cameras qui sont ensuite passés entre 2 autres
-    en entrée : 
-     - df_trajet_1 : dataframe : objet issus de la classe df_source pour le tajet 1
-     - cam1_trajet2 : integer : amera 1 du deuxeime trajet
-     - cam2_trajet2 : integer : camera 2 du deuxieme trajet
-    """
-    # 1er test : si la dataframe source est vide
-    # rechercher le temps de parcours mini et max d'un pl passé entre 8h et 9h entre camera 19 et 4
-    timedelta_min=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.min()
-    timedelta_max=df_trajet_1.df_tps_parcours_pl_final.tps_parcours.max()
-    # on en déduit les timestamp debut et fin de localisation de ces pl sur la camera 1 du trajet 2
-    timestamp_mini=df_trajet_1.date_debut+timedelta_min
-    timestamp_maxi=df_trajet_1.date_fin+timedelta_max
-    duree=(((timestamp_maxi-timestamp_mini).seconds)//60)+1 #partie entere de la division plus 1 minutes
-    
-    #calcul des temps de parcours entre les deux cameras 
-    df_tps_parcours_trajet_2=df_tps_parcours(df_global,timestamp_mini, duree, temps_max_autorise, cam1_trajet2,cam2_trajet2).df_tps_parcours_pl_final
-    
-    #recherche des trajets commmuns
-    df_transit=pd.merge(df_trajet_1.df_tps_parcours_pl_final,df_tps_parcours_trajet_2,on='immat')
-    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
-    dico_rename=({'date_cam_1_x':'date_cam_1',
-                  'date_cam_2_y':'date_cam_2',
-                  'cam_1_x':'cam_1',
-                  'cam_2_y':'cam_2'})
-    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]#.drop(['date_cam_2_x','cam_2_x'])
 
-    return df_transit
+class trajet_indirect():
+    """
+    classe pour les trajets passant par plus de 2 cameras
+    """
+    
+    def __init__(self,df, date_debut, duree, temps_max_autorise, cameras):
+        """
+        constructeur. se base sur classe trajet_direct
+        """
+
+        self.cameras_suivantes=cameras
+        self.df, self.date_debut, self.duree, self.temps_max_autorise=df, date_debut, duree, temps_max_autorise
+        self.nb_cam=len(cameras)
+        
+        #dico de resultats
+        self.dico_traj_directs=self.liste_trajets_directs()
+        self.df_transit=self.df_trajet_indirect()
+
+    def liste_trajets_directs(self):
+        """
+        pour obtenir un dico contenant les instances de trajet_direct pour chaque trajet éleémentaires
+        """  
+        dico_traj_directs={}    
+        #pour chaque couple de camera
+        for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
+            #initialisation du nom de variables pour le dico resultat 
+            nom_variable='trajet'+str(indice)
+            #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
+            if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
+                trajet=trajet_direct(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
+            else : 
+                cle_traj_prec='trajet'+str(indice-1)
+                trajet=(trajet_direct(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
+                                         dico_traj_directs[cle_traj_prec].duree_traj_fut,self.temps_max_autorise,
+                                         couple_cam[0], couple_cam[1]))
+            dico_traj_directs[nom_variable]=trajet
+            if trajet.df_tps_parcours_pl_final.empty : #des qu'un des trajets elementaires est vide on s'arret, et on retourne le dico avec un vide
+                return dico_traj_directs
+        
+        return dico_traj_directs
+            
+        
+    def df_trajet_indirect(self):
+        """
+        On trouve les vehicules passés par les différentes cameras du dico_traj_directs
+        """
+        #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
+        long_dico=len(self.dico_traj_directs)
+        if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
+            return self.dico_traj_directs['trajet0'].df_tps_parcours_pl_final
+        for a, val_dico in enumerate(self.dico_traj_directs):
+            if a<=len(self.dico_traj_directs)-2:
+                variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
+                if self.dico_traj_directs[variab].df_tps_parcours_pl_final.empty : #si un des trajets aboutit a empty, mais pas le 1er
+                    return self.dico_traj_directs[variab].df_tps_parcours_pl_final
+                if 'df_transit' not in locals() :
+                    df_transit=pd.merge(self.dico_traj_directs[variab].df_tps_parcours_pl_final,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')  
+                    
+                else : 
+                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
+
+        #ajout temps de parcours et mise en forme
+        df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+        dico_rename=({'date_cam_1_x':'date_cam_1',
+                      'date_cam_2_y':'date_cam_2',
+                      'cam_1_x':'cam_1',
+                      'cam_2_y':'cam_2'})
+        df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]
+        df_transit['cameras']=str(self.cameras_suivantes)
+        
+        return df_transit
