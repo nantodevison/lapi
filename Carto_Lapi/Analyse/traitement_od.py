@@ -243,9 +243,9 @@ class trajet_direct():
                         tooltip='tps_parcours').interactive()
         
         graph_pl_ok=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_point(color='gray').encode(
-                                alt.X('created_x'),
-                                alt.Y('hoursminutes(tps_parcours)',
-                                 scale=alt.Scale(clamp=True))).interactive()
+                                x='created_x',
+                                y='hoursminutes(tps_parcours)',
+                                tooltip='hoursminutes(tps_parcours)').interactive()
         graph_pl_90pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='blue').encode(
                                  x='created_x',
                                  y='hoursminutes(pl_90pctl)')
@@ -271,8 +271,9 @@ class trajet_direct():
         """
         date=self.date_debut.strftime("%Y-%m-%d")
         heures=self.date_debut.strftime("%Hh")+'-'+self.date_fin.strftime("%Hh")
-        os.makedirs(os.path.join(path,o_d, date),exist_ok=True)
-        path=os.path.join(os.path.join(path,o_d, date),'_'.join([heures,str(self.camera1),str(self.camera2)])+'.png' )
+        if not os.path.exists(os.path.join(path,o_d, date)) :
+            os.makedirs(os.path.join(path,o_d, date),exist_ok=True)
+        path=os.path.join(os.path.join(path,os.path.join(o_d, date)),'_'.join([heures,str(self.camera1),str(self.camera2)])+'.png' )
         graph.save(path, scale_factor=2.0)
         
 
