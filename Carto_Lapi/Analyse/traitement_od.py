@@ -88,7 +88,7 @@ class trajet_direct():
     attributs : 
     - tous les attributs de la classe df_source
     - tps_vl_90_qtl : integer : vitesse en dessous de laquelle circule 90 % des vl
-    - tps_pl_80_qtl : integer : vitesse en dessous de laquelle circule 80 % des pl
+    - tps_pl_85_qtl : integer : vitesse en dessous de laquelle circule 80 % des pl
     """
     
     def __init__(self,df, date_debut, duree, temps_max_autorise, camera1, camera2):
@@ -117,14 +117,14 @@ class trajet_direct():
     
         #filtre statistique : on en garde que ce qui est les 90 % de temps les plus rapides
         self.tps_vl_90_qtl=self.df_vl_ok.tps_parcours.quantile(0.9)
-        self.tps_pl_80_qtl=self.df_pl_ok.tps_parcours.quantile(0.8)
-        
+        self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)  
+        self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85)        
         
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=(self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
                                         (self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]).rename(columns=dico_renommage)
         self.df_tps_parcours_pl_final=(self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
-                                        (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_80_qtl)]).rename(columns=dico_renommage)
+                                        (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]).rename(columns=dico_renommage)
         if not self.df_tps_parcours_pl_final.empty: #je met un if car sinon ça me modifie le empty et cree le bordel par la suite
             self.df_tps_parcours_pl_final['cameras']=str([self.camera1,self.camera2])
         
@@ -225,7 +225,8 @@ class trajet_direct():
         #graph des temps de parcours sur df non filtree, selection possible sur type de veh
         tps_parcours_bruts=self.df_tps_parcours_brut[['created_x','tps_parcours','l']].copy() #copier les données avec juste ce qu'il faut
         tps_parcours_bruts.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours_bruts.tps_parcours #refernce à une journée à 00:00 car timedeltas non geres par altair (json en general)
-        tps_parcours_bruts['pl_90pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_80_qtl
+        tps_parcours_bruts['pl_90pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_90_qtl
+        tps_parcours_bruts['pl_85pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_85_qtl
         
         selection = alt.selection_multi(fields=['l'])
         color = alt.condition(selection,
@@ -239,19 +240,18 @@ class trajet_direct():
                         shape='l:N',
                         tooltip='tps_parcours')
         
-        graph_pl_ok=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_point().encode(
+        graph_pl_ok=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_point(color='red').encode(
                                  x='created_x',
                                  y='hoursminutes(tps_parcours)',
                                  tooltip=['hoursminutes(tps_parcours)'],
                                  color='l:N').interactive()
-        graph_pl_90pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line().encode(
+        graph_pl_90pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='blue').encode(
                                  x='created_x',
-                                 y='hoursminutes(pl_90pctl)',
-                                 color='l:N')
-        total=graph_pl_ok + graph_pl_90pctl
-        
-        #base=alt.Chart
-        #line_perc_90=self.tps_pl_80_qtl
+                                 y='hoursminutes(pl_90pctl)')
+        graph_pl_85pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='red').encode(
+                                 x='created_x',
+                                 y='hoursminutes(pl_85pctl)')
+        total=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl
         
         legend_graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
                 y=alt.Y('l:N', axis=alt.Axis(orient='right')),
@@ -262,7 +262,7 @@ class trajet_direct():
         
         #graph des temps de parcours PL  
                 
-        return  graph_stat_trie, graph_tps_bruts, legend_graph_tps_bruts, graph_pl_ok,graph_pl_90pctl,total
+        return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_pl_ok,graph_pl_90pctl,total
 
 class trajet_indirect():
     """
