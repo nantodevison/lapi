@@ -238,20 +238,19 @@ class trajet_direct():
                         y='hoursminutes(tps_parcours)',
                         color=color,
                         shape='l:N',
-                        tooltip='tps_parcours')
+                        tooltip='tps_parcours').interactive()
         
-        graph_pl_ok=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_point(color='red').encode(
-                                 x='created_x',
-                                 y='hoursminutes(tps_parcours)',
-                                 tooltip=['hoursminutes(tps_parcours)'],
-                                 color='l:N').interactive()
+        graph_pl_ok=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_point(color='gray').encode(
+                                alt.X('created_x'),
+                                alt.Y('hoursminutes(tps_parcours)',
+                                 scale=alt.Scale(clamp=True))).interactive()
         graph_pl_90pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='blue').encode(
                                  x='created_x',
                                  y='hoursminutes(pl_90pctl)')
         graph_pl_85pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='red').encode(
                                  x='created_x',
                                  y='hoursminutes(pl_85pctl)')
-        total=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl
+        graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl
         
         legend_graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
                 y=alt.Y('l:N', axis=alt.Axis(orient='right')),
@@ -262,7 +261,7 @@ class trajet_direct():
         
         #graph des temps de parcours PL  
                 
-        return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_pl_ok,graph_pl_90pctl,total
+        return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts,graph_prctl
 
 class trajet_indirect():
     """
