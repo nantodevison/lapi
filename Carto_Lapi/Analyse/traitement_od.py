@@ -13,6 +13,7 @@ import geopandas as gp
 import Connexion_Transfert as ct
 import altair as alt
 import os
+from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1','camera_id_x':'cam_1', 'created_y':'date_cam_2','camera_id_y':'cam_2'}
 liste_trajet=(pd.DataFrame({'o_d':['A63-A10','A63-A10','A63-A10'],
@@ -116,10 +117,11 @@ class trajet_direct():
         self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
         self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
     
-        #filtre statistique : on en garde que ce qui est les 90 % de temps les plus rapides
+        #filtre statistique : caracterisation des temps de parcours qui servent de filtre : test sur les percentuil et sur un cluster
         self.tps_vl_90_qtl=self.df_vl_ok.tps_parcours.quantile(0.9)
         self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)  
-        self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85)        
+        self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85) 
+        self.tps_pl_cluster =self.temp_max_cluster(300) [1] if self.temp_max_cluster(300)[0]!=0 else None
         
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=(self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
@@ -148,7 +150,6 @@ class trajet_direct():
         df_pl_ok=df.loc[(df.loc[:,'l']==1) & (df.loc[:,'fiability']==True)]
         return df_vlpl, df_tv_plaques_ok, df_veh_ok, df_vl_ok, df_pl_ok 
         
-
     def stats (self,df):
         """les stats issue des df_filtrees
         A RENESEIGNER LES DF QUI SORTENT"""
@@ -160,6 +161,37 @@ class trajet_direct():
         nb_pl_ok=len(self.df_pl_ok)
         return nb_tv_tot, nb_tv_plaque_ok, nb_vlpl, nb_veh_ok, nb_vl_ok, nb_pl_ok
     
+    def temp_max_cluster(self, delai):
+        """obtenir le temps max de parcours en faisant un cluster par dbscan
+        en entree : l'attribut df_tps_parcours_pl_final
+                    le delai max pour regrouper en luster,en seconde
+        en sortie : le nombre de clusters,
+                    un timedelta
+        """
+        donnees_src=self.df_pl_ok.loc[:,['created_x','tps_parcours']].copy() #isoler les données necessaires
+        temps_int=((pd.to_datetime('2018-01-01')+donnees_src['tps_parcours'])-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')#convertir les temps en integer
+        #mise en forme des données pour passer dans sklearn 
+        donnnes = temps_int.values
+        matrice=donnnes.reshape(-1, 1)
+        #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
+        clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/1.5).fit(matrice)
+        labels = clustering.labels_
+        n_clusters_ = len(set(labels))
+        # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
+        if n_clusters_== 0 :
+            return n_clusters_
+        #mettre en forme au format pandas
+        results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
+        results.columns = ['index_base', 'cluster_num']
+        results = pd.merge(results,self.df_pl_ok, left_on='index_base', right_index=True )
+        #obtenir un timedelta unique
+        temp_parcours_max=results.loc[results.loc[:,'cluster_num']!=-1].groupby(['cluster_num'])['tps_parcours'].max()
+        temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
+        
+        return n_clusters_, temp_parcours_max
+        
+        
+        
     def df_temps_parcours_bruts(self):
         """fonction de calcul du temps moyen de parcours entre 2 cameras
         en entree : dataframe : le dataframe format pandas qui contient les données
@@ -229,6 +261,7 @@ class trajet_direct():
         tps_parcours_bruts.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours_bruts.tps_parcours #refernce à une journée à 00:00 car timedeltas non geres par altair (json en general)
         tps_parcours_bruts['pl_90pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_90_qtl
         tps_parcours_bruts['pl_85pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_85_qtl
+        tps_parcours_bruts['pl_cluster']=pd.to_datetime('2018-01-01')+self.tps_pl_cluster
         
         selection = alt.selection_multi(fields=['l'])
         color = alt.condition(selection,
@@ -252,7 +285,11 @@ class trajet_direct():
         graph_pl_85pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='red').encode(
                                  x='created_x',
                                  y='hoursminutes(pl_85pctl)')
-        graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl
+        graph_pl_cluster=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='yellow').encode(
+                                 x='created_x',
+                                 y='hoursminutes(pl_cluster)')
+        
+        graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl + graph_pl_cluster
         
         legend_graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
                 y=alt.Y('l:N', axis=alt.Axis(orient='right')),
