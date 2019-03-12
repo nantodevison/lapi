@@ -93,7 +93,7 @@ class trajet_direct():
     - tps_pl_85_qtl : integer : vitesse en dessous de laquelle circule 80 % des pl
     """
     
-    def __init__(self,df, date_debut, duree, temps_max_autorise, camera1, camera2):
+    def __init__(self,df, date_debut, duree, temps_max_autorise, camera1, camera2, avecGraph=False):
         """
         constrcuteur
         en entree : dataframe : le dataframe format pandas qui contient les données
@@ -127,9 +127,11 @@ class trajet_direct():
         self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85) 
         try : 
             self.tps_pl_cluster =self.temp_max_cluster(300)[1]
-            self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs()
+            if avecGraph : 
+                self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs()
         except ClusterError : 
-            self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
+            if avecGraph :
+                self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
         
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].rename(columns=dico_renommage)
