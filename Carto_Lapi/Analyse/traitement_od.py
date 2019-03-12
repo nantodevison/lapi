@@ -415,7 +415,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         save_graph -> booleen, par defaut False, pour savoir si on exporte des graphs lies au trajets directs (10* temps sans graph)
     en sortie : DataFrame des trajets de transit
     """
-    dates= pd.date_range(date_jour, periods=24, freq='H') #générer les dates par intervalle d'1h
+    dates= pd.date_range(date_jour, periods=2, freq='H') #générer les dates par intervalle d'1h
     #parcourir les dates
     for date in dates : 
         date=date.strftime("%Y-%m-%d %H:%M:%S")
@@ -444,5 +444,5 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                     dico_od=pd.concat([dico_od,df_trajet], sort=False)
                 else : #sinon on initilise cette variable
                     dico_od=df_trajet
-    
+                df_trajet['o_d']=o_d
     return dico_od 
