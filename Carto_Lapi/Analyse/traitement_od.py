@@ -116,14 +116,18 @@ class trajet_direct():
         #resultats intermediaires
         self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok,self.df_pl_ok=self.df_filtrees(self.df_tps_parcours_brut)
         self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats(self.df_tps_parcours_brut) 
-    
+        
+        #si pas de pl sur la periode et les cameras on remonte l'info
+        if self.df_pl_ok.empty :
+            raise PasDePlError()
+
         #filtre statistique : caracterisation des temps de parcours qui servent de filtre : test sur les percentuil et sur un cluster
         self.tps_vl_90_qtl=self.df_vl_ok.tps_parcours.quantile(0.9)
         self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)  
         self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85) 
         try : 
-            self.tps_pl_cluster =self.temp_max_cluster(100)[1]
-            self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl, self.graph_cluster=self.plot_graphs()
+            self.tps_pl_cluster =self.temp_max_cluster(300)[1]
+            self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs()
         except ClusterError : 
             self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
         
@@ -298,8 +302,8 @@ class trajet_direct():
             graph_pl_cluster=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='yellow').encode(
                          x='created_x',
                          y='hoursminutes(pl_cluster)')
-            graph_cluster=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl + graph_pl_cluster
-            return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_prctl, graph_cluster   
+            graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl + graph_pl_cluster
+            return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_prctl 
         
         return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_prctl
 
@@ -392,8 +396,12 @@ class trajet_indirect():
         fonction d'export des graphes en se basant sur la fonction homonyme de la classe trajet_direct
         """
         for trajet in self.dico_traj_directs.values() :
-            trajet.exporter_graph(path,o_d,trajet.plot_graphs()[2])
+            trajet.exporter_graph(path,o_d,trajet.graph_prctl)
         
 class ClusterError(Exception):       
     def __init__(self):
         Exception.__init__(self,'nb de Cluster valable = 0 ') 
+
+class PasDePlError(Exception):       
+    def __init__(self):
+        Exception.__init__(self,'pas de PL sur la période et les cameras visées') 
