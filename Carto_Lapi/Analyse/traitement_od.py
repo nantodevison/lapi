@@ -121,13 +121,15 @@ class trajet_direct():
         self.tps_vl_90_qtl=self.df_vl_ok.tps_parcours.quantile(0.9)
         self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)  
         self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85) 
-        self.tps_pl_cluster =self.temp_max_cluster(300) [1] if self.temp_max_cluster(300)[0]!=0 else None
+        try : 
+            self.tps_pl_cluster =self.temp_max_cluster(100)[1]
+            self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl, self.graph_cluster=self.plot_graphs()
+        except ClusterError : 
+            self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
         
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
-        self.df_tps_parcours_vl_final=(self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
-                                        (self.df_vl_ok.loc[:,'tps_parcours']<=self.tps_vl_90_qtl)]).rename(columns=dico_renommage)
-        self.df_tps_parcours_pl_final=(self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].loc[
-                                        (self.df_pl_ok.loc[:,'tps_parcours']<=self.tps_pl_90_qtl)]).rename(columns=dico_renommage)
+        self.df_tps_parcours_vl_final=self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].rename(columns=dico_renommage)
+        self.df_tps_parcours_pl_final=self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].rename(columns=dico_renommage)
         if not self.df_tps_parcours_pl_final.empty: #je met un if car sinon ça me modifie le empty et cree le bordel par la suite
             self.df_tps_parcours_pl_final['cameras']=str([self.camera1,self.camera2])
         
@@ -176,10 +178,10 @@ class trajet_direct():
         #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
         clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/1.5).fit(matrice)
         labels = clustering.labels_
-        n_clusters_ = len(set(labels))
+        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
         # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
         if n_clusters_== 0 :
-            return n_clusters_
+            raise ClusterError()
         #mettre en forme au format pandas
         results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
         results.columns = ['index_base', 'cluster_num']
@@ -189,9 +191,7 @@ class trajet_direct():
         temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
         
         return n_clusters_, temp_parcours_max
-        
-        
-        
+              
     def df_temps_parcours_bruts(self):
         """fonction de calcul du temps moyen de parcours entre 2 cameras
         en entree : dataframe : le dataframe format pandas qui contient les données
@@ -239,7 +239,7 @@ class trajet_direct():
         else : 
             return -1
                                
-    def plot_graphs(self):
+    def plot_graphs(self, cluster=True):
         """cree et retourne les charts de altair pour un certines nombres de graph
         en sortie : graph_stat_trie : grphs de stat sur les nb de veh
                     graph_tps_bruts : graph de temps de passage entre 2 cam pour tout les types de veh non redresses 
@@ -261,7 +261,6 @@ class trajet_direct():
         tps_parcours_bruts.tps_parcours=pd.to_datetime('2018-01-01')+tps_parcours_bruts.tps_parcours #refernce à une journée à 00:00 car timedeltas non geres par altair (json en general)
         tps_parcours_bruts['pl_90pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_90_qtl
         tps_parcours_bruts['pl_85pctl']=pd.to_datetime('2018-01-01')+self.tps_pl_85_qtl
-        tps_parcours_bruts['pl_cluster']=pd.to_datetime('2018-01-01')+self.tps_pl_cluster
         
         selection = alt.selection_multi(fields=['l'])
         color = alt.condition(selection,
@@ -274,6 +273,12 @@ class trajet_direct():
                         color=color,
                         shape='l:N',
                         tooltip='tps_parcours').interactive()
+        legend_graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
+                                y=alt.Y('l:N', axis=alt.Axis(orient='right')),
+                                color=color,
+                                shape='l:N',
+                                ).add_selection(
+                                selection)
         
         graph_pl_ok=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_point(color='gray').encode(
                                 x='created_x',
@@ -285,21 +290,17 @@ class trajet_direct():
         graph_pl_85pctl=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='red').encode(
                                  x='created_x',
                                  y='hoursminutes(pl_85pctl)')
-        graph_pl_cluster=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='yellow').encode(
-                                 x='created_x',
-                                 y='hoursminutes(pl_cluster)')
         
-        graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl + graph_pl_cluster
+        graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl
         
-        legend_graph_tps_bruts = alt.Chart(tps_parcours_bruts).mark_point().encode(
-                y=alt.Y('l:N', axis=alt.Axis(orient='right')),
-                color=color,
-                shape='l:N',
-                ).add_selection(
-                selection)
+        if cluster : 
+            tps_parcours_bruts['pl_cluster']=pd.to_datetime('2018-01-01')+self.tps_pl_cluster
+            graph_pl_cluster=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='yellow').encode(
+                         x='created_x',
+                         y='hoursminutes(pl_cluster)')
+            graph_cluster=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl + graph_pl_cluster
+            return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_prctl, graph_cluster   
         
-        #graph des temps de parcours PL  
-                
         return  graph_stat_trie, graph_tps_bruts|legend_graph_tps_bruts, graph_prctl
 
     def exporter_graph(self,path,o_d,graph):
@@ -393,4 +394,6 @@ class trajet_indirect():
         for trajet in self.dico_traj_directs.values() :
             trajet.exporter_graph(path,o_d,trajet.plot_graphs()[2])
         
-        
+class ClusterError(Exception):       
+    def __init__(self):
+        Exception.__init__(self,'nb de Cluster valable = 0 ') 
