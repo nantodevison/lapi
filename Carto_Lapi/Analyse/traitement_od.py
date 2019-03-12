@@ -439,10 +439,11 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                         continue
                     df_trajet=trajet.df_tps_parcours_pl_final
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d,trajet.graph_prctl)    
+                df_trajet['o_d']=o_d
                 #stocker les resultats
                 if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
                     dico_od=pd.concat([dico_od,df_trajet], sort=False)
                 else : #sinon on initilise cette variable
                     dico_od=df_trajet
-                df_trajet['o_d']=o_d
+
     return dico_od 
