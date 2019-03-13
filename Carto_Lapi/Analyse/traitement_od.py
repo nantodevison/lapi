@@ -15,8 +15,8 @@ import altair as alt
 import os
 from sklearn.cluster import DBSCAN
 
-dico_renommage={'created_x':'date_cam_1','camera_id_x':'cam_1', 'created_y':'date_cam_2','camera_id_y':'cam_2'}
-liste_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajets.json')
+dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
+fichier_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajets.json')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     with ct.ConnexionBdd('gti_lapi') as c : 
@@ -128,12 +128,13 @@ class trajet_direct():
             if avecGraph : 
                 self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs()
         except ClusterError : 
+            print(f"pas de cluster pour trajet {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin} ")
             if avecGraph :
                 self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
         
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
-        self.df_tps_parcours_vl_final=self.df_vl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].rename(columns=dico_renommage)
-        self.df_tps_parcours_pl_final=self.df_pl_ok[['immat','created_x','camera_id_x', 'created_y','camera_id_y','tps_parcours']].rename(columns=dico_renommage)
+        self.df_tps_parcours_vl_final=self.df_vl_ok[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
+        self.df_tps_parcours_pl_final=self.df_pl_ok[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
         if not self.df_tps_parcours_pl_final.empty: #je met un if car sinon ça me modifie le empty et cree le bordel par la suite
             self.df_tps_parcours_pl_final['cameras']=self.df_tps_parcours_pl_final.apply(lambda x:list([self.camera1,self.camera2]), axis=1)
         
@@ -143,6 +144,9 @@ class trajet_direct():
         self.timestamp_mini=self.date_debut+self.timedelta_min
         self.timestamp_maxi=self.date_fin+self.timedelta_max
         self.duree_traj_fut=(((self.timestamp_maxi-self.timestamp_mini).seconds)//60)+1
+        
+        print(f" trajet direct : {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin}, nb_pl_ok : {self.nb_pl_ok}")
+        #print('dataframe : ', self.df_tps_parcours_pl_final)
                
     
     def df_filtrees(self,df):
@@ -222,7 +226,7 @@ class trajet_direct():
         #on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
         cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]
         # on regroupe les attributs dedescription de type etde fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi
-        cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self. test_unicite_type([x['l_x'],x['l_y']]), axis=1)
+        cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self. test_unicite_type([x['l_x'],x['l_y']],mode='1/2'), axis=1)
         cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 50 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on ne garde que les passage le plus rapide devant la camera 2
         cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.camera2]
@@ -235,14 +239,20 @@ class trajet_direct():
         
         return cam1_cam2_passages_filtres
 
-    def test_unicite_type(self,liste_l):
+    def test_unicite_type(self,liste_l, mode='unique'):
         """test pour voir si un vehicule a ete toujours vu de la mme façon ou non
            en entre : liste de valeur de l iisues d'une df""" 
-        if len(set(liste_l))==1 :
-            return liste_l[0]
-        else : 
-            return -1
-                               
+        if mode=='unique' : 
+            if len(set(liste_l))==1 :
+                return liste_l[0]
+            else : 
+                return -1
+        elif mode=='1/2' :
+            if any(liste_l)==1 : 
+                return 1
+            else : 
+                return -1
+                       
     def plot_graphs(self, cluster=True):
         """cree et retourne les charts de altair pour un certines nombres de graph
         en sortie : graph_stat_trie : grphs de stat sur les nb de veh
@@ -379,7 +389,7 @@ class trajet_indirect():
                     
                 else : 
                     df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
-
+        print(f"df_trajet_indirect, df_transit : {df_transit.columns}")
         #ajout temps de parcours et mise en forme
         df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
         dico_rename=({'date_cam_1_x':'date_cam_1',
@@ -420,15 +430,17 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     for date in dates : 
         date=date.strftime("%Y-%m-%d %H:%M:%S")
         #parcourir les trajets possibles
-        for index, value in liste_trajet.iterrows() :
+        for index, value in liste_trajets.iterrows() :
             o_d, carac_trajet=value[0],value[1]
             for dico_carac in carac_trajet : #carle json des trajets est de type record
                 cameras=dico_carac['cameras']
                 type_t=dico_carac['type_trajet']
+                print(f"trajet : {o_d}, cameras : {cameras}")
                 if type_t=='indirect' : # dans ce cas on appelle la classe correspondante
                     try :
                         trajet=trajet_indirect(df_journee,date, 60, 16, cameras)
                     except PasDePlError : #si pas de pl on boucle sur le trajet suivant
+                        print("pas de pl")
                         continue 
                     df_trajet=trajet.df_transit#en deduire le total
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d) #si on exporte les graphs des trajets directs
@@ -436,6 +448,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                     try : 
                         trajet=trajet_direct(df_journee,date, 60, 16, cameras[0],cameras[1])
                     except PasDePlError :
+                        print("pas de pl")
                         continue
                     df_trajet=trajet.df_tps_parcours_pl_final
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d,trajet.graph_prctl)    
