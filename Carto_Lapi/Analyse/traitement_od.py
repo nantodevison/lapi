@@ -85,10 +85,6 @@ class df_source():
 class trajet_direct():
     """
     Classe decrivant les df des temps de parcours 
-    attributs : 
-    - tous les attributs de la classe df_source
-    - tps_vl_90_qtl : integer : vitesse en dessous de laquelle circule 90 % des vl
-    - tps_pl_85_qtl : integer : vitesse en dessous de laquelle circule 80 % des pl
     """
     
     def __init__(self,df, date_debut, duree, temps_max_autorise, camera1, camera2, avecGraph=False):
@@ -100,6 +96,7 @@ class trajet_direct():
                 temps_max_autorise : integer : le nb heure max entre la camerade debut et de fin
                 camera1 : integer : camera de debut
                 camera2 : integer : camera de fin
+                avecGraph -> booleen traduit si on veut creer les attributs de graph ou non
         """
         self.df, self.duree, self.temps_max_autorise, self.camera1, self.camera2=df, duree, temps_max_autorise, camera1, camera2
         
@@ -135,8 +132,7 @@ class trajet_direct():
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=self.df_vl_ok[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
         self.df_tps_parcours_pl_final=self.df_pl_ok[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
-        if not self.df_tps_parcours_pl_final.empty: #je met un if car sinon ça me modifie le empty et cree le bordel par la suite
-            self.df_tps_parcours_pl_final['cameras']=self.df_tps_parcours_pl_final.apply(lambda x:list([self.camera1,self.camera2]), axis=1)
+        self.df_tps_parcours_pl_final['cameras']=self.df_tps_parcours_pl_final.apply(lambda x:list([self.camera1,self.camera2]), axis=1)
         
         #resultats finaux : temps de parcours min et max et autres indicatuers utiles si ce trajet direct est partie d'un trajet indirect
         self.timedelta_min=self.df_tps_parcours_pl_final.tps_parcours.min()
@@ -365,8 +361,6 @@ class trajet_indirect():
                                          dico_traj_directs[cle_traj_prec].duree_traj_fut,self.temps_max_autorise,
                                          couple_cam[0], couple_cam[1]))
             dico_traj_directs[nom_variable]=trajet
-            if trajet.df_tps_parcours_pl_final.empty : #des qu'un des trajets elementaires est vide on s'arret, et on retourne le dico avec un vide
-                return dico_traj_directs
         
         return dico_traj_directs
             
@@ -416,7 +410,10 @@ class ClusterError(Exception):
     def __init__(self):
         Exception.__init__(self,'nb de Cluster valable = 0 ') 
 
-class PasDePlError(Exception):       
+class PasDePlError(Exception):  
+    """
+    Exception levee si le trajet direct ne comprend pas de pl
+    """     
     def __init__(self):
         Exception.__init__(self,'pas de PL sur la période et les cameras visées') 
         
