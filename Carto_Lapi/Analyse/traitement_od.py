@@ -145,7 +145,7 @@ class trajet_direct():
         self.timestamp_maxi=self.date_fin+self.timedelta_max
         self.duree_traj_fut=(((self.timestamp_maxi-self.timestamp_mini).seconds)//60)+1
         
-        print(f" trajet direct : {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin}, nb_pl_ok : {self.nb_pl_ok}")
+        #print(f" trajet direct : {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin}, nb_pl_ok : {self.nb_pl_ok}")
         #print('dataframe : ', self.df_tps_parcours_pl_final)
                
     
@@ -375,28 +375,32 @@ class trajet_indirect():
         """
         On trouve les vehicules passés par les différentes cameras du dico_traj_directs
         """
+        dico_rename={'date_cam_1_x':'date_cam_1','date_cam_2_y':'date_cam_2'} #paramètres pour mise en forme donnees
+        
         #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
         long_dico=len(self.dico_traj_directs)
+        #print (self.dico_traj_directs)
         if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
             return self.dico_traj_directs['trajet0'].df_tps_parcours_pl_final
         for a, val_dico in enumerate(self.dico_traj_directs):
-            if a<=len(self.dico_traj_directs)-2:
+            if a<=long_dico-1:
+                #print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
                 variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
                 if self.dico_traj_directs[variab].df_tps_parcours_pl_final.empty : #si un des trajets aboutit a empty, mais pas le 1er
                     return self.dico_traj_directs[variab].df_tps_parcours_pl_final
-                if 'df_transit' not in locals() :
-                    df_transit=pd.merge(self.dico_traj_directs[variab].df_tps_parcours_pl_final,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')  
-                    
-                else : 
+                if a==0 :
+                    df_transit=pd.merge(self.dico_traj_directs[variab].df_tps_parcours_pl_final,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
+                    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+                    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]  
+                elif a<long_dico-1: 
+                    #print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
                     df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
-        print(f"df_trajet_indirect, df_transit : {df_transit.columns}")
-        #ajout temps de parcours et mise en forme
-        df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
-        dico_rename=({'date_cam_1_x':'date_cam_1',
-                      'date_cam_2_y':'date_cam_2',
-                      'cam_1_x':'cam_1',
-                      'cam_2_y':'cam_2'})
-        df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','cam_1','cam_2','tps_parcours']]
+                    #print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+                    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]
+            #print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
+        #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
+        
         df_transit['cameras']=df_transit.apply(lambda x:list(self.cameras_suivantes), axis=1)
 
         return df_transit
