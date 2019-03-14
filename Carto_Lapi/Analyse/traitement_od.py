@@ -125,7 +125,7 @@ class trajet_direct():
             if avecGraph : 
                 self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs()
         except ClusterError : 
-            print(f"pas de cluster pour trajet {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin} ")
+            #print(f"pas de cluster pour trajet {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin} ")
             if avecGraph :
                 self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
         
@@ -213,10 +213,10 @@ class trajet_direct():
         #trouver tt les bagnoles passée par cam1 dont la 2eme camera est cam2
         #isoler camera 1
         df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==self.camera1]
-        #on retrouve ces immatriculation
-        df_duree_autres_cam=df2.loc[df2.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat'])]
+        #on retrouve ces immatriculation mais qui ne sont pas à la 1ere camera
+        df_duree_autres_cam=df2.loc[(df2.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
         #on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
-        cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), how='left', on='immat')
+        cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')
         #on ne garde que les passages à la 2ème caméra postérieur au passage à la première
         cam1_croise_suivant=cam1_croise_autre_cam.loc[(cam1_croise_autre_cam.loc[:,'created_x']<cam1_croise_autre_cam.loc[:,'created_y'])]
         #on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
@@ -352,6 +352,7 @@ class trajet_indirect():
         for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
             #initialisation du nom de variables pour le dico resultat 
             nom_variable='trajet'+str(indice)
+            print(indice,couple_cam)
             #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
             if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
                 trajet=trajet_direct(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
@@ -373,12 +374,12 @@ class trajet_indirect():
         
         #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
         long_dico=len(self.dico_traj_directs)
-        #print (self.dico_traj_directs)
+        print (self.dico_traj_directs)
         if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
             return self.dico_traj_directs['trajet0'].df_tps_parcours_pl_final
         for a, val_dico in enumerate(self.dico_traj_directs):
             if a<=long_dico-1:
-                #print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
+                print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
                 variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
                 if self.dico_traj_directs[variab].df_tps_parcours_pl_final.empty : #si un des trajets aboutit a empty, mais pas le 1er
                     return self.dico_traj_directs[variab].df_tps_parcours_pl_final
@@ -387,13 +388,13 @@ class trajet_indirect():
                     df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
                     df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]  
                 elif a<long_dico-1: 
-                    #print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
                     df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
-                    #print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
                     df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
                     df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]
-            #print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
-        #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
+            print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
+        print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
         
         df_transit['cameras']=df_transit.apply(lambda x:list(self.cameras_suivantes), axis=1)
 
@@ -426,7 +427,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         save_graph -> booleen, par defaut False, pour savoir si on exporte des graphs lies au trajets directs (10* temps sans graph)
     en sortie : DataFrame des trajets de transit
     """
-    dates= pd.date_range(date_jour, periods=2, freq='H') #générer les dates par intervalle d'1h
+    dates= pd.date_range(date_jour, periods=24, freq='H') #générer les dates par intervalle d'1h
     #parcourir les dates
     for date in dates : 
         date=date.strftime("%Y-%m-%d %H:%M:%S")
@@ -436,12 +437,12 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
             for dico_carac in carac_trajet : #carle json des trajets est de type record
                 cameras=dico_carac['cameras']
                 type_t=dico_carac['type_trajet']
-                print(f"trajet : {o_d}, cameras : {cameras}")
+                print(f"trajet : {o_d}, cameras : {cameras}, date : {date}")
                 if type_t=='indirect' : # dans ce cas on appelle la classe correspondante
                     try :
                         trajet=trajet_indirect(df_journee,date, 60, 16, cameras)
                     except PasDePlError : #si pas de pl on boucle sur le trajet suivant
-                        print("pas de pl")
+                        #print("pas de pl")
                         continue 
                     df_trajet=trajet.df_transit#en deduire le total
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d) #si on exporte les graphs des trajets directs
@@ -449,7 +450,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                     try : 
                         trajet=trajet_direct(df_journee,date, 60, 16, cameras[0],cameras[1])
                     except PasDePlError :
-                        print("pas de pl")
+                        #print("pas de pl")
                         continue
                     df_trajet=trajet.df_tps_parcours_pl_final
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d,trajet.graph_prctl)    
