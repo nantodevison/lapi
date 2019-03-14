@@ -219,8 +219,13 @@ class trajet_direct():
         cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')
         #on ne garde que les passages à la 2ème caméra postérieur au passage à la première
         cam1_croise_suivant=cam1_croise_autre_cam.loc[(cam1_croise_autre_cam.loc[:,'created_x']<cam1_croise_autre_cam.loc[:,'created_y'])]
+        #print(cam1_croise_suivant[['camera_id_x','created_x','created_y','camera_id_y']])
         #on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
         cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]
+        #print(cam1_fastest_next[['camera_id_x','created_x','created_y','camera_id_y']])
+        #Si la df cam1_fastest_next est vide ça crée une erreur ValueError dans la creation de 'l', donc je filtre avant avec une levee d'erreur PasdePl
+        if cam1_fastest_next.empty : 
+            raise PasDePlError()
         # on regroupe les attributs dedescription de type etde fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi
         cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self. test_unicite_type([x['l_x'],x['l_y']],mode='1/2'), axis=1)
         cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 50 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
@@ -339,6 +344,10 @@ class trajet_indirect():
         self.df, self.date_debut, self.duree, self.temps_max_autorise=df, date_debut, duree, temps_max_autorise
         self.nb_cam=len(cameras)
         
+        #il y a des trajets directs redondant inérent à tous les trajets indirects : les trajets de départ entre les cameras [14,19], [16,19] et [12-6], qui sont répétés 
+        #respectivement 11*, 11* et 17*
+        #on peut donc ne les déterminer qu'une fois, et rappeler directement ces resultats pour les fois suivantes
+        
         #dico de resultats
         self.dico_traj_directs=self.liste_trajets_directs()
         self.df_transit=self.df_trajet_indirect()
@@ -351,8 +360,8 @@ class trajet_indirect():
         #pour chaque couple de camera
         for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
             #initialisation du nom de variables pour le dico resultat 
+            #print(indice,couple_cam)
             nom_variable='trajet'+str(indice)
-            print(indice,couple_cam)
             #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
             if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
                 trajet=trajet_direct(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
@@ -374,12 +383,12 @@ class trajet_indirect():
         
         #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
         long_dico=len(self.dico_traj_directs)
-        print (self.dico_traj_directs)
+        #print (self.dico_traj_directs)
         if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
             return self.dico_traj_directs['trajet0'].df_tps_parcours_pl_final
         for a, val_dico in enumerate(self.dico_traj_directs):
             if a<=long_dico-1:
-                print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
+                #print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
                 variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
                 if self.dico_traj_directs[variab].df_tps_parcours_pl_final.empty : #si un des trajets aboutit a empty, mais pas le 1er
                     return self.dico_traj_directs[variab].df_tps_parcours_pl_final
@@ -388,15 +397,16 @@ class trajet_indirect():
                     df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
                     df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]  
                 elif a<long_dico-1: 
-                    print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    #print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
                     df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_tps_parcours_pl_final,on='immat')
-                    print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    #print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
                     df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
                     df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]
-            print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
-        print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
+            #print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
+        #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
         
         df_transit['cameras']=df_transit.apply(lambda x:list(self.cameras_suivantes), axis=1)
+        print(df_transit)
 
         return df_transit
     
@@ -427,7 +437,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         save_graph -> booleen, par defaut False, pour savoir si on exporte des graphs lies au trajets directs (10* temps sans graph)
     en sortie : DataFrame des trajets de transit
     """
-    dates= pd.date_range(date_jour, periods=24, freq='H') #générer les dates par intervalle d'1h
+    dates= pd.date_range(date_jour, periods=1, freq='H') #générer les dates par intervalle d'1h
     #parcourir les dates
     for date in dates : 
         date=date.strftime("%Y-%m-%d %H:%M:%S")
