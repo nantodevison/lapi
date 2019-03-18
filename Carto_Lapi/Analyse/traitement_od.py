@@ -406,7 +406,7 @@ class trajet_indirect():
         #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
         
         df_transit['cameras']=df_transit.apply(lambda x:list(self.cameras_suivantes), axis=1)
-        print(df_transit)
+        #print(df_transit)
 
         return df_transit
     
@@ -443,7 +443,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         date=date.strftime("%Y-%m-%d %H:%M:%S")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
-            o_d, carac_trajet=value[0],value[1]
+            origine,destination,carac_trajet=value[0],value[1],value[2]
             for dico_carac in carac_trajet : #carle json des trajets est de type record
                 cameras=dico_carac['cameras']
                 type_t=dico_carac['type_trajet']
