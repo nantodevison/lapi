@@ -12,7 +12,7 @@ import pandas as pd
 import geopandas as gp
 import Connexion_Transfert as ct
 import altair as alt
-import os
+import os, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
@@ -448,9 +448,9 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         date=date.strftime("%Y-%m-%d %H:%M:%S")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
-            origine,destination,carac_trajet=value[0],value[1],value[2]
+            origine,destination,carac_trajet=value[0],value[0],value[2]
             o_d=origine+'-'+destination
-            print(f"trajet : {origine}-{destination}, date : {date}")
+            #print(f"trajet : {value[0]}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
             for dico_carac in carac_trajet : #carle json des trajets est de type record
                 cameras=dico_carac['cameras']
                 type_t=dico_carac['type_trajet']
@@ -479,5 +479,5 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                 else : #sinon on initilise cette variable
                     dico_od=df_trajet
                 #print(dico_od)
-    
+            print(f"trajet : {origine}-{destination}, date : {date}, fin_traitement : {dt.datetime.now()}")
     return dico_od 
