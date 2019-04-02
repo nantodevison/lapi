@@ -243,7 +243,28 @@ class trajet_direct():
         cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
         
         return cam1_cam2_passages_filtres
-
+    
+    def loc_trajet_global(df_journee, date_jour, date_fin, duree_max, cameras): 
+        """
+        fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
+        permet de retrouver tous les pl apres avoir la duree du trajet indirect
+        """
+        df.set_index('created').sort_index()
+        date_jour=pd.to_datetime(date_jour)
+        cam1, cam2=cameras[0], cameras[1]
+        #isoler les veh qui partent entre la date de depart et la date limite de depart
+        df_duree=df_journee.loc[date_jour:date_jour+pd.Timedelta(minutes=date_fin)]
+        #isoler ceux qui passenr à la camera 1
+        df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==cam1]
+        #on retrouve ces immatriculation mais qui ne sont pas à la 1ere camera
+        df_duree_autres_cam=df2.loc[(df2.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
+        #on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
+        cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')
+        
+        
+        
+        
+        
     def test_unicite_type(self,liste_l, mode='unique'):
         """test pour voir si un vehicule a ete toujours vu de la mme façon ou non
            en entre : liste de valeur de l iisues d'une df""" 
@@ -355,6 +376,7 @@ class trajet_indirect():
         #dico de resultats
         self.dico_traj_directs=self.liste_trajets_directs()
         self.df_transit=self.df_trajet_indirect()
+        self.temps_parcours_max=self.df_transit.tps_parcours.max()
 
     def liste_trajets_directs(self):
         """
@@ -431,7 +453,9 @@ class PasDePlError(Exception):
     """     
     def __init__(self):
         Exception.__init__(self,'pas de PL sur la période et les cameras visées') 
-        
+
+
+          
         
 def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     """Fonction d'agregation des trajets de transit sur une journee
@@ -461,7 +485,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                     except PasDePlError : #si pas de pl on boucle sur le trajet suivant
                         #print("pas de pl")
                         continue 
-                    df_trajet=trajet.df_transit#en deduire le total
+                    df_trajet=df_journee.df_transit#en deduire le total
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d) #si on exporte les graphs des trajets directs
                 else :
                     try : 
