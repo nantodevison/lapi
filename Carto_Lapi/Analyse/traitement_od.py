@@ -117,21 +117,25 @@ class trajet_direct():
             raise PasDePlError()
 
         #filtre statistique : caracterisation des temps de parcours qui servent de filtre : test sur les percentuil et sur un cluster
-        self.tps_vl_90_qtl=self.df_vl_ok.tps_parcours.quantile(0.9)
         self.tps_pl_90_qtl=self.df_pl_ok.tps_parcours.quantile(0.9)  
         self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85) 
         try : 
-            self.tps_pl_cluster =self.temp_max_cluster(300)[1]
+            self.temps_pour_filtre=self.temp_max_cluster(300)[1]
             if avecGraph : 
                 self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs()
+            
         except ClusterError : 
+            self.temps_pour_filtre=self.tps_pl_85_qtl=self.df_pl_ok.tps_parcours.quantile(0.85)
             #print(f"pas de cluster pour trajet {self.camera1, self.camera2} entre  {self.date_debut,self.date_fin} ")
             if avecGraph :
                 self.graph_stat_trie, self.graph_tps_bruts, self.graph_prctl=self.plot_graphs(False)
         
         #resultats finaux finaux : un df des vehicules passe par les 2 cameras dans l'ordre, qui sont ok en plque et en typede véhicules
         self.df_tps_parcours_vl_final=self.df_vl_ok[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
-        self.df_tps_parcours_pl_final=self.df_pl_ok[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
+        self.df_tps_parcours_pl_final=(self.df_pl_ok.loc[self.df_pl_ok['tps_parcours']<self.temps_pour_filtre]
+                                        [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))
+        if self.df_tps_parcours_pl_final.empty :
+            raise PasDePlError()
         self.df_tps_parcours_pl_final['cameras']=self.df_tps_parcours_pl_final.apply(lambda x:list([self.camera1,self.camera2]), axis=1)
         
         #resultats finaux : temps de parcours min et max et autres indicatuers utiles si ce trajet direct est partie d'un trajet indirect
@@ -180,7 +184,7 @@ class trajet_direct():
         donnnes = temps_int.values
         matrice=donnnes.reshape(-1, 1)
         #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
-        clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/1.5).fit(matrice)
+        clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/2).fit(matrice)
         labels = clustering.labels_
         n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
         # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
@@ -228,7 +232,7 @@ class trajet_direct():
             raise PasDePlError()
         # on regroupe les attributs dedescription de type etde fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi
         cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self. test_unicite_type([x['l_x'],x['l_y']],mode='1/2'), axis=1)
-        cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 50 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
+        cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on ne garde que les passage le plus rapide devant la camera 2
         cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.camera2]
         #on trie puis on ajoute un filtre surle temps entre les 2 camera.
@@ -309,7 +313,7 @@ class trajet_direct():
         graph_prctl=graph_pl_ok + graph_pl_90pctl + graph_pl_85pctl
         
         if cluster : 
-            tps_parcours_bruts['pl_cluster']=pd.to_datetime('2018-01-01')+self.tps_pl_cluster
+            tps_parcours_bruts['pl_cluster']=pd.to_datetime('2018-01-01')+self.temps_pour_filtre
             graph_pl_cluster=alt.Chart(tps_parcours_bruts.loc[tps_parcours_bruts.loc[:,'l']==1]).mark_line(color='yellow').encode(
                          x='created_x',
                          y='hoursminutes(pl_cluster)')
@@ -437,17 +441,20 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         save_graph -> booleen, par defaut False, pour savoir si on exporte des graphs lies au trajets directs (10* temps sans graph)
     en sortie : DataFrame des trajets de transit
     """
-    dates= pd.date_range(date_jour, periods=1, freq='H') #générer les dates par intervalle d'1h
+    dates= pd.date_range(date_jour, periods=24, freq='H') #générer les dates par intervalle d'1h
+    print (dates)
     #parcourir les dates
     for date in dates : 
         date=date.strftime("%Y-%m-%d %H:%M:%S")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
             origine,destination,carac_trajet=value[0],value[1],value[2]
+            o_d=origine+'-'+destination
+            print(f"trajet : {origine}-{destination}, date : {date}")
             for dico_carac in carac_trajet : #carle json des trajets est de type record
                 cameras=dico_carac['cameras']
                 type_t=dico_carac['type_trajet']
-                print(f"trajet : {o_d}, cameras : {cameras}, date : {date}")
+                #print(f"cameras : {cameras}, type_trajet : {type_t}")
                 if type_t=='indirect' : # dans ce cas on appelle la classe correspondante
                     try :
                         trajet=trajet_indirect(df_journee,date, 60, 16, cameras)
@@ -464,11 +471,13 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                         continue
                     df_trajet=trajet.df_tps_parcours_pl_final
                     if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d,trajet.graph_prctl)    
-                df_trajet['o_d']=o_d
+                df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
+                #print (df_trajet)
                 #stocker les resultats
                 if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
                     dico_od=pd.concat([dico_od,df_trajet], sort=False)
                 else : #sinon on initilise cette variable
                     dico_od=df_trajet
-
+                #print(dico_od)
+    
     return dico_od 
