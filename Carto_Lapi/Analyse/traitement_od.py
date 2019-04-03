@@ -82,6 +82,142 @@ class df_source():
         
         return  graph_stat_trie, graph_fiab
 
+class trajet():
+    """
+    classe regroupant permettant le calcul de trajet direct, indirect ou global
+    en entre : une df issue de ouvrir_fichier_lapi
+    """
+    
+    def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct') : 
+        self.df=df.set_index('created').sort_index()
+        self.date_debut, self.duree, self.temps_max_autorise, self.cameras_suivantes=pd.to_datetime(date_debut), duree, temps_max_autorise,cameras
+        self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree) 
+        self.df_duree=self.df.loc[self.date_debut:self.date_fin]
+        
+        if len(cameras)==2:
+            self.df_pl_direct=self.trajet_direct()
+            self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
+        else : 
+            self.dico_traj_directs=self.liste_trajets_directs()
+            self.df_transit=self.df_trajet_indirect()
+            self.temps_parcours_max=self.df_transit.tps_parcours.max()
+        
+    def trajet_direct(self):
+        #trouver tt les bagnoles passée par cam1 dont la 2eme camera est cam2
+        #isoler camera 1
+        df_duree_cam1=self.df_duree.loc[self.df_duree.loc[:,'camera_id']==self.cameras_suivantes[0]]
+        #on retrouve ces immatriculation mais qui ne sont pas à la 1ere camera
+        df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
+        #on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
+        cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')
+        #on ne garde que les passages à la 2ème caméra postérieur au passage à la première
+        cam1_croise_suivant=cam1_croise_autre_cam.loc[(cam1_croise_autre_cam.loc[:,'created_x']<cam1_croise_autre_cam.loc[:,'created_y'])]
+        #print(cam1_croise_suivant[['camera_id_x','created_x','created_y','camera_id_y']])
+        #on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
+        cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]
+        #print(cam1_fastest_next[['camera_id_x','created_x','created_y','camera_id_y']])
+        #Si la df cam1_fastest_next est vide ça crée une erreur ValueError dans la creation de 'l', donc je filtre avant avec une levee d'erreur PasdePl
+        if cam1_fastest_next.empty : 
+            raise PasDePlError()
+        # on regroupe les attributs dedescription de type etde fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi
+        cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='1/2'), axis=1)
+        cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
+        #on ne garde que les passage le plus rapide devant la camera 2
+        cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.cameras_suivantes[1]]
+        #on trie puis on ajoute un filtre surle temps entre les 2 camera.
+        cam1_cam2_passages=cam1_puis_cam2.set_index('created_y').sort_index()
+        cam1_cam2_passages_filtres=cam1_cam2_passages[self.date_debut:self.date_debut+pd.Timedelta(hours=self.temps_max_autorise)]
+        #on ressort la colonne de tempsde l'index et on cree la colonne des differentiel de temps
+        cam1_cam2_passages_filtres=cam1_cam2_passages_filtres.reset_index()
+        cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
+        #isoler les pl fiables
+        df_pl=cam1_cam2_passages_filtres.loc[(cam1_cam2_passages_filtres.loc[:,'l']==1) & (cam1_cam2_passages_filtres.loc[:,'fiability']==True)]
+        try : 
+            self.temps_pour_filtre=self.temp_max_cluster(df_pl,300)[1]
+        except ClusterError : 
+            self.temps_pour_filtre=df_pl.tps_parcours.quantile(0.85)
+        df_tps_parcours_pl_final=(df_pl.loc[df_pl['tps_parcours']<self.temps_pour_filtre]
+                                        [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))
+        
+        return df_tps_parcours_pl_final
+    
+    def liste_trajets_directs(self):
+        """
+        pour obtenir un dico contenant les instances de trajet_direct pour chaque trajet éleémentaires
+        """  
+        dico_traj_directs={}    
+        #pour chaque couple de camera
+        for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
+            #initialisation du nom de variables pour le dico resultat 
+            #print(indice,couple_cam)
+            nom_variable='trajet'+str(indice)
+            #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
+            if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
+                trajet=trajet_direct(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
+            else : 
+                cle_traj_prec='trajet'+str(indice-1)
+                trajet=(trajet_direct(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
+                                         dico_traj_directs[cle_traj_prec].duree_traj_fut,self.temps_max_autorise,
+                                         couple_cam[0], couple_cam[1]))
+            dico_traj_directs[nom_variable]=trajet
+        
+        return dico_traj_directs
+    
+    def temps_timedeltas_direct(self):
+        
+        timedelta_min=self.df_pl_direct.tps_parcours.min()
+        timedelta_max=self.df_pl_direct.tps_parcours.max()
+        timestamp_mini=self.date_debut+timedelta_min
+        timestamp_maxi=self.date_fin+timedelta_max
+        duree_traj_fut=(((timestamp_maxi-timestamp_mini).seconds)//60)+1
+        
+        return timedelta_min,timedelta_max,timestamp_mini,timestamp_maxi,duree_traj_fut
+        
+
+    def temp_max_cluster(self, df_pl_ok, delai):
+        """obtenir le temps max de parcours en faisant un cluster par dbscan
+        en entree : la df des temps de parcours pl final
+                    le delai max pour regrouper en luster,en seconde
+        en sortie : le nombre de clusters,
+                    un timedelta
+        """
+        donnees_src=df_pl_ok.loc[:,['created_x','tps_parcours']].copy() #isoler les données necessaires
+        temps_int=((pd.to_datetime('2018-01-01')+donnees_src['tps_parcours'])-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')#convertir les temps en integer
+        #mise en forme des données pour passer dans sklearn 
+        donnnes = temps_int.values
+        matrice=donnnes.reshape(-1, 1)
+        #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
+        clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/2).fit(matrice)
+        labels = clustering.labels_
+        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+        # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
+        if n_clusters_== 0 :
+            raise ClusterError()
+        #mettre en forme au format pandas
+        results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
+        results.columns = ['index_base', 'cluster_num']
+        results = pd.merge(results,df_pl_ok, left_on='index_base', right_index=True )
+        #obtenir un timedelta unique
+        temp_parcours_max=results.loc[results.loc[:,'cluster_num']!=-1].groupby(['cluster_num'])['tps_parcours'].max()
+        temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
+        
+        return n_clusters_, temp_parcours_max
+    
+    def test_unicite_type(self,liste_l, mode='unique'):
+        """test pour voir si un vehicule a ete toujours vu de la mme façon ou non
+           en entre : liste de valeur de l iisues d'une df""" 
+        if mode=='unique' : 
+            if len(set(liste_l))==1 :
+                return liste_l[0]
+            else : 
+                return -1
+        elif mode=='1/2' :
+            if any(liste_l)==1 : 
+                return 1
+            else : 
+                return -1
+
+
 class trajet_direct():
     """
     Classe decrivant les df des temps de parcours 
@@ -244,7 +380,7 @@ class trajet_direct():
         
         return cam1_cam2_passages_filtres
     
-    def loc_trajet_global(df_journee, date_jour, duree, duree_max, cameras,liste_trajet_od ): 
+    def loc_trajet_global(self,df_journee, date_jour, duree, duree_max, cameras,liste_trajet_od ): 
         """
         fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
         permet de retrouver tous les pl apres avoir la duree du trajet indirect
@@ -261,7 +397,7 @@ class trajet_direct():
         #on limite ces données selon le temps autorisé à partir de la date de depart
         df_autres_cam_temp_ok=df_duree_autres_cam.loc[date_jour:date_jour+pd.Timedelta(minutes=duree_max)]
         #on trie par heure de passage devant les cameras puis on regroupe et on liste les cameras devant lesquelles ils sont passés
-        groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : test_unicite_type(list(x),'1/2'),
+        groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
                                                                         'created':lambda x: x.max()}))
         #jointure avec la df de départ pour récupérer le passage devant la camera 1
         df_agrege=df_duree_cam1.join(groupe,on='immat',lsuffix='_left')[['immat', 'l','camera_id','created']].rename(columns={'created':'date_cam_2', 'camera_id':'cameras'})
@@ -271,7 +407,9 @@ class trajet_direct():
         #on ne garde que les vehicules passé à la camera 2 et qui sont des pl 
         df_trajet=df_agrege.loc[(df_agrege['cameras'].apply(lambda x : x[-1])==camera2) & (df_agrege['l']==1)]
         # on filtre les les cameras si ils ne sont pas dans les patterns prévus dans liste_trajet_total
-        df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
+        df_trajet_final=df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
+    
+        return df_trajet_final
         
         
         
