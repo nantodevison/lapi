@@ -244,22 +244,34 @@ class trajet_direct():
         
         return cam1_cam2_passages_filtres
     
-    def loc_trajet_global(df_journee, date_jour, date_fin, duree_max, cameras): 
+    def loc_trajet_global(df_journee, date_jour, duree, duree_max, cameras,liste_trajet_od ): 
         """
         fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
         permet de retrouver tous les pl apres avoir la duree du trajet indirect
         """
-        df.set_index('created').sort_index()
+        camera1, camera2=cameras[0], cameras[1]
         date_jour=pd.to_datetime(date_jour)
-        cam1, cam2=cameras[0], cameras[1]
-        #isoler les veh qui partent entre la date de depart et la date limite de depart
-        df_duree=df_journee.loc[date_jour:date_jour+pd.Timedelta(minutes=date_fin)]
-        #isoler ceux qui passenr à la camera 1
-        df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==cam1]
-        #on retrouve ces immatriculation mais qui ne sont pas à la 1ere camera
+        df2=df_journee.set_index('created').sort_index()
+        #on limite le nb d'objet entre les 2 heures de depart
+        df_duree=df2.loc[date_jour:date_jour+pd.Timedelta(minutes=duree)]
+        #on trouve les veh passés cameras 1
+        df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==camera1]
+        #on les retrouve aux autres cameras
         df_duree_autres_cam=df2.loc[(df2.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
-        #on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
-        cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')
+        #on limite ces données selon le temps autorisé à partir de la date de depart
+        df_autres_cam_temp_ok=df_duree_autres_cam.loc[date_jour:date_jour+pd.Timedelta(minutes=duree_max)]
+        #on trie par heure de passage devant les cameras puis on regroupe et on liste les cameras devant lesquelles ils sont passés
+        groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : test_unicite_type(list(x),'1/2'),
+                                                                        'created':lambda x: x.max()}))
+        #jointure avec la df de départ pour récupérer le passage devant la camera 1
+        df_agrege=df_duree_cam1.join(groupe,on='immat',lsuffix='_left')[['immat', 'l','camera_id','created']].rename(columns={'created':'date_cam_2', 'camera_id':'cameras'})
+        #temps de parcours
+        df_agrege=df_agrege.reset_index().rename(columns={'created':'date_cam_1'})
+        df_agrege['tps_parcours']=df_agrege.apply(lambda x : x.date_cam_2-x.date_cam_1, axis=1)
+        #on ne garde que les vehicules passé à la camera 2 et qui sont des pl 
+        df_trajet=df_agrege.loc[(df_agrege['cameras'].apply(lambda x : x[-1])==camera2) & (df_agrege['l']==1)]
+        # on filtre les les cameras si ils ne sont pas dans les patterns prévus dans liste_trajet_total
+        df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
         
         
         
@@ -363,6 +375,11 @@ class trajet_indirect():
     def __init__(self,df, date_debut, duree, temps_max_autorise, cameras):
         """
         constructeur. se base sur classe trajet_direct
+        df : dataframe sur 2 jours issue de ouvrir_fichier_lapi
+        date debut : string de type Y-M-D H:M:S ou pandas datetime
+        duree : plage de passage des veh devant la 1ere camera, en minutes
+        temps_max_autorise : temps autorise pour passage devant la derniere cameras, en heure
+        cameras : liste des cameras devant lesquelles le veh doit passer
         """
 
         self.cameras_suivantes=cameras
