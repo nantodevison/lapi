@@ -10,17 +10,137 @@ Module de traitement des donnees lapi
 import matplotlib #pour éviter le message d'erreurrelatif a rcParams
 import pandas as pd
 import geopandas as gp
+import numpy as np
 import Connexion_Transfert as ct
 import altair as alt
 import os, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
-fichier_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajets.json')
+fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, 'cam_d':11, 'trajets':[
+                                                        {'cameras':[14,19,4,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,1,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,4,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,1,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,4,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,1,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,4,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,1,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,11],'type_trajet':'indirect'},
+                                                        {'cameras':[14,11],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A10','destination':'A63','cam_o':12, 'cam_d':13,'trajets':[{'cameras':[12,6,2,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,6,3,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,6,2,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,6,3,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,6,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,2,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,3,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,2,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,3,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,6,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[12,13],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A63','destination':'N10','cam_o':14, 'cam_d':5,'trajets':[{'cameras':[14,19,4,5],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,1,5],'type_trajet':'indirect'},
+                                                        {'cameras':[14,4,5],'type_trajet':'indirect'},
+                                                        {'cameras':[14,1,5],'type_trajet':'indirect'},
+                                                        {'cameras':[14,5],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'N10','destination':'A63','cam_o':6, 'cam_d':13,'trajets':[{'cameras':[6,2,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[6,3,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[6,2,13],'type_trajet':'indirect'},
+                                                        {'cameras':[6,3,13],'type_trajet':'indirect'},
+                                                        {'cameras':[6,13],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A62','destination':'A10','cam_o':10, 'cam_d':11,'trajets':[{'cameras':[10,4,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[10,4,11],'type_trajet':'indirect'},
+                                                        {'cameras':[10,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[10,11],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A10','destination':'A62','cam_o':12, 'cam_d':9,'trajets':[{'cameras':[12,6,3,9],'type_trajet':'indirect'},
+                                                        {'cameras':[12,3,9],'type_trajet':'indirect'},
+                                                        {'cameras':[12,6,9],'type_trajet':'indirect'},
+                                                        {'cameras':[12,9],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A62','destination':'N10','cam_o':10, 'cam_d':5,'trajets':[{'cameras':[10,4,5],'type_trajet':'indirect'},
+                                                        {'cameras':[10,5],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'N10','destination':'A62','cam_o':6, 'cam_d':9,'trajets':[{'cameras':[6,3,9],'type_trajet':'indirect'},
+                                                        {'cameras':[6,9],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A63','destination':'A62','cam_o':14, 'cam_d':9,'trajets':[{'cameras':[14,19,9],'type_trajet':'indirect'},
+                                                        {'cameras':[14,9],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A62','destination':'A63','cam_o':10, 'cam_d':13,'trajets':[{'cameras':[10,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[10,13],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A89','destination':'A63','cam_o':8 ,'cam_d':13,'trajets':[{'cameras':[8,3,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[8,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[8,3,13],'type_trajet':'indirect'},
+                                                        {'cameras':[8,13],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A63','destination':'A89','cam_o':14, 'cam_d':7,'trajets':[{'cameras':[14,19,4,7],'type_trajet':'indirect'},
+                                                        {'cameras':[14,4,7],'type_trajet':'indirect'},
+                                                        {'cameras':[14,19,7],'type_trajet':'indirect'},
+                                                        {'cameras':[14,7],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A89','destination':'A62','cam_o':8, 'cam_d':9,'trajets':[{'cameras':[8,3,9],'type_trajet':'indirect'},
+                                                        {'cameras':[8,9],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A62','destination':'A89','cam_o':10, 'cam_d':7,'trajets':[{'cameras':[10,4,7],'type_trajet':'indirect'},
+                                                        {'cameras':[10,7],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A89','destination':'A10','cam_o':8, 'cam_d':11,'trajets':[{'cameras':[8,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[8,11],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A10','destination':'A89','cam_o':12, 'cam_d':7,'trajets':[{'cameras':[12,6,7],'type_trajet':'indirect'},
+                                                        {'cameras':[12,7],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A89','destination':'N10','cam_o':8, 'cam_d':5,'trajets':[{'cameras':[8,5],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'N10','destination':'A89','cam_o':6, 'cam_d':7,'trajets':[{'cameras':[6,7],'type_trajet':'direct'}
+                                                       ]},
+                            {'origine':'A10','destination':'A630','cam_o':12, 'cam_d':18,'trajets':[{'cameras':[12,6,2,18],'type_trajet':'indirect'},
+                                                         {'cameras':[12,6,3,18],'type_trajet':'indirect'},
+                                                         {'cameras':[12,2,18],'type_trajet':'indirect'},
+                                                         {'cameras':[12,3,18],'type_trajet':'indirect'},
+                                                         {'cameras':[12,6,18],'type_trajet':'indirect'},
+                                                         {'cameras':[12,18],'type_trajet':'direct'},
+                                                        ]},
+                            {'origine':'A630','destination':'A10','cam_o':19, 'cam_d':18,'trajets':[{'cameras':[19,4,5,11],'type_trajet':'indirect'},
+                                                         {'cameras':[19,1,5,11],'type_trajet':'indirect'},
+                                                         {'cameras':[19,1,11],'type_trajet':'indirect'},
+                                                         {'cameras':[19,4,11],'type_trajet':'indirect'},
+                                                         {'cameras':[19,5,11],'type_trajet':'indirect'},
+                                                         {'cameras':[19,11],'type_trajet':'direct'},
+                                                       ]},
+                            {'origine':'A630','destination':'A62','cam_o':19, 'cam_d':9,'trajets':[{'cameras':[19,9],'type_trajet':'direct'}
+                                                        ]},
+                            {'origine':'A62','destination':'A630','cam_o':10, 'cam_d':18,'trajets':[{'cameras':[10,18],'type_trajet':'direct'}
+                                                        ]},
+                            {'origine':'A630','destination':'A89','cam_o':19, 'cam_d':7,'trajets':[{'cameras':[19,4,7],'type_trajet':'indirect'},
+                                                         {'cameras':[19,7],'type_trajet':'direct'}
+                                                        ]},
+                            {'origine':'A89','destination':'A630','cam_o':8, 'cam_d':18,'trajets':[{'cameras':[8,3,18],'type_trajet':'indirect'},
+                                                         {'cameras':[8,18],'type_trajet':'direct'}
+                                                        ]},
+                            {'origine':'N10','destination':'A630','cam_o':6, 'cam_d':18,'trajets':[{'cameras':[6,2,18],'type_trajet':'indirect'},
+                                                         {'cameras':[6,3,18],'type_trajet':'indirect'},
+                                                         {'cameras':[6,18],'type_trajet':'direct'},
+                                                        ]},
+                            {'origine':'A630','destination':'N10','cam_o':19, 'cam_d':5,'trajets':[{'cameras':[19,1,5],'type_trajet':'indirect'},
+                                                         {'cameras':[19,4,5],'type_trajet':'indirect'},
+                                                         {'cameras':[19,5],'type_trajet':'direct'},
+                                                        ]}
+                           ]))[['origine', 'destination', 'cam_o', 'cam_d','trajets']]
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     with ct.ConnexionBdd('gti_lapi') as c : 
-        requete=f"select camera_id, created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
+        requete=f"select case when camera_id=13 or camera_id=15 then 13 when camera_id=14 or camera_id=16 then 14 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
 
@@ -88,15 +208,28 @@ class trajet():
     en entre : une df issue de ouvrir_fichier_lapi
     """
     
-    def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct') : 
-        self.df=df.set_index('created').sort_index()
+    def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct') :
+        try : self.df=df.set_index('created').sort_index() 
+        except KeyError : self.df=df
         self.date_debut, self.duree, self.temps_max_autorise, self.cameras_suivantes=pd.to_datetime(date_debut), duree, temps_max_autorise,cameras
-        self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree) 
-        self.df_duree=self.df.loc[self.date_debut:self.date_fin]
-        
+        self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
+        self.df_duree=self.df.loc[self.date_debut:self.date_fin]  
+    
         if len(cameras)==2:
-            self.df_pl_direct=self.trajet_direct()
-            self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
+            if type=='Direct' :
+                self.df_pl_direct=self.trajet_direct()
+                self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
+            elif type=='Global' :
+                #trouver trajet complet
+                self.trajet_complet=self.recup_trajets()[1]
+                print (self.trajet_complet)
+                #obtenir le temps de parcours max en minutes
+                tps_max=[]
+                for trajet_indirect in self.trajet_complet : 
+                    tps_max.append(trajet(df,date_debut, duree, temps_max_autorise, trajet_indirect).temps_parcours_max)
+                tps_max=np.max(tps_max)
+                #rechercher le df des passages avec 
+                self.df_global=self.loc_trajet_global(tps_max)
         else : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
@@ -138,8 +271,77 @@ class trajet():
             self.temps_pour_filtre=df_pl.tps_parcours.quantile(0.85)
         df_tps_parcours_pl_final=(df_pl.loc[df_pl['tps_parcours']<self.temps_pour_filtre]
                                         [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))
+        if df_tps_parcours_pl_final.empty :
+            raise PasDePlError()
         
         return df_tps_parcours_pl_final
+    
+    def df_trajet_indirect(self):
+        """
+        On trouve les vehicules passés par les différentes cameras du dico_traj_directs
+        """
+        dico_rename={'date_cam_1_x':'date_cam_1','date_cam_2_y':'date_cam_2'} #paramètres pour mise en forme donnees
+        
+        #on fait une jointure de type 'inner, qui ne garde que les lignes présentes dans les deux tables, en iterant sur chaque element du dico
+        long_dico=len(self.dico_traj_directs)
+        #print (self.dico_traj_directs)
+        if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
+            return self.dico_traj_directs['trajet0'].df_pl_direct
+        for a, val_dico in enumerate(self.dico_traj_directs):
+            if a<=long_dico-1:
+                #print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
+                variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
+                if self.dico_traj_directs[variab].df_pl_direct.empty : #si un des trajets aboutit a empty, mais pas le 1er
+                    return self.dico_traj_directs[variab].df_pl_direct
+                if a==0 :
+                    df_transit=pd.merge(self.dico_traj_directs[variab].df_pl_direct,self.dico_traj_directs[variab2].df_pl_direct,on='immat')
+                    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+                    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]  
+                elif a<long_dico-1: 
+                    #print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_pl_direct,on='immat')
+                    #print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
+                    df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
+                    df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]
+            #print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
+        #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
+        
+        df_transit['cameras']=df_transit.apply(lambda x:list(self.cameras_suivantes), axis=1)
+        #print(df_transit)
+
+        return df_transit
+    
+    def loc_trajet_global(self, duree_max): 
+        """
+        fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
+        permet de retrouver tous les pl apres avoir la duree du trajet indirect
+        """
+        liste_trajet_od=self.recup_trajets()[0]
+        camera1, camera2=self.cameras_suivantes[0], self.cameras_suivantes[1]
+        #on limite le nb d'objet entre les 2 heures de depart
+        df_duree=self.df.loc[self.date_debut:self.date_fin]
+        #on trouve les veh passés cameras 1
+        df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==self.cameras_suivantes[0]]
+        #on les retrouve aux autres cameras
+        df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
+        #on limite ces données selon le temps autorisé à partir de la date de depart
+        df_autres_cam_temp_ok=df_duree_autres_cam.loc[self.date_debut:self.date_fin+duree_max]
+        #on trie par heure de passage devant les cameras puis on regroupe et on liste les cameras devant lesquelles ils sont passés
+        groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
+                                                                        'created':lambda x: x.max()}))
+        #jointure avec la df de départ pour récupérer le passage devant la camera 1
+        df_agrege=df_duree_cam1.join(groupe,on='immat',lsuffix='_left')[['immat', 'l','camera_id','created']].rename(columns={'created':'date_cam_2', 'camera_id':'cameras'})
+        #temps de parcours
+        df_agrege=df_agrege.reset_index().rename(columns={'created':'date_cam_1'})
+        df_agrege['tps_parcours']=df_agrege.apply(lambda x : x.date_cam_2-x.date_cam_1, axis=1)
+        #on ne garde que les vehicules passé à la camera 2 et qui sont des pl et qui ont un tpsde parcours < au temps pre-calcule
+        df_trajet=(df_agrege.loc[(df_agrege['cameras'].apply(lambda x : x[-1])==self.cameras_suivantes[1]) & (df_agrege['l']==1)
+                                  & (df_agrege['tps_parcours'] < duree_max)])
+        print(len(df_autres_cam_temp_ok))
+        # on filtre les les cameras si ils ne sont pas dans les patterns prévus dans liste_trajet_total
+        df_trajet_final=df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
+    
+        return df_trajet_final
     
     def liste_trajets_directs(self):
         """
@@ -153,13 +355,13 @@ class trajet():
             nom_variable='trajet'+str(indice)
             #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
             if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
-                trajet=trajet_direct(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam[0], couple_cam[1])
+                trajet_elem=trajet(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam)
             else : 
                 cle_traj_prec='trajet'+str(indice-1)
-                trajet=(trajet_direct(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
+                trajet_elem=(trajet(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
                                          dico_traj_directs[cle_traj_prec].duree_traj_fut,self.temps_max_autorise,
-                                         couple_cam[0], couple_cam[1]))
-            dico_traj_directs[nom_variable]=trajet
+                                         couple_cam))
+            dico_traj_directs[nom_variable]=trajet_elem
         
         return dico_traj_directs
     
@@ -187,7 +389,10 @@ class trajet():
         donnnes = temps_int.values
         matrice=donnnes.reshape(-1, 1)
         #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
-        clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/2).fit(matrice)
+        try :
+            clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/2).fit(matrice)
+        except ValueError :
+            raise ClusterError()
         labels = clustering.labels_
         n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
         # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
@@ -217,6 +422,16 @@ class trajet():
             else : 
                 return -1
 
+    def recup_trajets(self):
+        liste_trajet_od=([tuple(cam['cameras']) for camera in fichier_trajet.loc[(fichier_trajet['cam_d']==self.cameras_suivantes[1]) & 
+                                                                              (fichier_trajet['cam_o']==self.cameras_suivantes[0])].trajets for cam in camera])
+        trajet_max=[]
+        for trajet in liste_trajet_od : 
+            if len(trajet)==max([len(trajet) for trajet in liste_trajet_od]) : 
+                trajet_max.append(trajet)
+        
+        return liste_trajet_od, trajet_max
+    
 
 class trajet_direct():
     """
