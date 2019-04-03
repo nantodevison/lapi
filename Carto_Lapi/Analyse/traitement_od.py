@@ -829,9 +829,7 @@ class PasDePlError(Exception):
     def __init__(self):
         Exception.__init__(self,'pas de PL sur la période et les cameras visées') 
 
-
-          
-        
+    
 def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     """Fonction d'agregation des trajets de transit sur une journee
     en entre : 
@@ -840,20 +838,23 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         save_graph -> booleen, par defaut False, pour savoir si on exporte des graphs lies au trajets directs (10* temps sans graph)
     en sortie : DataFrame des trajets de transit
     """
-    dates= pd.date_range(date_jour, periods=4, freq='H') #générer les dates par intervalle d'1h
+    dates= pd.date_range(date_jour, periods=24, freq='H') #générer les dates par intervalle d'1h
     print (dates)
     #parcourir les dates
     for date in dates : 
         date=date.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
             origine,destination,cameras=value[0],value[1],[value[2],value[3]]
             o_d=origine+'-'+destination
-            print(f"trajet : {value[0]}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
+            #print(f"trajet : {value[0]}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
                 df_trajet=trajet(df_journee,date,60,16,cameras, type='Global').df_global
             except PasDePlError :
                 continue
+            
+            df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
             
             if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
                 dico_od=pd.concat([dico_od,df_trajet], sort=False)
@@ -863,36 +864,13 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     return dico_od             
                 
                 
-                
-    """            
-            for dico_carac in carac_trajet : #carle json des trajets est de type record
-                cameras=dico_carac['cameras']
-                type_t=dico_carac['type_trajet']
-                #print(f"cameras : {cameras}, type_trajet : {type_t}")
-                if type_t=='indirect' : # dans ce cas on appelle la classe correspondante
-                    try :
-                        trajet=trajet_indirect(df_journee,date, 60, 16, cameras)
-                    except PasDePlError : #si pas de pl on boucle sur le trajet suivant
-                        #print("pas de pl")
-                        continue 
-                    df_trajet=df_journee.df_transit#en deduire le total
-                    if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d) #si on exporte les graphs des trajets directs
-                else :
-                    try : 
-                        trajet=trajet_direct(df_journee,date, 60, 16, cameras[0],cameras[1])
-                    except PasDePlError :
-                        #print("pas de pl")
-                        continue
-                    df_trajet=trajet.df_tps_parcours_pl_final
-                    if save_graphs : trajet.exporter_graph(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\graphs',o_d,trajet.graph_prctl)    
-                df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
-                #print (df_trajet)
-                #stocker les resultats
-                if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
-                    dico_od=pd.concat([dico_od,df_trajet], sort=False)
-                else : #sinon on initilise cette variable
-                    dico_od=df_trajet
-                #print(dico_od)
-            print(f"trajet : {origine}-{destination}, date : {date}, fin_traitement : {dt.datetime.now()}")
-    return dico_od 
-    """
+def transit_temps_complet(date_debut, date_fin):
+    #faire une liste de date debut date fin par pas de 2j
+    #utiliser ouvrir_fichier_lapi pour ouvrir le fichier
+    #se baser la dessus pour lancer transit 1 jour
+    #stocker les résultats de transit1jour dans une df au fur et a mesure
+    pass
+    
+    
+    
+    
