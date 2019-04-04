@@ -844,7 +844,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     en sortie : DataFrame des trajets de transit
     """
     #parcourir les dates
-    for date in pd.date_range(date_jour, periods=24, freq='H') : 
+    for date in pd.date_range(date_jour, periods=5, freq='H') : 
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
@@ -866,13 +866,27 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     return dico_od             
                 
                 
-def transit_temps_complet(date_debut, date_fin):
+def transit_temps_complet(date_debut, nb_jours,liste_trajets):
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
-    df_3semaines=t.ouvrir_fichier_lapi(date_debut,date_fin)
+    date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
+    print(f"import  : {dt.datetime.now()}")
+    df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin)
     #selection de 1 jour par boucle
-    
+    print(f" fin import  : {dt.datetime.now()}")
+    for date in pd.date_range(date_debut, periods=nb_jours, freq='D') :
+        df_journee=df_3semaines.loc[date:date+pd.Timedelta(days=2)]
+        df_transit_jour=transit_1_jour(df_journee,date,liste_trajets)
+        
+        if 'df_transit_total' in locals() : #si la varible existe deja on la concatene avec le reste
+                df_transit_total=pd.concat([df_transit_total,df_trajet], sort=False)
+        else : #sinon on initilise cette variable
+                df_transit_total=df_trajet 
     #se baser la dessus pour lancer transit 1 jour
     #stocker les résultats de transit1jour dans une df au fur et a mesure
+    return df_transit_total
+
+def pourcentage_pl_camera():
+    #isoler les pl 
     pass
     
     
