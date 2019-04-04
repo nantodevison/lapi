@@ -232,6 +232,7 @@ class trajet():
                 for trajet_indirect in self.trajet_complet :
                     tps=trajet(df,date_debut, duree, temps_max_autorise, trajet_indirect).temps_parcours_max
                     tps_max.append(tps)
+                    tps=1 #pour envoi de l'objet tarjet au GB
                 tps_max=np.max(tps_max)
                 #rechercher le df des passages avec 
                 self.df_global, self.df_passag_transit=self.loc_trajet_global(tps_max)
@@ -350,13 +351,16 @@ class trajet():
                                   & (df_agrege['tps_parcours'] < duree_max)])
         # on filtre les les cameras si ils ne sont pas dans les patterns prévus dans liste_trajet_total
         df_trajet_final=df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
+        if df_trajet_final.empty :
+            raise PasDePlError()
         
         #pour obtenir la liste des passagesrelevant de trajets de transits :
         #limitation des données des cameras par jointures
         df_joint_passag_transit=df_trajet_final.merge(df_duree_autres_cam.reset_index(), on='immat')
+        #print(f'nb_ob_trajet_final : {len(df_trajet_final)}, \n  dataframe : passage : {df_joint_passag_transit}')
         #filtrer selon les cameras présentent dans la liste et created est compris entre date_cam_1 et date_cam_2
-        df_passag_transit=(df_joint_passag_transit.loc[(df_joint_passag_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1)) 
-                & (df_joint_passag_transit.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1))]
+        df_passag_transit1=df_joint_passag_transit.loc[(df_joint_passag_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1))]
+        df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
                 [['created','camera_id','immat','fiability','l_y','state']].rename(columns={'l_y':'l'}))
         
         return df_trajet_final, df_passag_transit
@@ -858,7 +862,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         for index, value in liste_trajets.iterrows() :
             origine,destination,cameras=value[0],value[1],[value[2],value[3]]
             o_d=origine+'-'+destination
-            #print(f"trajet : {value[0]}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
+            print(f"trajet : {value[0]}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
                 donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
                 df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
