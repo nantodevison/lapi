@@ -209,8 +209,13 @@ class trajet():
     """
     
     def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct') :
-        try : self.df=df.set_index('created').sort_index() 
-        except KeyError : self.df=df
+        
+        #en fonction du df qui est passé on met la date de creation en index ou non
+        if isinstance(df.index,pd.DatetimeIndex) :
+            self.df=df
+        else :
+            self.df=df.set_index('created').sort_index()
+        
         self.date_debut, self.duree, self.temps_max_autorise, self.cameras_suivantes=pd.to_datetime(date_debut), duree, temps_max_autorise,cameras
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin]  
@@ -838,11 +843,8 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
         save_graph -> booleen, par defaut False, pour savoir si on exporte des graphs lies au trajets directs (10* temps sans graph)
     en sortie : DataFrame des trajets de transit
     """
-    dates= pd.date_range(date_jour, periods=24, freq='H') #générer les dates par intervalle d'1h
-    print (dates)
     #parcourir les dates
-    for date in dates : 
-        date=date.strftime("%Y-%m-%d %H:%M:%S")
+    for date in pd.date_range(date_jour, periods=24, freq='H') : 
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
@@ -865,8 +867,10 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                 
                 
 def transit_temps_complet(date_debut, date_fin):
-    #faire une liste de date debut date fin par pas de 2j
-    #utiliser ouvrir_fichier_lapi pour ouvrir le fichier
+    #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
+    df_3semaines=t.ouvrir_fichier_lapi(date_debut,date_fin)
+    #selection de 1 jour par boucle
+    
     #se baser la dessus pour lancer transit 1 jour
     #stocker les résultats de transit1jour dans une df au fur et a mesure
     pass
