@@ -927,13 +927,11 @@ def transit_temps_complet(date_debut, nb_jours,liste_trajets):
 def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets):
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
-    print(f"import  : {dt.datetime.now()}")
     df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
     #selection de 1 jour par boucle
-    print(f" fin import  : {dt.datetime.now()}")
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
         df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
-        
+        print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         for index, value in liste_trajets.iterrows() :
             origine,destination,cameras=value[0],value[1],[value[2],value[3]]
             o_d=origine+'-'+destination
