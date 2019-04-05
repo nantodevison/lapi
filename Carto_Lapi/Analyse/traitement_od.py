@@ -924,10 +924,10 @@ def transit_temps_complet(date_debut, nb_jours,liste_trajets):
     #stocker les résultats de transit1jour dans une df au fur et a mesure
     return df_transit_total
 
-def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets):
+def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
-    df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
+    #df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
     #selection de 1 jour par boucle
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
         df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
