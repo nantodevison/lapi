@@ -17,19 +17,19 @@ import os, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
-fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, 'cam_d':11, 'trajets':[
-                                                        {'cameras':[14,19,4,5,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,1,5,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,4,5,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,1,5,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,5,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,4,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,1,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,4,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,1,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,5,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,11],'type_trajet':'indirect'},
-                                                        {'cameras':[14,11],'type_trajet':'direct'}
+fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':15, 'cam_d':11, 'trajets':[
+                                                        {'cameras':[15,19,4,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,1,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,4,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,1,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,4,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,1,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,4,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,1,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,5,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,11],'type_trajet':'indirect'},
+                                                        {'cameras':[15,11],'type_trajet':'direct'}
                                                        ]},
                             {'origine':'A10','destination':'A63','cam_o':12, 'cam_d':13,'trajets':[{'cameras':[12,6,2,18,13],'type_trajet':'indirect'},
                                                         {'cameras':[12,6,3,18,13],'type_trajet':'indirect'},
@@ -44,14 +44,16 @@ fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, '
                                                         {'cameras':[12,18,13],'type_trajet':'indirect'},
                                                         {'cameras':[12,13],'type_trajet':'direct'},
                                                        ]},
-                            {'origine':'A63','destination':'N10','cam_o':14, 'cam_d':5,'trajets':[{'cameras':[14,19,4,5],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,1,5],'type_trajet':'indirect'},
-                                                        {'cameras':[14,4,5],'type_trajet':'indirect'},
-                                                        {'cameras':[14,1,5],'type_trajet':'indirect'},
-                                                        {'cameras':[14,5],'type_trajet':'direct'},
+                            {'origine':'A63','destination':'N10','cam_o':15, 'cam_d':5,'trajets':[{'cameras':[15,19,4,5],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,1,5],'type_trajet':'indirect'},
+                                                        {'cameras':[15,4,5],'type_trajet':'indirect'},
+                                                        {'cameras':[15,1,5],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,5],'type_trajet':'indirect'}, 
+                                                        {'cameras':[15,5],'type_trajet':'direct'},
                                                        ]},
                             {'origine':'N10','destination':'A63','cam_o':6, 'cam_d':13,'trajets':[{'cameras':[6,2,18,13],'type_trajet':'indirect'},
                                                         {'cameras':[6,3,18,13],'type_trajet':'indirect'},
+                                                        {'cameras':[6,18,13],'type_trajet':'indirect'},
                                                         {'cameras':[6,2,13],'type_trajet':'indirect'},
                                                         {'cameras':[6,3,13],'type_trajet':'indirect'},
                                                         {'cameras':[6,13],'type_trajet':'direct'},
@@ -72,8 +74,8 @@ fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, '
                             {'origine':'N10','destination':'A62','cam_o':6, 'cam_d':9,'trajets':[{'cameras':[6,3,9],'type_trajet':'indirect'},
                                                         {'cameras':[6,9],'type_trajet':'direct'},
                                                        ]},
-                            {'origine':'A63','destination':'A62','cam_o':14, 'cam_d':9,'trajets':[{'cameras':[14,19,9],'type_trajet':'indirect'},
-                                                        {'cameras':[14,9],'type_trajet':'direct'},
+                            {'origine':'A63','destination':'A62','cam_o':15, 'cam_d':9,'trajets':[{'cameras':[15,19,9],'type_trajet':'indirect'},
+                                                        {'cameras':[15,9],'type_trajet':'direct'},
                                                        ]},
                             {'origine':'A62','destination':'A63','cam_o':10, 'cam_d':13,'trajets':[{'cameras':[10,18,13],'type_trajet':'indirect'},
                                                         {'cameras':[10,13],'type_trajet':'direct'},
@@ -83,10 +85,10 @@ fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, '
                                                         {'cameras':[8,3,13],'type_trajet':'indirect'},
                                                         {'cameras':[8,13],'type_trajet':'direct'},
                                                        ]},
-                            {'origine':'A63','destination':'A89','cam_o':14, 'cam_d':7,'trajets':[{'cameras':[14,19,4,7],'type_trajet':'indirect'},
-                                                        {'cameras':[14,4,7],'type_trajet':'indirect'},
-                                                        {'cameras':[14,19,7],'type_trajet':'indirect'},
-                                                        {'cameras':[14,7],'type_trajet':'direct'},
+                            {'origine':'A63','destination':'A89','cam_o':15, 'cam_d':7,'trajets':[{'cameras':[15,19,4,7],'type_trajet':'indirect'},
+                                                        {'cameras':[15,4,7],'type_trajet':'indirect'},
+                                                        {'cameras':[15,19,7],'type_trajet':'indirect'},
+                                                        {'cameras':[15,7],'type_trajet':'direct'},
                                                        ]},
                             {'origine':'A89','destination':'A62','cam_o':8, 'cam_d':9,'trajets':[{'cameras':[8,3,9],'type_trajet':'indirect'},
                                                         {'cameras':[8,9],'type_trajet':'direct'}
@@ -104,35 +106,35 @@ fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, '
                                                        ]},
                             {'origine':'N10','destination':'A89','cam_o':6, 'cam_d':7,'trajets':[{'cameras':[6,7],'type_trajet':'direct'}
                                                        ]},
-                            {'origine':'A10','destination':'A630','cam_o':12, 'cam_d':18,'trajets':[{'cameras':[12,6,2,18],'type_trajet':'indirect'},
+                            {'origine':'A10','destination':'A660','cam_o':12, 'cam_d':18,'trajets':[{'cameras':[12,6,2,18],'type_trajet':'indirect'},
                                                          {'cameras':[12,6,3,18],'type_trajet':'indirect'},
                                                          {'cameras':[12,2,18],'type_trajet':'indirect'},
                                                          {'cameras':[12,3,18],'type_trajet':'indirect'},
                                                          {'cameras':[12,6,18],'type_trajet':'indirect'},
                                                          {'cameras':[12,18],'type_trajet':'direct'},
                                                         ]},
-                            {'origine':'A630','destination':'A10','cam_o':19, 'cam_d':18,'trajets':[{'cameras':[19,4,5,11],'type_trajet':'indirect'},
+                            {'origine':'A660','destination':'A10','cam_o':19, 'cam_d':18,'trajets':[{'cameras':[19,4,5,11],'type_trajet':'indirect'},
                                                          {'cameras':[19,1,5,11],'type_trajet':'indirect'},
                                                          {'cameras':[19,1,11],'type_trajet':'indirect'},
                                                          {'cameras':[19,4,11],'type_trajet':'indirect'},
                                                          {'cameras':[19,5,11],'type_trajet':'indirect'},
                                                          {'cameras':[19,11],'type_trajet':'direct'},
                                                        ]},
-                            {'origine':'A630','destination':'A62','cam_o':19, 'cam_d':9,'trajets':[{'cameras':[19,9],'type_trajet':'direct'}
+                            {'origine':'A660','destination':'A62','cam_o':19, 'cam_d':9,'trajets':[{'cameras':[19,9],'type_trajet':'direct'}
                                                         ]},
-                            {'origine':'A62','destination':'A630','cam_o':10, 'cam_d':18,'trajets':[{'cameras':[10,18],'type_trajet':'direct'}
+                            {'origine':'A62','destination':'A660','cam_o':10, 'cam_d':18,'trajets':[{'cameras':[10,18],'type_trajet':'direct'}
                                                         ]},
-                            {'origine':'A630','destination':'A89','cam_o':19, 'cam_d':7,'trajets':[{'cameras':[19,4,7],'type_trajet':'indirect'},
+                            {'origine':'A660','destination':'A89','cam_o':19, 'cam_d':7,'trajets':[{'cameras':[19,4,7],'type_trajet':'indirect'},
                                                          {'cameras':[19,7],'type_trajet':'direct'}
                                                         ]},
-                            {'origine':'A89','destination':'A630','cam_o':8, 'cam_d':18,'trajets':[{'cameras':[8,3,18],'type_trajet':'indirect'},
+                            {'origine':'A89','destination':'A660','cam_o':8, 'cam_d':18,'trajets':[{'cameras':[8,3,18],'type_trajet':'indirect'},
                                                          {'cameras':[8,18],'type_trajet':'direct'}
                                                         ]},
-                            {'origine':'N10','destination':'A630','cam_o':6, 'cam_d':18,'trajets':[{'cameras':[6,2,18],'type_trajet':'indirect'},
+                            {'origine':'N10','destination':'A660','cam_o':6, 'cam_d':18,'trajets':[{'cameras':[6,2,18],'type_trajet':'indirect'},
                                                          {'cameras':[6,3,18],'type_trajet':'indirect'},
                                                          {'cameras':[6,18],'type_trajet':'direct'},
                                                         ]},
-                            {'origine':'A630','destination':'N10','cam_o':19, 'cam_d':5,'trajets':[{'cameras':[19,1,5],'type_trajet':'indirect'},
+                            {'origine':'A660','destination':'N10','cam_o':19, 'cam_d':5,'trajets':[{'cameras':[19,1,5],'type_trajet':'indirect'},
                                                          {'cameras':[19,4,5],'type_trajet':'indirect'},
                                                          {'cameras':[19,5],'type_trajet':'direct'},
                                                         ]}
@@ -140,7 +142,7 @@ fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':14, '
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     with ct.ConnexionBdd('gti_lapi') as c : 
-        requete=f"select case when camera_id=13 or camera_id=15 then 13 when camera_id=14 or camera_id=16 then 14 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
+        requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
 
@@ -208,7 +210,7 @@ class trajet():
     en entre : une df issue de ouvrir_fichier_lapi
     """
     
-    def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct') :
+    def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct', df_filtre=None) :
         
         #en fonction du df qui est passé on met la date de creation en index ou non
         if isinstance(df.index,pd.DatetimeIndex) :
@@ -235,7 +237,7 @@ class trajet():
                     tps=1 #pour envoi de l'objet tarjet au GB
                 tps_max=np.max(tps_max)
                 #rechercher le df des passages avec 
-                self.df_global, self.df_passag_transit=self.loc_trajet_global(tps_max)
+                self.df_global, self.df_passag_transit=self.loc_trajet_global(tps_max,df_filtre)
         else : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
@@ -275,8 +277,10 @@ class trajet():
             self.temps_parcours_max=self.temp_max_cluster(df_pl,300)[1]
         except ClusterError : 
             self.temps_parcours_max=df_pl.tps_parcours.quantile(0.85)
+        """pour filtre sur temps de parcours
         df_tps_parcours_pl_final=(df_pl.loc[df_pl['tps_parcours']<self.temps_parcours_max]
-                                        [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))
+                                        [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))"""
+        df_tps_parcours_pl_final=df_pl[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
         if df_tps_parcours_pl_final.empty :
             raise PasDePlError()
         
@@ -323,7 +327,7 @@ class trajet():
 
         return df_transit
     
-    def loc_trajet_global(self, duree_max): 
+    def loc_trajet_global(self, duree_max,df_filtre): 
         """
         fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
         permet de retrouver tous les pl apres avoir la duree du trajet indirect
@@ -332,6 +336,8 @@ class trajet():
         camera1, camera2=self.cameras_suivantes[0], self.cameras_suivantes[1]
         #on limite le nb d'objet entre les 2 heures de depart
         df_duree=self.df.loc[self.date_debut:self.date_fin]
+        if isinstance(df_filtre,pd.DataFrame) : 
+            df_duree=filtrer_df(df_duree,df_filtre)
         #on trouve les veh passés cameras 1
         df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==self.cameras_suivantes[0]]
         #on les retrouve aux autres cameras
@@ -857,24 +863,31 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     """
     #parcourir les dates
     dico_trajet_od,dico_passag_od={},{} #dico avec cle par o_d
-    for date in pd.date_range(date_jour, periods=1, freq='H') : 
+    for date in pd.date_range(date_jour, periods=24, freq='H') : 
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
             origine,destination,cameras=value[0],value[1],[value[2],value[3]]
             o_d=origine+'-'+destination
-            print(f"trajet : {origine}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
+            #print(f"index : {index},trajet : {origine}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
-                df_journee_filtre=
-                donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
+                if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
+                    donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
+                else : 
+                    donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
                 df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
             except PasDePlError :
                 continue
             
             df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
-            dico_trajet_od[o_d], dico_passag_od[o_d]=df_trajet,df_passag
-            """
-            #por dico total
+            if o_d in dico_trajet_od.keys():
+                dico_trajet_od[o_d]=pd.concat([dico_trajet_od[o_d],df_trajet])
+                dico_passag_od[o_d]=pd.concat([dico_passag_od[o_d],df_passag])
+            else : 
+                dico_trajet_od[o_d]=df_trajet
+                dico_passag_od[o_d]=df_passag
+            #dico_passag_od[o_d]=df_passag
+
             if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
                 dico_od=pd.concat([dico_od,df_trajet], sort=False)
             else : #sinon on initilise cette variable
@@ -883,9 +896,9 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                 dico_passag=pd.concat([dico_passag,df_passag], sort=False)
             else : #sinon on initilise cette variable
                 dico_passag=df_passag
-            """  
+ 
                 
-    return dico_trajet_od, dico_passag_od           
+    return dico_trajet_od, dico_passag_od, dico_od,  dico_passag         
                 
                 
 def transit_temps_complet(date_debut, nb_jours,liste_trajets):
@@ -897,6 +910,29 @@ def transit_temps_complet(date_debut, nb_jours,liste_trajets):
     print(f" fin import  : {dt.datetime.now()}")
     for date in pd.date_range(date_debut, periods=nb_jours, freq='D') :
         df_journee=df_3semaines.loc[date:date+pd.Timedelta(days=2)]
+        df_transit_jour, df_passage_jour=transit_1_jour(df_journee,date,liste_trajets)
+        
+        if 'df_transit_total' in locals() : #si la varible existe deja on la concatene avec le reste
+                df_transit_total=pd.concat([df_transit_total,df_trajet], sort=False)
+        else : #sinon on initilise cette variable
+                df_transit_total=df_transit_jour 
+        if 'df_passag_total' in locals() : #si la varible existe deja on la concatene avec le reste
+                df_passag_total=pd.concat([df_passag_total,df_trajet], sort=False)
+        else : #sinon on initilise cette variable
+                df_passag_total=df_passage_jour
+    #se baser la dessus pour lancer transit 1 jour
+    #stocker les résultats de transit1jour dans une df au fur et a mesure
+    return df_transit_total
+
+def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets):
+    #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
+    date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
+    print(f"import  : {dt.datetime.now()}")
+    df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
+    #selection de 1 jour par boucle
+    print(f" fin import  : {dt.datetime.now()}")
+    for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
+        df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
         df_transit_jour, df_passage_jour=transit_1_jour(df_journee,date,liste_trajets)
         
         if 'df_transit_total' in locals() : #si la varible existe deja on la concatene avec le reste
