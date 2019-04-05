@@ -863,7 +863,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     """
     #parcourir les dates
     dico_trajet_od,dico_passag_od={},{} #dico avec cle par o_d
-    for date in pd.date_range(date_jour, periods=24, freq='H') : 
+    for date in pd.date_range(date_jour, periods=2, freq='H') : 
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
@@ -933,23 +933,54 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets):
     print(f" fin import  : {dt.datetime.now()}")
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
         df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
-        df_transit_jour, df_passage_jour=transit_1_jour(df_journee,date,liste_trajets)
         
-        if 'df_transit_total' in locals() : #si la varible existe deja on la concatene avec le reste
-                df_transit_total=pd.concat([df_transit_total,df_trajet], sort=False)
-        else : #sinon on initilise cette variable
-                df_transit_total=df_transit_jour 
-        if 'df_passag_total' in locals() : #si la varible existe deja on la concatene avec le reste
-                df_passag_total=pd.concat([df_passag_total,df_trajet], sort=False)
-        else : #sinon on initilise cette variable
-                df_passag_total=df_passage_jour
-    #se baser la dessus pour lancer transit 1 jour
-    #stocker les résultats de transit1jour dans une df au fur et a mesure
-    return df_transit_total
+        for index, value in liste_trajets.iterrows() :
+            origine,destination,cameras=value[0],value[1],[value[2],value[3]]
+            o_d=origine+'-'+destination
+            #print(f"index : {index},trajet : {origine}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
+            try : 
+                if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
+                    donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
+                else : 
+                    donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
+                df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
+            except PasDePlError :
+                continue
+            
+            df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
+            if o_d in dico_trajet_od.keys():
+                dico_trajet_od[o_d]=pd.concat([dico_trajet_od[o_d],df_trajet])
+                dico_passag_od[o_d]=pd.concat([dico_passag_od[o_d],df_passag])
+            else : 
+                dico_trajet_od[o_d]=df_trajet
+                dico_passag_od[o_d]=df_passag
+            #dico_passag_od[o_d]=df_passag
 
-def pourcentage_pl_camera():
-    #isoler les pl 
-    pass
+            if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
+                dico_od=pd.concat([dico_od,df_trajet], sort=False)
+            else : #sinon on initilise cette variable
+                dico_od=df_trajet  
+            if 'dico_passag' in locals() : #si la varible existe deja on la concatene avec le reste
+                dico_passag=pd.concat([dico_passag,df_passag], sort=False)
+            else : #sinon on initilise cette variable
+                dico_passag=df_passag
+ 
+                
+    return dico_trajet_od, dico_passag_od, dico_od,  dico_passag
+
+def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
+    #isoler les pl de la source
+    df_pl_3semaines=df_3semaines.loc[df_3semaines['l']==1]
+    df_pl_3semaines.set_index('created',inplace=True)
+    #comparer les pl en transit avec l'ensembles des pl, par heure, par camera
+    #obtenir les nb de pl par heure et par camera sur la source
+    df_synthese_pl_tot=df_pl_3semaines.groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_tot'})
+    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_transit'})
+    df_pct_pl_transit=pd.concat([df_synthese_pl_tot,df_synthese_pl_transit], axis=1, join='inner')
+    df_pct_pl_transit.columns=[['nb_pl_tot','nb_pl_transit']]
+    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : float(x['nb_pl_transit'])*100 / x['nb_pl_tot'] ,axis=1)
+    
+    return df_pct_pl_transit
     
 def filtrer_df(df_global,df_filtre): 
     df_global=df_global.reset_index().set_index(['created','immat'])
