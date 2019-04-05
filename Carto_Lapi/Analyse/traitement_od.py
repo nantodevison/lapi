@@ -857,7 +857,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     """
     #parcourir les dates
     dico_trajet_od,dico_passag_od={},{} #dico avec cle par o_d
-    for date in pd.date_range(date_jour, periods=2, freq='H') : 
+    for date in pd.date_range(date_jour, periods=1, freq='H') : 
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
@@ -865,13 +865,14 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
             o_d=origine+'-'+destination
             print(f"trajet : {origine}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
+                df_journee_filtre=
                 donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
                 df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
             except PasDePlError :
                 continue
             
             df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
-            dico_trajet_od[o_d], dico_passag_od=df_trajet,df_passag
+            dico_trajet_od[o_d], dico_passag_od[o_d]=df_trajet,df_passag
             """
             #por dico total
             if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
@@ -914,6 +915,14 @@ def pourcentage_pl_camera():
     #isoler les pl 
     pass
     
+def filtrer_df(df_global,df_filtre): 
+    df_global=df_global.reset_index().set_index(['created','immat'])
+    df_filtre=df_filtre.reset_index().set_index(['created','immat'])
+    df_global_filtre=df_global.loc[~df_global.index.isin(df_filtre.index)].reset_index().set_index('created')
+    return df_global_filtre
     
+    
+    
+       
     
     
