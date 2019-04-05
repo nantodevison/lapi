@@ -856,13 +856,14 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
     en sortie : DataFrame des trajets de transit
     """
     #parcourir les dates
-    for date in pd.date_range(date_jour, periods=5, freq='H') : 
+    dico_trajet_od,dico_passag_od={},{} #dico avec cle par o_d
+    for date in pd.date_range(date_jour, periods=2, freq='H') : 
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         #parcourir les trajets possibles
         for index, value in liste_trajets.iterrows() :
             origine,destination,cameras=value[0],value[1],[value[2],value[3]]
             o_d=origine+'-'+destination
-            print(f"trajet : {value[0]}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
+            print(f"trajet : {origine}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
                 donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
                 df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
@@ -870,7 +871,9 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                 continue
             
             df_trajet['o_d'],df_trajet['origine'],df_trajet['destination']=o_d, origine, destination
-            
+            dico_trajet_od[o_d], dico_passag_od=df_trajet,df_passag
+            """
+            #por dico total
             if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
                 dico_od=pd.concat([dico_od,df_trajet], sort=False)
             else : #sinon on initilise cette variable
@@ -878,9 +881,10 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
             if 'dico_passag' in locals() : #si la varible existe deja on la concatene avec le reste
                 dico_passag=pd.concat([dico_passag,df_passag], sort=False)
             else : #sinon on initilise cette variable
-                dico_passag=df_passag  
+                dico_passag=df_passag
+            """  
                 
-    return dico_od, dico_passag           
+    return dico_trajet_od, dico_passag_od           
                 
                 
 def transit_temps_complet(date_debut, nb_jours,liste_trajets):
@@ -892,12 +896,16 @@ def transit_temps_complet(date_debut, nb_jours,liste_trajets):
     print(f" fin import  : {dt.datetime.now()}")
     for date in pd.date_range(date_debut, periods=nb_jours, freq='D') :
         df_journee=df_3semaines.loc[date:date+pd.Timedelta(days=2)]
-        df_transit_jour=transit_1_jour(df_journee,date,liste_trajets)
+        df_transit_jour, df_passage_jour=transit_1_jour(df_journee,date,liste_trajets)
         
         if 'df_transit_total' in locals() : #si la varible existe deja on la concatene avec le reste
                 df_transit_total=pd.concat([df_transit_total,df_trajet], sort=False)
         else : #sinon on initilise cette variable
-                df_transit_total=df_trajet 
+                df_transit_total=df_transit_jour 
+        if 'df_passag_total' in locals() : #si la varible existe deja on la concatene avec le reste
+                df_passag_total=pd.concat([df_passag_total,df_trajet], sort=False)
+        else : #sinon on initilise cette variable
+                df_passag_total=df_passage_jour
     #se baser la dessus pour lancer transit 1 jour
     #stocker les résultats de transit1jour dans une df au fur et a mesure
     return df_transit_total
