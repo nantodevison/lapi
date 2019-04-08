@@ -299,22 +299,22 @@ class trajet():
         #print (self.dico_traj_directs)
         if long_dico<2 : #si c'est le cas ça veut dire une seule entree dans le dico, ce qui signifie que l'entree est empty, donc on retourne une df empty pour etre raccord avec le type de donnees renvoyee par trajet_direct dans ce cas
             raise PasDePlError()
-            return self.dico_traj_directs['trajet0'].df_pl_direct
+            return self.dico_traj_directs['trajet0'].df_transit
         for a, val_dico in enumerate(self.dico_traj_directs):
             if a<=long_dico-1:
                 #print(f"occurence {a} pour trajet : {val_dico}, lg dico_:{long_dico}")
                 variab,variab2 ='trajet'+str(a), 'trajet'+str(a+1)
-                if self.dico_traj_directs[variab].df_pl_direct.empty : #si un des trajets aboutit a empty, mais pas le 1er
-                    return self.dico_traj_directs[variab].df_pl_direct
+                if self.dico_traj_directs[variab].df_transit.empty : #si un des trajets aboutit a empty, mais pas le 1er
+                    return self.dico_traj_directs[variab].df_transit
                 if a==0 :
-                    df_transit=pd.merge(self.dico_traj_directs[variab].df_pl_direct,self.dico_traj_directs[variab2].df_pl_direct,on='immat')
+                    df_transit=pd.merge(self.dico_traj_directs[variab].df_transit,self.dico_traj_directs[variab2].df_transit,on='immat')
                     if df_transit.empty :
                         raise PasDePlError()
                     df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
                     df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]  
                 elif a<long_dico-1: 
                     #print(f" avant boucle df_trajet_indirect, df_transit : {df_transit.columns}")
-                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_pl_direct,on='immat')
+                    df_transit=pd.merge(df_transit,self.dico_traj_directs[variab2].df_transit,on='immat')
                     if df_transit.empty :
                         raise PasDePlError()
                     #print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
@@ -465,7 +465,7 @@ class trajet():
     def graph(self):
         copie_df=self.df_transit.copy()
         copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
-        copie_df.temps_parcours_max=pd.to_datetime('2018-01-01')+self.temps_parcours_max
+        copie_df['temps_parcours_max']=pd.to_datetime('2018-01-01')+self.temps_parcours_max
         graph_tps_parcours = alt.Chart(copie_df).mark_point().encode(
                         x='date_cam_1',
                         y='hoursminutes(tps_parcours)',
