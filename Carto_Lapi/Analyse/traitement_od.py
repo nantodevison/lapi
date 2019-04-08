@@ -275,8 +275,10 @@ class trajet():
         df_pl=cam1_cam2_passages_filtres.loc[(cam1_cam2_passages_filtres.loc[:,'l']==1) & (cam1_cam2_passages_filtres.loc[:,'fiability']==True)]
         try : 
             self.temps_parcours_max=self.temp_max_cluster(df_pl,300)[1]
+            self.tps_parcours_max_type='Cluster'
         except ClusterError : 
             self.temps_parcours_max=df_pl.tps_parcours.quantile(0.85)
+            self.tps_parcours_max_type='85eme_percentile'
         """pour filtre sur temps de parcours
         df_tps_parcours_pl_final=(df_pl.loc[df_pl['tps_parcours']<self.temps_parcours_max]
                                         [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))"""
@@ -460,6 +462,13 @@ class trajet():
         
         return liste_trajet_od, trajet_max
     
+    def graph(self):
+        copie_df=self.df_transit.copy()
+        copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
+        graph_tps_bruts = alt.Chart(toto.df_transit).mark_point().encode(
+                        x='date_cam_1',
+                        y='hoursminutes(tps_parcours)',
+                        tooltip='hoursminutes(tps_parcours)').interactive()
 
 class trajet_direct():
     """
