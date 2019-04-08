@@ -237,7 +237,7 @@ class trajet():
                     tps=1 #pour envoi de l'objet tarjet au GB
                 self.temps_parcours_max=np.max(tps_max)
                 #rechercher le df des passages avec 
-                self.df_transit, self.df_passag_transit=self.loc_trajet_global(self.temps_parcours_max,df_filtre)
+                self.df_transit, self.df_passag_transit, self.df_transit_pour_filtre=self.loc_trajet_global(self.temps_parcours_max,df_filtre)
         else : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
@@ -334,6 +334,18 @@ class trajet():
         fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
         permet de retrouver tous les pl apres avoir la duree du trajet indirect
         """
+        def filtrer_passage(liste, liste_trajet) :
+            for filtre in liste_trajet :
+                if liste[:len(filtre)]==tuple(filtre):
+                    return liste[:len(filtre)]
+            else : return liste
+        
+        def recuperer_date_cam2(liste,liste_created,liste_trajet):
+            for filtre in liste_trajet :
+                if liste[:len(filtre)]==tuple(filtre):
+                    return liste_created[len(filtre)-1]
+            else : return liste_created[-1]
+        
         liste_trajet_od=self.recup_trajets()[0]
         camera1, camera2=self.cameras_suivantes[0], self.cameras_suivantes[1]
         #on limite le nb d'objet entre les 2 heures de depart
@@ -348,7 +360,7 @@ class trajet():
         df_autres_cam_temp_ok=df_duree_autres_cam.loc[self.date_debut:self.date_fin+duree_max]
         #on trie par heure de passage devant les cameras puis on regroupe et on liste les cameras devant lesquelles ils sont passés
         groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
-                                                                        'created':lambda x: lambda x: tuple(x)}))
+                                                                        'created':lambda x: tuple(x)}))
         #analyse des trajets : on limites les cameras de cameras_id et les moment de passages si elles matchs un des pattern de a liste des trajets
         groupe['camera_id']=groupe.apply(lambda x : filtrer_passage(x['camera_id'],liste_trajet_od),axis=1)
         groupe['created']=groupe.apply(lambda x : recuperer_date_cam2(x['camera_id'],x['created'],liste_trajet_od),axis=1)
@@ -375,18 +387,6 @@ class trajet():
         df_passag_transit1=df_joint_passag_transit.loc[(df_joint_passag_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1))]
         df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
                 [['created','camera_id','immat','fiability','l_y','state']].rename(columns={'l_y':'l'}))
-        
-        def filtrer_passage(liste, liste_trajet) :
-            for filtre in liste_trajet :
-                if liste[:len(filtre)]==tuple(filtre):
-                    return liste[:len(filtre)]
-            else : return liste
-        
-        def recuperer_date_cam2(liste,liste_created,liste_trajet):
-            for filtre in liste_trajet :
-                if liste[:len(filtre)]==tuple(filtre):
-                    return liste_created[len(filtre)-1]
-            else : return liste_created[-1]
         
         
         return df_trajet_final, df_passag_transit,df_transit_pr_filtre
@@ -954,7 +954,7 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
                 else : 
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
-                df_trajet, df_passag, tps_parcours_filtre=donnees_trajet.df_transit, donnees_trajet.df_passag_transit,donnees_trajet.temps_parcours_max
+                df_trajet, df_passag, tps_parcours_filtre,df_filtre_global=donnees_trajet.df_transit, donnees_trajet.df_passag_transit,donnees_trajet.temps_parcours_max, donnees_trajet.df_transit_pour_filtre
             except PasDePlError :
                 continue
             
@@ -977,9 +977,12 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
                 dico_passag=pd.concat([dico_passag,df_passag], sort=False)
             else : #sinon on initilise cette variable
                 dico_passag=df_passag
- 
+            if 'dico_filtre'in locals() :
+                dico_filtre=pd.concat([dico_filtre,df_passag], sort=False)
+            else : 
+                dico_filtre=df_filtre_global
                 
-    return dico_trajet_od, dico_passag_od, dico_od,  dico_passag
+    return dico_trajet_od, dico_passag_od, dico_od,  dico_passag,dico_filtre
 
 def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
     #isoler les pl de la source
