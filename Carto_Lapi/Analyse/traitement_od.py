@@ -224,7 +224,7 @@ class trajet():
     
         if len(cameras)==2:
             if type=='Direct' :
-                self.df_pl_direct=self.trajet_direct()
+                self.df_transit=self.trajet_direct()
                 self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
             elif type=='Global' :
                 #trouver trajet complet
@@ -235,9 +235,9 @@ class trajet():
                     tps=trajet(df,date_debut, duree, temps_max_autorise, trajet_indirect).temps_parcours_max
                     tps_max.append(tps)
                     tps=1 #pour envoi de l'objet tarjet au GB
-                self.tps_max=np.max(tps_max)
+                self.temps_parcours_max=np.max(tps_max)
                 #rechercher le df des passages avec 
-                self.df_global, self.df_passag_transit=self.loc_trajet_global(self.tps_max,df_filtre)
+                self.df_transit, self.df_passag_transit=self.loc_trajet_global(self.temps_parcours_max,df_filtre)
         else : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
@@ -395,8 +395,8 @@ class trajet():
     
     def temps_timedeltas_direct(self):
         
-        timedelta_min=self.df_pl_direct.tps_parcours.min()
-        timedelta_max=self.df_pl_direct.tps_parcours.max()
+        timedelta_min=self.df_transit.tps_parcours.min()
+        timedelta_max=self.df_transit.tps_parcours.max()
         timestamp_mini=self.date_debut+timedelta_min
         timestamp_maxi=self.date_fin+timedelta_max
         duree_traj_fut=(((timestamp_maxi-timestamp_mini).seconds)//60)+1
@@ -875,7 +875,7 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
                 else : 
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
-                df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
+                df_trajet, df_passag=donnees_trajet.df_transit, donnees_trajet.df_passag_transit
             except PasDePlError :
                 continue
             
@@ -919,7 +919,7 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
                 else : 
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
-                df_trajet, df_passag, tps_parcours_filtre=donnees_trajet.df_global, donnees_trajet.df_passag_transit,donnees_trajet.tps_max
+                df_trajet, df_passag, tps_parcours_filtre=donnees_trajet.df_transit, donnees_trajet.df_passag_transit,donnees_trajet.temps_parcours_max
             except PasDePlError :
                 continue
             
