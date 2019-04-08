@@ -341,7 +341,7 @@ class trajet():
         if isinstance(df_filtre,pd.DataFrame) : 
             df_duree=filtrer_df(df_duree,df_filtre)
         #on trouve les veh passés cameras 1
-        df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==self.cameras_suivantes[0]]
+        df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==camera1]
         #on les retrouve aux autres cameras
         df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
         #on limite ces données selon le temps autorisé à partir de la date de depart
@@ -355,7 +355,7 @@ class trajet():
         df_agrege=df_agrege.reset_index().rename(columns={'created':'date_cam_1'})
         df_agrege['tps_parcours']=df_agrege.apply(lambda x : x.date_cam_2-x.date_cam_1, axis=1)
         #on ne garde que les vehicules passé à la camera 2 et qui sont des pl et qui ont un tpsde parcours < au temps pre-calcule
-        df_trajet=(df_agrege.loc[(df_agrege['cameras'].apply(lambda x : x[-1])==self.cameras_suivantes[1]) & (df_agrege['l']==1)
+        df_trajet=(df_agrege.loc[(df_agrege['cameras'].apply(lambda x : x[-1])==camera2) & (df_agrege['l']==1)
                                   & (df_agrege['tps_parcours'] < duree_max)])
         # on filtre les les cameras si ils ne sont pas dans les patterns prévus dans liste_trajet_total
         df_trajet_final=df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
