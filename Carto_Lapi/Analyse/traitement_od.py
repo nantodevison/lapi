@@ -235,9 +235,9 @@ class trajet():
                     tps=trajet(df,date_debut, duree, temps_max_autorise, trajet_indirect).temps_parcours_max
                     tps_max.append(tps)
                     tps=1 #pour envoi de l'objet tarjet au GB
-                tps_max=np.max(tps_max)
+                self.tps_max=np.max(tps_max)
                 #rechercher le df des passages avec 
-                self.df_global, self.df_passag_transit=self.loc_trajet_global(tps_max,df_filtre)
+                self.df_global, self.df_passag_transit=self.loc_trajet_global(self.tps_max,df_filtre)
         else : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
@@ -900,33 +900,11 @@ def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
                 
     return dico_trajet_od, dico_passag_od, dico_od,  dico_passag         
                 
-                
-def transit_temps_complet(date_debut, nb_jours,liste_trajets):
-    #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
-    date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
-    print(f"import  : {dt.datetime.now()}")
-    df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin)
-    #selection de 1 jour par boucle
-    print(f" fin import  : {dt.datetime.now()}")
-    for date in pd.date_range(date_debut, periods=nb_jours, freq='D') :
-        df_journee=df_3semaines.loc[date:date+pd.Timedelta(days=2)]
-        df_transit_jour, df_passage_jour=transit_1_jour(df_journee,date,liste_trajets)
-        
-        if 'df_transit_total' in locals() : #si la varible existe deja on la concatene avec le reste
-                df_transit_total=pd.concat([df_transit_total,df_trajet], sort=False)
-        else : #sinon on initilise cette variable
-                df_transit_total=df_transit_jour 
-        if 'df_passag_total' in locals() : #si la varible existe deja on la concatene avec le reste
-                df_passag_total=pd.concat([df_passag_total,df_trajet], sort=False)
-        else : #sinon on initilise cette variable
-                df_passag_total=df_passage_jour
-    #se baser la dessus pour lancer transit 1 jour
-    #stocker les résultats de transit1jour dans une df au fur et a mesure
-    return df_transit_total
 
 def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
+    dico_trajet_od,dico_passag_od,dico_tps_filtre={},{},{} 
     #df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
     #selection de 1 jour par boucle
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
@@ -941,7 +919,7 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
                 else : 
                     donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
-                df_trajet, df_passag=donnees_trajet.df_global, donnees_trajet.df_passag_transit
+                df_trajet, df_passag, tps_parcours_filtre=donnees_trajet.df_global, donnees_trajet.df_passag_transit,donnees_trajet.tps_max
             except PasDePlError :
                 continue
             
@@ -949,9 +927,11 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
             if o_d in dico_trajet_od.keys():
                 dico_trajet_od[o_d]=pd.concat([dico_trajet_od[o_d],df_trajet])
                 dico_passag_od[o_d]=pd.concat([dico_passag_od[o_d],df_passag])
+                dico_tps_filtre[o_d].update({date:tps_parcours_filtre})
             else : 
                 dico_trajet_od[o_d]=df_trajet
                 dico_passag_od[o_d]=df_passag
+                dico_tps_filtre[o_d]={date:tps_parcours_filtre}
             #dico_passag_od[o_d]=df_passag
 
             if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
