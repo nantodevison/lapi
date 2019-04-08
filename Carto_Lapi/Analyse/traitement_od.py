@@ -465,10 +465,18 @@ class trajet():
     def graph(self):
         copie_df=self.df_transit.copy()
         copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
-        graph_tps_bruts = alt.Chart(toto.df_transit).mark_point().encode(
+        copie_df.temps_parcours_max=pd.to_datetime('2018-01-01')+self.temps_parcours_max
+        graph_tps_parcours = alt.Chart(copie_df).mark_point().encode(
                         x='date_cam_1',
                         y='hoursminutes(tps_parcours)',
                         tooltip='hoursminutes(tps_parcours)').interactive()
+        graph_tps_filtre=alt.Chart(copie_df).mark_line(color='yellow').encode(
+                         x='date_cam_1',
+                         y='hoursminutes(temps_parcours_max)',
+                         tooltip='hoursminutes(temps_parcours_max)')
+        graph_tps_parcours=graph_tps_parcours+graph_tps_filtre
+        
+        return graph_tps_parcours
 
 class trajet_direct():
     """
