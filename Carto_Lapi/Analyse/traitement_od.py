@@ -348,17 +348,22 @@ class trajet():
         df_autres_cam_temp_ok=df_duree_autres_cam.loc[self.date_debut:self.date_fin+duree_max]
         #on trie par heure de passage devant les cameras puis on regroupe et on liste les cameras devant lesquelles ils sont passés
         groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
-                                                                        'created':lambda x: x.max()}))
+                                                                        'created':lambda x: lambda x: tuple(x)}))
+        #analyse des trajets : on limites les cameras de cameras_id et les moment de passages si elles matchs un des pattern de a liste des trajets
+        groupe['camera_id']=groupe.apply(lambda x : filtrer_passage(x['camera_id'],liste_trajet_od),axis=1)
+        groupe['created']=groupe.apply(lambda x : recuperer_date_cam2(x['camera_id'],x['created'],liste_trajet_od),axis=1)
         #jointure avec la df de départ pour récupérer le passage devant la camera 1
         df_agrege=df_duree_cam1.join(groupe,on='immat',lsuffix='_left')[['immat', 'l','camera_id','created']].rename(columns={'created':'date_cam_2', 'camera_id':'cameras'})
         #temps de parcours
         df_agrege=df_agrege.reset_index().rename(columns={'created':'date_cam_1'})
         df_agrege['tps_parcours']=df_agrege.apply(lambda x : x.date_cam_2-x.date_cam_1, axis=1)
-        #on ne garde que les vehicules passé à la camera 2 et qui sont des pl et qui ont un tpsde parcours < au temps pre-calcule
-        df_trajet=(df_agrege.loc[(df_agrege['cameras'].apply(lambda x : x[-1])==camera2) & (df_agrege['l']==1)
-                                  & (df_agrege['tps_parcours'] < duree_max)])
         # on filtre les les cameras si ils ne sont pas dans les patterns prévus dans liste_trajet_total
-        df_trajet_final=df_trajet.loc[df_trajet['cameras'].isin(liste_trajet_od)]
+        df_trajet=df_agrege.loc[df_agrege['cameras'].isin(liste_trajet_od)]
+        df_transit_pr_filtre=df_trajet.rename(columns={'date_cam_1':'created'})[['created','immat','tps_parcours']]
+        
+        #on ne garde que les vehicules passé à la camera 2 et qui sont des pl et qui ont un tpsde parcours < au temps pre-calcule
+        df_trajet_final=(df_trajet.loc[(df_trajet['cameras'].apply(lambda x : x[-1])==camera2) & (df_trajet['l']==1)
+                                  & (df_trajet['tps_parcours'] < duree_max)])
         if df_trajet_final.empty :
             raise PasDePlError()
         
@@ -371,7 +376,20 @@ class trajet():
         df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
                 [['created','camera_id','immat','fiability','l_y','state']].rename(columns={'l_y':'l'}))
         
-        return df_trajet_final, df_passag_transit
+        def filtrer_passage(liste, liste_trajet) :
+            for filtre in liste_trajet :
+                if liste[:len(filtre)]==tuple(filtre):
+                    return liste[:len(filtre)]
+            else : return liste
+        
+        def recuperer_date_cam2(liste,liste_created,liste_trajet):
+            for filtre in liste_trajet :
+                if liste[:len(filtre)]==tuple(filtre):
+                    return liste_created[len(filtre)-1]
+            else : return liste_created[-1]
+        
+        
+        return df_trajet_final, df_passag_transit,df_transit_pr_filtre
     
     def liste_trajets_directs(self):
         """
