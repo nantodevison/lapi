@@ -356,10 +356,10 @@ class trajet():
         df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==camera1]
         #on les retrouve aux autres cameras
         df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
-        #on limite ces données selon le temps autorisé à partir de la date de depart
-        df_autres_cam_temp_ok=df_duree_autres_cam.loc[self.date_debut:self.date_debut+pd.Timedelta(hours=self.temps_max_autorise)]
+        #on limite ces données selon le temps autorisé à partir de la date de depart, j'enleve pour pouvoir lister le trajet complet meme si dechargement
+        #df_autres_cam_temp_ok=df_duree_autres_cam.loc[self.date_debut:self.date_fin+duree_max]
         #on trie par heure de passage devant les cameras puis on regroupe et on liste les cameras devant lesquelles ils sont passés
-        groupe=(df_autres_cam_temp_ok.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
+        groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
                                                                         'created':lambda x: tuple(x)}))
         #analyse des trajets : on limites les cameras de cameras_id et les moment de passages si elles matchs un des pattern de a liste des trajets
         #l'objectif là est d'ajouter les passages ayant fait l'objet d'un arret à la liste des passage à ne pas traiter.
