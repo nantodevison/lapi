@@ -213,7 +213,7 @@ class trajet():
     en entre : une df issue de ouvrir_fichier_lapi
     """
     
-    def __init__(self,df,date_debut, duree, temps_max_autorise, cameras,type='Direct', df_filtre=None) :
+    def __init__(self,df,date_debut, duree, cameras,type='Direct', df_filtre=None) :
         
         #en fonction du df qui est passé on met la date de creation en index ou non
         if isinstance(df.index,pd.DatetimeIndex) :
@@ -221,7 +221,10 @@ class trajet():
         else :
             self.df=df.set_index('created').sort_index()
         
-        self.date_debut, self.duree, self.temps_max_autorise, self.cameras_suivantes=pd.to_datetime(date_debut), duree, temps_max_autorise,cameras
+        if self.df.empty:    
+            raise PasDePlError()
+        
+        self.date_debut, self.duree, self.cameras_suivantes=pd.to_datetime(date_debut), duree, cameras
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin]  
     
@@ -327,41 +330,47 @@ class trajet():
         fonction pour retrouver tous les pl d'une o_d une fois que l'on a identifé la duree_max entre 2 cameras
         permet de retrouver tous les pl apres avoir la duree du trajet indirect
         """
-        def filtrer_passage(liste, df_liste_trajet) :
-            for liste_cams in df_liste_trajet.cameras.tolist() :
+        def filtrer_passage(liste, df_liste_trajet,cam) :
+            for liste_cams in [a for a in liste_complete_trajet.cameras.tolist() if a[0]==cam] :
                 if liste[:len(liste_cams)]==tuple(liste_cams):
                     return liste[:len(liste_cams)]
             else : return liste
         
-        def recuperer_date_cam2(liste,liste_created,df_liste_trajet):
-            for liste_cams in df_liste_trajet.cameras.tolist() :
+        def recuperer_date_cam2(liste,liste_created,df_liste_trajet,cam):
+            for liste_cams in [a for a in liste_complete_trajet.cameras.tolist() if a[0]==cam] :
                 if liste[:len(liste_cams)]==tuple(liste_cams):
                     return liste_created[len(liste_cams)-1]
             else : return liste_created[-1]
         
         liste_trajet_od=self.recup_trajets()[0]
-        camera1, camera2=self.cameras_suivantes[0], self.cameras_suivantes[1]
+        camera1=self.cameras_suivantes[0]
         #on limite le nb d'objet entre les 2 heures de depart
         df_duree=self.df.loc[self.date_debut:self.date_fin]
+        if df_duree.empty : 
+           raise PasDePlError() 
         if isinstance(df_filtre,pd.DataFrame) : 
             df_duree=filtrer_df(df_duree,df_filtre)
         #on trouve les veh passés cameras 1
         df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==camera1]
+        if df_duree_cam1.empty : 
+           raise PasDePlError() 
+        #on recupere ces immat aux autres cameras
         df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
         groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
                                                                                        'created':lambda x: tuple(x)}))
-        if groupe.empty :
+        groupe_pl=groupe.loc[groupe['l']==1].copy() #on ne garde que les pl
+        if groupe_pl.empty :
             raise PasDePlError()
-        groupe['camera_id']=groupe.apply(lambda x : filtrer_passage(x['camera_id'],liste_complete_trajet),axis=1)
-        groupe['created']=groupe.apply(lambda x : recuperer_date_cam2(x['camera_id'],x['created'],liste_complete_trajet),axis=1)
-        df_ts_trajets=(groupe.reset_index().merge(liste_complete_trajet[['cameras','origine','destination']],right_on='cameras', left_on='camera_id').
-                       rename(columns={'created':'date_cam_2'}).drop('camera_id',axis=1))
+        groupe_pl['camera_id']=groupe_pl.apply(lambda x : filtrer_passage(x['camera_id'],liste_complete_trajet,camera1),axis=1)#on filtre les cameras selon la liste des trajets existants
+        groupe_pl['created']=groupe_pl.apply(lambda x : recuperer_date_cam2(x['camera_id'],x['created'],liste_complete_trajet,camera1),axis=1)#on recupère les datetimede passages correspondants
+        df_ts_trajets=(groupe_pl.reset_index().merge(liste_complete_trajet[['cameras','origine','destination']],right_on='cameras', left_on='camera_id').
+                       rename(columns={'created':'date_cam_2'}).drop('camera_id',axis=1))#on récupère les infos par jointure sur les cameras
         if df_ts_trajets.empty :
             raise PasDePlError()
         df_ts_trajets['o_d']=df_ts_trajets.apply(lambda x : x['origine']+'-'+x['destination'],axis=1)
-        df_agrege=df_duree_cam1.reset_index().merge(df_ts_trajets,on='immat').drop(['camera_id', 'l_x','state','fiability'],axis=1).rename(columns={'l_y':'l','created':'date_cam_1'})
+        df_agrege=df_duree_cam1.reset_index().merge(df_ts_trajets,on='immat').drop(['camera_id', 'l_x','fiability'],axis=1).rename(columns={'l_y':'l','created':'date_cam_1'})
         df_agrege['tps_parcours']=df_agrege.apply(lambda x : x.date_cam_2-x.date_cam_1, axis=1)
-        
+        df_agrege=df_agrege.loc[df_agrege['date_cam_2'] > df_agrege['date_cam_1']]#pour les cas bizarres de plaques vu a qq minutes d'intervalle au sein d'une même heure
         
         if df_agrege.empty :
             raise PasDePlError()
@@ -371,7 +380,7 @@ class trajet():
         df_joint_passag_transit=df_agrege.merge(df_duree_autres_cam.reset_index(), on='immat')
         df_passag_transit1=df_joint_passag_transit.loc[(df_joint_passag_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1))]
         df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
-                        [['created','camera_id','immat','fiability','l_y','state']].rename(columns={'l_y':'l'}))
+                        [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
         
         
         return df_agrege,df_passag_transit
@@ -553,14 +562,14 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
         else : 
             df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
         print(f"date : {date} debut_traitement : {dt.datetime.now()}")
-        for index, value in liste_trajets.iterrows() :
-            cameras=[value[2],value[3]]
-            #print(f"index : {index},trajet : {origine}-{destination}, date : {date}, debut_traitement : {dt.datetime.now()}")
+        for cameras in zip([15,12,8,10,19,6],range(6)) : #dans ce mode peu importe la camera d'arrivée, elle sont toutes analysées
+            #print(f"cameras{cameras}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
                 if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
-                    donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global',df_filtre=dico_passag)
+                    #print(dico_passag.loc[dico_passag['created']>=date])
+                    donnees_trajet=trajet(df_journee,date,60,cameras, type='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy())
                 else : 
-                    donnees_trajet=trajet(df_journee,date,60,16,cameras, type='Global')
+                    donnees_trajet=trajet(df_journee,date,60,cameras, type='Global')
                 df_trajet, df_passag=donnees_trajet.df_transit, donnees_trajet.df_passag_transit
             except PasDePlError :
                 continue
@@ -574,6 +583,7 @@ def transit_temps_complet_v2(date_debut, nb_jours,liste_trajets, df_3semaines):
             else : #sinon on initilise cette variable
                 dico_passag=df_passag
             
+            #df_journee=filtrer_df(df_journee, df_passag)
     return dico_od,  dico_passag
 
 def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
