@@ -144,6 +144,12 @@ liste_complete_trajet=pd.DataFrame([[tuple(liste_cam['cameras']),value[0],value[
 liste_complete_trajet=liste_complete_trajet.sort_values('nb_cams',ascending=False)
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
+    """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
+    l'ouvertur se fait par appel d'une connexionBdd Python (scripts de travail ici https://github.com/nantodevison/Outils/blob/master/Outils/Martin_Perso/Connexion_Transfert.py)
+    en entree : date_debut : string de type YYYY-MM-DD hh:mm:ss
+                date_fin: string de type YYYY-MM-DD hh:mm:ss
+    en sortie : dataframe pandas
+    """
     with ct.ConnexionBdd('gti_lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
