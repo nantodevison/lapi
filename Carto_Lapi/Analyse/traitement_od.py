@@ -155,71 +155,23 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
 
-class df_source():
-    """
-    classe regroupant les principales caractéristiques d'une df de lapi issues de la fonction df_temps_parcours_moyen
-    Dans cette classe une ligne est un trajet (opposé à la classe de base ou un ligne estun vehicule)
-    """
-    def __init__(self,df):
-        """
-        constrcuteur, va creer attributs : 
-        - nb de vehicules total, nb de vehicules sur, nb vl sur, nb pl sur, nb_plaqu_ok, nb_type_identifie
-        - un df pour chaque attribut avec 
-        """
-        self.df=df
-        self.df_vlpl, self.df_tv_plaques_ok, self.df_veh_ok, self.df_vl_ok, self.df_pl_ok=self.df_filtrees()
-        self.nb_tv_tot, self.nb_tv_plaque_ok, self.nb_vlpl, self.nb_veh_ok, self.nb_vl_ok, self.nb_pl_ok=self.stats()             
-        
-    def df_filtrees(self):
-        """isole les df depuis la df source
-        A RENESEIGNER LES DF QUI SORTENT"""
-        #Dataframes intermediaires 
-        df_vlpl=self.df.loc[self.df.loc[:,'l']!=-1]
-        df_tv_plaques_ok=self.df.loc[self.df.loc[:,'fiability']>=80]
-        df_veh_ok=self.df.loc[(self.df.loc[:,'l']!=-1) & (self.df.loc[:,'fiability']>=80)]
-        df_vl_ok=self.df.loc[(self.df.loc[:,'l']==0) & (self.df.loc[:,'fiability']>=80)]
-        df_pl_ok=self.df.loc[(self.df.loc[:,'l']==1) & (self.df.loc[:,'fiability']>=80)]
-        return df_vlpl, df_tv_plaques_ok, df_veh_ok, df_vl_ok, df_pl_ok 
-            def stats (self):
-        """les stats issue des df_filtrees
-        A RENESEIGNER LES DF QUI SORTENT"""
-        nb_tv_tot=len(self.df)
-        nb_tv_plaque_ok=len(self.df_tv_plaques_ok)
-        nb_vlpl=len(self.df_vlpl)
-        nb_veh_ok=len(self.df_veh_ok)                      
-        nb_vl_ok=len(self.df_vl_ok)
-        nb_pl_ok=len(self.df_pl_ok)
-        return nb_tv_tot, nb_tv_plaque_ok, nb_vlpl, nb_veh_ok, nb_vl_ok, nb_pl_ok
-            def plot_graphs(self):
-        """cree et retourne les charts de altair pour un certines nombres de graph"""
-        
-        #graph des stats de df
-        stats_df=pd.DataFrame([{'type': 'nb_tv_tot', 'value':self.nb_tv_tot},{'type': 'nb_tv_plaque_ok', 'value':self.nb_tv_plaque_ok},
-                               {'type': 'nb_vlpl', 'value':self.nb_vlpl},{'type': 'nb_veh_ok', 'value':self.nb_veh_ok},
-                               {'type': 'nb_vl_ok', 'value':self.nb_vl_ok},{'type': 'nb_pl_ok', 'value':self.nb_pl_ok}])
-        graph_stat=alt.Chart(stats_df).mark_bar().encode(
-            x='type',
-            y='value',
-            color='type')
-        graph_stat_trie = graph_stat.encode(alt.X(field='type', type='nominal',
-                                            sort=alt.EncodingSortField(field='value',op='mean'))).properties(width=100)
-        
-        #graph de la fiabilte de la plaque dans le temps
-        stat_fiability = self.df.loc[:,['created', 'fiability']].copy().set_index('created').sort_index()
-        stat_fiability=stat_fiability.groupby(pd.Grouper(freq='5Min')).mean().reset_index()
-        graph_fiab=alt.Chart(stat_fiability).mark_line().encode(
-            alt.X('created'),
-            alt.Y('fiability',scale=alt.Scale(zero=False))).interactive()
-        
-        return  graph_stat_trie, graph_fiab
 
 class trajet():
     """
-    classe regroupant permettant le calcul de trajet direct, indirect ou global
-    en entre : une df issue de ouvrir_fichier_lapi
+    classe permettant le calcul de trajet : 
+    - direct (2 cameras : debut et fin uniquement) à un horaire de depart donne. le veh passe cam 1 puis de suite cam2 
+    - indirect (plus de 2 cameras : toute les cameras parcourue) à un horaire de depart donne. Le veh passe a chacune des cameras, dans l'ordre
+    - global (2 cameras : debut et fin uniquement) à un horaire de depart donne. le veh part de cam1 et arrive a cam2, selon une liste d etrajet possible. cf fichier XXXXX
+    Attributs : 
+        df -- une pandas df issue de ouvrir_fichier_lapi ou de tout autre slice ou copy
+        date_debut -- string de type YYYY-MM-DD hh:mm:ss ou pandas datetime -- date de debut du passage à la 1ere cam
+        duree -- integer -- duree en minute pour periode de passage devant la première camera
+        typeTrajet -- type de trajet -- Direct, Indirect, Global. le nombre de Camera est lié et fonction de ce paramètre
+        df_filtre -- pandas dataframe -- permetde filtrer les données selonles passages déjà traites. en typeTrajet='Global unqiuement'
+        temps_max_autorise -- le temps que l'on autorise pour trouver les vehicules passés par cam1. en typeTrajet='Direct' ou Indirect uniquement
     """
     
-    def __init__(self,df,date_debut, duree, cameras,type='Direct', df_filtre=None) :
+    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18) :
         
         #en fonction du df qui est passé on met la date de creation en index ou non
         if isinstance(df.index,pd.DatetimeIndex) :
@@ -230,20 +182,31 @@ class trajet():
         if self.df.empty:    
             raise PasDePlError()
         
-        self.date_debut, self.duree, self.cameras_suivantes=pd.to_datetime(date_debut), duree, cameras
+        self.date_debut, self.duree, self.cameras_suivantes, self.temps_max_autorise=pd.to_datetime(date_debut), duree, cameras,temps_max_autorise
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin]  
     
-        if len(cameras)==2:
-            if type=='Direct' :
-                self.df_transit=self.trajet_direct()
-                self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
-            elif type=='Global' :
+        if typeTrajet=='Direct' :
+            self.df_transit=self.trajet_direct()
+            self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
+            try : 
+                self.temps_parcours_max=self.temp_max_cluster(self.df_transit,300)[1]
+                self.tps_parcours_max_type='Cluster'
+            except ClusterError('haha') :
+                print(f"nb cluster={ClusterError.nb_cluster}, passage sur percentile") 
+                self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
+                self.tps_parcours_max_type='85eme_percentile'
+        elif typeTrajet=='Global' :
                 self.df_transit, self.df_passag_transit=self.loc_trajet_global(df_filtre)
-        else : 
+        elif typeTrajet=='Indirect' : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
-            self.temps_parcours_max=self.df_transit.tps_parcours.max()
+            try : 
+                self.temps_parcours_max=self.temp_max_cluster(self.df_transit,300)[1]
+                self.tps_parcours_max_type='Cluster'
+            except ClusterError() : 
+                self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
+                self.tps_parcours_max_type='85eme_percentile'
         
     def trajet_direct(self):
         #trouver tt les bagnoles passée par cam1 dont la 2eme camera est cam2
@@ -262,8 +225,9 @@ class trajet():
         #Si la df cam1_fastest_next est vide ça crée une erreur ValueError dans la creation de 'l', donc je filtre avant avec une levee d'erreur PasdePl
         if cam1_fastest_next.empty : 
             raise PasDePlError()
-        # on regroupe les attributs dedescription de type etde fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi
+        # on regroupe les attributs de description de type et de fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi)
         cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='1/2'), axis=1)
+        #pour la fiabilite on peut faire varier le critere. ici c'est 0 : tous le spassages sont pris
         cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on ne garde que les passage le plus rapide devant la camera 2
         cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.cameras_suivantes[1]]
@@ -275,21 +239,34 @@ class trajet():
         cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
         #isoler les pl fiables
         df_pl=cam1_cam2_passages_filtres.loc[(cam1_cam2_passages_filtres.loc[:,'l']==1) & (cam1_cam2_passages_filtres.loc[:,'fiability']==True)]
-        try : 
-            self.temps_parcours_max=self.temp_max_cluster(df_pl,300)[1]
-            self.tps_parcours_max_type='Cluster'
-        except ClusterError : 
-            self.temps_parcours_max=df_pl.tps_parcours.quantile(0.85)
-            self.tps_parcours_max_type='85eme_percentile'
-        """pour filtre sur temps de parcours
-        df_tps_parcours_pl_final=(df_pl.loc[df_pl['tps_parcours']<self.temps_parcours_max]
-                                        [['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage))"""
         df_tps_parcours_pl_final=df_pl[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
         if df_tps_parcours_pl_final.empty :
             raise PasDePlError()
         
         return df_tps_parcours_pl_final
-    
+ 
+    def liste_trajets_directs(self):
+        """
+        pour obtenir un dico contenant les instances de trajet_direct pour chaque trajet éleémentaires
+        """  
+        dico_traj_directs={}    
+        #pour chaque couple de camera
+        for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
+            #initialisation du nom de variables pour le dico resultat 
+            #print(indice,couple_cam)
+            nom_variable='trajet'+str(indice)
+            #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
+            if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
+                trajet_elem=trajet(self.df, self.date_debut, self.duree, couple_cam,temps_max_autorise=self.temps_max_autorise)
+            else : 
+                cle_traj_prec='trajet'+str(indice-1)
+                trajet_elem=(trajet(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
+                                         dico_traj_directs[cle_traj_prec].duree_traj_fut,
+                                         couple_cam, temps_max_autorise=self.temps_max_autorise))
+            dico_traj_directs[nom_variable]=trajet_elem
+        
+        return dico_traj_directs
+   
     def df_trajet_indirect(self):
         """
         On trouve les vehicules passés par les différentes cameras du dico_traj_directs
@@ -390,29 +367,7 @@ class trajet():
         
         
         return df_agrege,df_passag_transit
-    
-    def liste_trajets_directs(self):
-        """
-        pour obtenir un dico contenant les instances de trajet_direct pour chaque trajet éleémentaires
-        """  
-        dico_traj_directs={}    
-        #pour chaque couple de camera
-        for indice,couple_cam in enumerate([[self.cameras_suivantes[i],self.cameras_suivantes[i+1]] for i in range(len(self.cameras_suivantes)-1)]) :
-            #initialisation du nom de variables pour le dico resultat 
-            #print(indice,couple_cam)
-            nom_variable='trajet'+str(indice)
-            #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
-            if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
-                trajet_elem=trajet(self.df, self.date_debut, self.duree, self.temps_max_autorise, couple_cam)
-            else : 
-                cle_traj_prec='trajet'+str(indice-1)
-                trajet_elem=(trajet(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
-                                         dico_traj_directs[cle_traj_prec].duree_traj_fut,self.temps_max_autorise,
-                                         couple_cam))
-            dico_traj_directs[nom_variable]=trajet_elem
         
-        return dico_traj_directs
-    
     def temps_timedeltas_direct(self):
         
         timedelta_min=self.df_transit.tps_parcours.min()
@@ -423,7 +378,6 @@ class trajet():
         
         return timedelta_min,timedelta_max,timestamp_mini,timestamp_maxi,duree_traj_fut
         
-
     def temp_max_cluster(self, df_pl_ok, delai):
         """obtenir le temps max de parcours en faisant un cluster par dbscan
         en entree : la df des temps de parcours pl final
@@ -431,7 +385,9 @@ class trajet():
         en sortie : le nombre de clusters,
                     un timedelta
         """
-        donnees_src=df_pl_ok.loc[:,['created_x','tps_parcours']].copy() #isoler les données necessaires
+        if df_pl_ok.empty:
+            raise ClusterError()
+        donnees_src=df_pl_ok.loc[:,['date_cam_1','tps_parcours']].copy() #isoler les données necessaires
         temps_int=((pd.to_datetime('2018-01-01')+donnees_src['tps_parcours'])-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')#convertir les temps en integer
         #mise en forme des données pour passer dans sklearn 
         donnnes = temps_int.values
@@ -440,12 +396,12 @@ class trajet():
         try :
             clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/2).fit(matrice)
         except ValueError :
-            raise ClusterError()
+            raise ClusterError('ValueError lors de la creation du Cluster')
         labels = clustering.labels_
         n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
         # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
         if n_clusters_== 0 :
-            raise ClusterError()
+            raise ClusterError('Nb_Cluster = 0')
         #mettre en forme au format pandas
         results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
         results.columns = ['index_base', 'cluster_num']
@@ -496,16 +452,36 @@ class trajet():
         
         return graph_tps_parcours
 
-class ClusterError(Exception):       
-    def __init__(self):
-        Exception.__init__(self,'nb de Cluster valable = 0 ') 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
 
-class PasDePlError(Exception):  
+class ClusterError(Exception):
+    """Excpetion si pb dans la construction du cluster
+    Attributs : 
+        message -- message d'erreur -- text
+        nb_cluster -- nombre de cluster -- int 
+    """       
+    def __init__(self,message,nb_cluster=None ):
+        self.message=message 
+        self.nb_cluster=nb_cluster
+        
+
+class PasDePlError(Error):  
     """
     Exception levee si le trajet direct ne comprend pas de pl
     """     
     def __init__(self):
-        Exception.__init__(self,'pas de PL sur la période et les cameras visées') 
+        print('pas de PL sur la période et les cameras visées')
+
+class TypeTrajet_NbCamera_Error(Error):  
+    """
+    Exception levee si le type de trajet ne correpond pas au nombre de camera ou si le type e trajet n'est pas Direct, Indirect, Global.
+    """     
+    def __init__(self, nb_cam, typeTrajet):
+        self.typeTrajet=typeTrajet
+        self.nb_cam=nb_cam
+        print(f"le nb de camera :{self.nb_cam} ne correspond pas au type de trajet : {typeTrajet}, ou le type n'est pas connu") 
 
     
 def transit_1_jour(df_journee,date_jour, liste_trajets, save_graphs=False):
