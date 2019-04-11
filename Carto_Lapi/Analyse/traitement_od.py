@@ -139,9 +139,8 @@ fichier_trajet=(pd.DataFrame([{'origine':'A63','destination':'A10','cam_o':15, '
                                                          {'cameras':[19,5],'type_trajet':'direct'},
                                                         ]}
                            ]))[['origine', 'destination', 'cam_o', 'cam_d','trajets']]
-liste_complete_trajet=pd.DataFrame([[tuple(liste_cam['cameras']),value[0],value[1],value[2],value[3],len(liste_cam['cameras'])] for obj, value in fichier_trajet.iterrows() for liste_cam in value[4]],
-             columns=['cameras','origine','destination','cam_o','cam_d','nb_cams'])
-liste_complete_trajet=liste_complete_trajet.sort_values('nb_cams',ascending=False)
+liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
+liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
