@@ -45,7 +45,7 @@ class trajet():
         duree -- integer -- duree en minute pour periode de passage devant la première camera
         typeTrajet -- type de trajet -- Direct, Indirect, Global. le nombre de Camera est lié et fonction de ce paramètre
         df_filtre -- pandas dataframe -- permetde filtrer les données selonles passages déjà traites. en typeTrajet='Global unqiuement'
-        temps_max_autorise -- le temps que l'on autorise pour trouver les vehicules passés par cam1. en typeTrajet='Direct' ou Indirect uniquement
+        temps_max_autorise -- le temps que l'on autorise pour trouver les vehicules passés par cam1.
     """
     
     def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18) :
@@ -53,8 +53,8 @@ class trajet():
         Constrcuteur
         Attributs de sortie : 
            df_transit : pandas dataframe des trajets avec immat, date_cam_1, date_cam_2, tps_parcours (cameras en plus en Indirect ou Global)
-           temps_parcours_max : uniquement pour direct ou Indirect : temps de parcours max mmoyen, issu de Cluster ou percentile
-           tps_parcours_max_type : uniquement pour direct ou Indirect : source du tempsde parcours max
+           temps_parcours_max : : temps de parcours max mmoyen, issu de Cluster ou percentile
+           tps_parcours_max_type : : source du tempsde parcours max
            df_passag_transit : pandas dataframe: uniquemnet pour global : liste des passages consideres comme du transit
         """
                 #en prmeier on verifie que le typede trajet colle avec le nb de camera
@@ -71,28 +71,27 @@ class trajet():
         if self.df.empty:    
             raise PasDePlError()
         
+        #attributs
         self.date_debut, self.duree, self.cameras_suivantes, self.temps_max_autorise=pd.to_datetime(date_debut), duree, cameras,temps_max_autorise
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin]   
         
+        #calcul des df
         if typeTrajet=='Direct' :
             self.df_transit=self.trajet_direct()
             self.timedelta_min,self.timedelta_max,self.timestamp_mini,self.timestamp_maxi,self.duree_traj_fut=self.temps_timedeltas_direct()
-            try : 
-                self.temps_parcours_max=self.temp_max_cluster(self.df_transit,300)[1]
-                self.tps_parcours_max_type='Cluster'
-            except ClusterError :
-                self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
-                self.tps_parcours_max_type='85eme_percentile'
         elif typeTrajet=='Global' :
                 self.df_transit, self.df_passag_transit=self.loc_trajet_global(df_filtre)
         else : 
             self.dico_traj_directs=self.liste_trajets_directs()
             self.df_transit=self.df_trajet_indirect()
+        
+        #temps de parcours
+        if typeTrajet in ['Direct', 'Indirect'] :
             try : 
                 self.temps_parcours_max=self.temp_max_cluster(self.df_transit,300)[1]
                 self.tps_parcours_max_type='Cluster'
-            except ClusterError() : 
+            except ClusterError :
                 self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
                 self.tps_parcours_max_type='85eme_percentile'
         
@@ -122,7 +121,7 @@ class trajet():
         if cam1_fastest_next.empty : 
             raise PasDePlError()
         # on regroupe les attributs de description de type et de fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi)
-        cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='1/2'), axis=1)
+        cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='unique'), axis=1)
         #pour la fiabilite on peut faire varier le critere. ici c'est 0 : tous le spassages sont pris
         cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on ne garde que les passage le plus rapide devant la camera 2
@@ -365,10 +364,6 @@ class trajet():
         
         return graph_tps_parcours
 
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    pass
-
 class ClusterError(Exception):
     """Excpetion si pb dans la construction du cluster
     Attributs : 
@@ -407,7 +402,8 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
     """
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
-    dico_trajet_od,dico_passag_od={},{} 
+    dico_tps_max={}
+    dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d']=[],[],[],[]
     #df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
     #selection de 1 jour par boucle
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
@@ -425,6 +421,17 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
                 else : 
                     donnees_trajet=trajet(df_journee,date,60,cameras, typeTrajet='Global')
                 df_trajet, df_passag=donnees_trajet.df_transit, donnees_trajet.df_passag_transit
+                for od in df_trajet.o_d.unique(): 
+                    try : 
+                        temps_parcours_max=donnees_trajet.temp_max_cluster(df_trajet.loc[df_trajet['o_d']==od],300)[1]
+                        tps_parcours_max_type='Cluster'
+                    except ClusterError :
+                        temps_parcours_max=df_trajet.loc[df_trajet['o_d']==od].tps_parcours.quantile(0.85)
+                        tps_parcours_max_type='85eme_percentile'
+                    dico_tps_max['date'].append(date)
+                    dico_tps_max['temps'].append(temps_parcours_max)
+                    dico_tps_max['type'].append(tps_parcours_max_type)
+                    dico_tps_max['o_d'].append(od)
             except PasDePlError :
                 continue
 
@@ -438,7 +445,8 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
                 dico_passag=df_passag
             
             #df_journee=filtrer_df(df_journee, df_passag)
-    return dico_od,  dico_passag
+    dico_tps_max=pd.DataFrame(dico_tps_max)
+    return dico_od,  dico_passag, dico_tps_max
 
 def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
     #isoler les pl de la source
@@ -459,38 +467,6 @@ def filtrer_df(df_global,df_filtre):
     df_filtre=df_filtre.reset_index().set_index(['created','immat'])
     df_global_filtre=df_global.loc[~df_global.index.isin(df_filtre.index)].reset_index().set_index('created')
     return df_global_filtre
-
-def temp_max_cluster(self, df_pl_ok, delai):
-        """obtenir le temps max de parcours en faisant un cluster par dbscan
-        en entree : la df des temps de parcours pl final
-                    le delai max pour regrouper en luster,en seconde
-        en sortie : le nombre de clusters,
-                    un timedelta
-        """
-        donnees_src=df_pl_ok.loc[:,['created_x','tps_parcours']].copy() #isoler les données necessaires
-        temps_int=((pd.to_datetime('2018-01-01')+donnees_src['tps_parcours'])-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')#convertir les temps en integer
-        #mise en forme des données pour passer dans sklearn 
-        donnnes = temps_int.values
-        matrice=donnnes.reshape(-1, 1)
-        #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
-        try :
-            clustering=DBSCAN(eps=delai, min_samples=len(temps_int)/2).fit(matrice)
-        except ValueError :
-            raise ClusterError()
-        labels = clustering.labels_
-        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-        # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
-        if n_clusters_== 0 :
-            raise ClusterError()
-        #mettre en forme au format pandas
-        results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
-        results.columns = ['index_base', 'cluster_num']
-        results = pd.merge(results,df_pl_ok, left_on='index_base', right_index=True )
-        #obtenir un timedelta unique
-        temp_parcours_max=results.loc[results.loc[:,'cluster_num']!=-1].groupby(['cluster_num'])['tps_parcours'].max()
-        temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
-        
-        return n_clusters_, temp_parcours_max
     
     
     
