@@ -304,6 +304,8 @@ class trajet():
             raise ClusterError()
         donnees_src=df_pl_ok.loc[:,['date_cam_1','tps_parcours']].copy() #isoler les données necessaires
         temps_int=((pd.to_datetime('2018-01-01')+donnees_src['tps_parcours'])-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')#convertir les temps en integer
+        if len(temps_int)<20 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
+            raise ClusterError()
         #mise en forme des données pour passer dans sklearn 
         donnnes = temps_int.values
         matrice=donnnes.reshape(-1, 1)
