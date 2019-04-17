@@ -19,6 +19,8 @@ from sklearn.cluster import DBSCAN
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
 liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
+liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
+liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -73,6 +75,7 @@ class trajet():
         
         #attributs
         self.date_debut, self.duree, self.cameras_suivantes, self.temps_max_autorise=pd.to_datetime(date_debut), duree, cameras,temps_max_autorise
+        self.typeTrajet=typeTrajet
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin]   
         
@@ -94,6 +97,23 @@ class trajet():
             except ClusterError :
                 self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
                 self.tps_parcours_max_type='85eme_percentile'
+        else : 
+            dico_tps_max={}
+            dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d'], dico_tps_max['cameras'] = [],[],[],[],[]
+            for cam, od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
+                                    self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())):
+                try : 
+                    temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],300)[1]
+                    tps_parcours_max_type='Cluster'
+                except ClusterError :
+                    temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
+                    tps_parcours_max_type='85eme_percentile'
+                dico_tps_max['date'].append(self.date_debut)
+                dico_tps_max['temps'].append(temps_parcours_max)
+                dico_tps_max['type'].append(tps_parcours_max_type)
+                dico_tps_max['o_d'].append(od)
+                dico_tps_max['cameras'].append(cam)
+            self.temps_parcours_max=pd.DataFrame(dico_tps_max)
         
     def trajet_direct(self):
         """
@@ -353,18 +373,31 @@ class trajet():
         """
         copie_df=self.df_transit.copy()
         copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
-        copie_df['temps_parcours_max']=pd.to_datetime('2018-01-01')+self.temps_parcours_max
-        graph_tps_parcours = alt.Chart(copie_df).mark_point().encode(
-                        x='date_cam_1',
-                        y='hoursminutes(tps_parcours)',
-                        tooltip='hoursminutes(tps_parcours)').interactive()
-        graph_tps_filtre=alt.Chart(copie_df).mark_line(color='yellow').encode(
-                         x='date_cam_1',
-                         y='hoursminutes(temps_parcours_max)',
-                         tooltip='hoursminutes(temps_parcours_max)')
-        graph_tps_parcours=graph_tps_parcours+graph_tps_filtre
-        
-        return graph_tps_parcours
+        if self.typeTrajet !='Global' :
+            copie_df['temps_parcours_max']=pd.to_datetime('2018-01-01')+self.temps_parcours_max
+            graph_tps_parcours = alt.Chart(copie_df).mark_point().encode(
+                            x='date_cam_1',
+                            y='hoursminutes(tps_parcours)',
+                            tooltip='hoursminutes(tps_parcours)').interactive()
+            graph_tps_filtre=alt.Chart(copie_df).mark_line(color='yellow').encode(
+                             x='date_cam_1',
+                             y='hoursminutes(temps_parcours_max)',
+                             tooltip='hoursminutes(temps_parcours_max)')
+            graph_tps_parcours=graph_tps_parcours+graph_tps_filtre
+            
+            return graph_tps_parcours
+        else : 
+            dico_graph={}
+            print(f"liste des o-d :{self.df_transit.o_d.unique()}")
+            for od in self.df_transit.o_d.unique() :
+                graph_tps_parcours = alt.Chart(copie_df.loc[copie_df['o_d']==od]).mark_point().encode(
+                                x='date_cam_1',
+                                y='hoursminutes(tps_parcours)',
+                                tooltip='hoursminutes(tps_parcours)').interactive()
+                dico_graph[od]=graph_tps_parcours
+            return dico_graph
+                    
+                
 
 class ClusterError(Exception):
     """Excpetion si pb dans la construction du cluster
@@ -374,8 +407,6 @@ class ClusterError(Exception):
     """       
     def __init__(self):
         Exception.__init__(self,"Erruer de cluster : nb cluster = 0 ou ValueError sur le DBScan ou df d'entree vide")
-
-        
 
 class PasDePlError(Exception):  
     """
@@ -404,8 +435,6 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
     """
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
-    dico_tps_max={}
-    dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d']=[],[],[],[]
     #df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
     #selection de 1 jour par boucle
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
@@ -422,29 +451,19 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
                     donnees_trajet=trajet(df_journee,date,60,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy())
                 else : 
                     donnees_trajet=trajet(df_journee,date,60,cameras, typeTrajet='Global')
-                df_trajet, df_passag=donnees_trajet.df_transit, donnees_trajet.df_passag_transit
-                for od in df_trajet.o_d.unique(): 
-                    try : 
-                        temps_parcours_max=donnees_trajet.temp_max_cluster(df_trajet.loc[df_trajet['o_d']==od],300)[1]
-                        tps_parcours_max_type='Cluster'
-                    except ClusterError :
-                        temps_parcours_max=df_trajet.loc[df_trajet['o_d']==od].tps_parcours.quantile(0.85)
-                        tps_parcours_max_type='85eme_percentile'
-                    dico_tps_max['date'].append(date)
-                    dico_tps_max['temps'].append(temps_parcours_max)
-                    dico_tps_max['type'].append(tps_parcours_max_type)
-                    dico_tps_max['o_d'].append(od)
+                df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max
+                
             except PasDePlError :
                 continue
-
-            if 'dico_od' in locals() : #si la varible existe deja on la concatene avec le reste
-                dico_od=pd.concat([dico_od,df_trajet], sort=False)
-            else : #sinon on initilise cette variable
-                dico_od=df_trajet  
+            
             if 'dico_passag' in locals() : #si la varible existe deja on la concatene avec le reste
                 dico_passag=pd.concat([dico_passag,df_passag], sort=False)
+                dico_od=pd.concat([dico_od,df_trajet], sort=False)
+                dico_tps_max=pd.concat([dico_tps_max,df_tps_max], sort=False)
             else : #sinon on initilise cette variable
                 dico_passag=df_passag
+                dico_od=df_trajet 
+                dico_tps_max=df_tps_max
             
             #df_journee=filtrer_df(df_journee, df_passag)
     dico_tps_max=pd.DataFrame(dico_tps_max)
