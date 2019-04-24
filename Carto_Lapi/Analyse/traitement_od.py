@@ -106,7 +106,7 @@ class trajet():
                 for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
                             self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())): 
                     try : 
-                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],725)[1]
+                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],700)[1]
                         tps_parcours_max_type='Cluster'
                     except ClusterError :
                         temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
@@ -120,7 +120,7 @@ class trajet():
             else :
                 for od in self.df_transit.o_d.unique().tolist():
                     try : 
-                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],725)[1]
+                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],700)[1]
                         tps_parcours_max_type='Cluster'
                     except ClusterError :
                         temps_parcours_max=self.df_transit.loc[self.df_transit['o_d']==od].tps_parcours.quantile(0.85)
@@ -347,10 +347,10 @@ class trajet():
         if len(liste_valeur)<20 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
             raise ClusterError()
         #mise en forme des données pour passer dans sklearn 
-        #matrice=np.array(liste_valeur).reshape(-1, 1)
+        matrice=np.array(liste_valeur).reshape(-1, 1)
         #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
         try :
-            clustering=DBSCAN(eps=delai, min_samples=len(liste_valeur)/2).fit(liste)
+            clustering=DBSCAN(eps=delai, min_samples=len(liste_valeur)/4).fit(liste)
         except ValueError :
             raise ClusterError()
         labels = clustering.labels_
@@ -476,8 +476,16 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
     #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
     #df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
+    #générer des dates
+    liste_date=[] # on pourrait faire une ofnction a part sur la generation de dates
+    for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') : 
+        if date.hour in [6,7,8,14,15,16,17,18,19] : 
+            for date_15m in pd.date_range(date, periods=4, freq='15T') :
+               liste_date.append(date_15m)
+        else: 
+            liste_date.append(date)
     #selection de 1 jour par boucle
-    for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') :
+    for date in liste_date :
         if date.weekday()==5 : # si on est le semadi on laisse la journee de dimanche passer et le pl repart
             df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=32)]
         else : 
@@ -533,10 +541,28 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique):
     """
     jointure des 3 sources de données :le tempsde arcours, le temps max issus du lapi, le temps theorique
     """
+    def filtre_tps_parcours(date_passage,tps_parcours, type_tps_lapi, tps_lapi, tps_theoriq, marge) : 
+        """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
+        
+        if date_passage.hour in [20,21,22,23,0,1,2,3,4,5,6] : 
+            marge += 480 #si le gars passe la nuit, on lui ajoute 8 heure de marge
+        if type_tps_lapi=='Cluster':
+            if tps_parcours < tps_lapi+pd.Timedelta(str(marge)+'min') :
+                return 1
+            else: 
+                return 0
+        else : 
+            if tps_parcours < tps_theoriq+pd.Timedelta(str(marge)+'min') :
+                return 1
+            else: 
+                return 0
+            
     df_transit['period']=df_transit.apply(lambda x : x['date_cam_1'].to_period('H'),axis=1)
     df_tps_parcours['period']=df_tps_parcours.apply(lambda x : x['date'].to_period('H'),axis=1)
     df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period']).merge(df_theorique[['cameras','tps_parcours_theoriq' ]], on='cameras')
-    
+    df_transit_tps_parcours['filtre_tps']=df_transit_tps_parcours.apply(lambda x : filtre_tps_parcours(x['date_cam_1'],
+                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],10), axis=1)
+    return df_transit_tps_parcours
        
     
     
