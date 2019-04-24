@@ -100,8 +100,8 @@ class trajet():
         else : 
             dico_tps_max={}
             dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d'], dico_tps_max['cameras'] = [],[],[],[],[]
-            for cam, od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
-                                    self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())):
+            for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
+                        self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())):
                 try : 
                     temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],300)[1]
                     tps_parcours_max_type='Cluster'
@@ -387,14 +387,36 @@ class trajet():
             
             return graph_tps_parcours
         else : 
+            print (f"liste des o-d : {self.df_transit.o_d.unique()}")
             dico_graph={}
-            print(f"liste des o-d :{self.df_transit.o_d.unique()}")
+            copie_df=copie_df.merge(self.temps_parcours_max, on='cameras').drop('o_d_y',axis=1)
+            copie_df.temps=pd.to_datetime('2018-01-01')+copie_df.temps
+
             for od in self.df_transit.o_d.unique() :
-                graph_tps_parcours = alt.Chart(copie_df.loc[copie_df['o_d']==od]).mark_point().encode(
+                copie_df_tps_max=copie_df.loc[copie_df['o_d_x']==od][['cameras', 'temps', 'type']].drop_duplicates('temps').copy()
+                index_temps=pd.DataFrame(pd.DatetimeIndex(pd.date_range(start=self.date_debut, end=self.date_fin, periods=len(copie_df_tps_max))), columns=['date_cam_1'])
+                prod_cartesien=copie_df_tps_max.assign(key=1).merge(index_temps.assign(key=1), on='key')
+                points=alt.Chart(copie_df.loc[copie_df['o_d_x']==od]).mark_point().encode(
+                                x='date_cam_1',
+                                y='hoursminutes(tps_parcours):T',
+                                color='cameras',
+                                shape='cameras',
+                                tooltip='hoursminutes(tps_parcours)').interactive()
+                line = alt.Chart(prod_cartesien).mark_line().encode(
+                                x='date_cam_1',
+                                y='hoursminutes(temps):T',
+                                color='cameras').interactive()
+                """graph_tps_parcours = alt.Chart(copie_df.loc[copie_df['o_d_x']==od]).mark_point().encode(
                                 x='date_cam_1',
                                 y='hoursminutes(tps_parcours)',
+                                color='cameras',
+                                shape='cameras',
                                 tooltip='hoursminutes(tps_parcours)').interactive()
-                dico_graph[od]=graph_tps_parcours
+                graph_tps_filtre=alt.Chart(copie_df.loc[copie_df['o_d_x']==od]).mark_line().encode(
+                                        x='date_cam_1',
+                                        y='hoursminutes(temps)')
+                """
+                dico_graph[od]=points+line#graph_tps_parcours+graph_tps_filtre
             return dico_graph
                     
                 
