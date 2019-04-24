@@ -48,9 +48,10 @@ class trajet():
         typeTrajet -- type de trajet -- Direct, Indirect, Global. le nombre de Camera est lié et fonction de ce paramètre
         df_filtre -- pandas dataframe -- permetde filtrer les données selonles passages déjà traites. en typeTrajet='Global unqiuement'
         temps_max_autorise -- le temps que l'on autorise pour trouver les vehicules passés par cam1.
+        typeCluster -- pour typeTrajet='Global' : regroupement des temps de parcours par o_d ou parcameras parcourue 
     """
     
-    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18) :
+    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18, typeCluster='o_d') :
         """
         Constrcuteur
         Attributs de sortie : 
@@ -99,20 +100,30 @@ class trajet():
                 self.tps_parcours_max_type='85eme_percentile'
         else : 
             dico_tps_max={}
-            dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d'], dico_tps_max['cameras'] = [],[],[],[],[]
-            for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
-                        self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())):
-                try : 
-                    temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],300)[1]
-                    tps_parcours_max_type='Cluster'
-                except ClusterError :
-                    temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
-                    tps_parcours_max_type='85eme_percentile'
-                dico_tps_max['date'].append(self.date_debut)
-                dico_tps_max['temps'].append(temps_parcours_max)
-                dico_tps_max['type'].append(tps_parcours_max_type)
-                dico_tps_max['o_d'].append(od)
-                dico_tps_max['cameras'].append(cam)
+            dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d']=[],[],[],[]
+            if typeCluster!='o_d' : #on pourrait le remplacer par ='cam' et mettre une erreur comme pour le typetrajet
+                dico_tps_max['cameras'] = []
+                for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
+                            self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())): 
+                    try : 
+                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],300)[1]
+                        tps_parcours_max_type='Cluster'
+                    except ClusterError :
+                        temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
+                        tps_parcours_max_type='85eme_percentile'
+                    dico_tps_max['cameras'].append(cam)
+            else :
+                for od in self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist():
+                    try : 
+                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],300)[1]
+                        tps_parcours_max_type='Cluster'
+                    except ClusterError :
+                        temps_parcours_max=self.df_transit.loc[self.df_transit['o_d']==od].tps_parcours.quantile(0.85)
+                        tps_parcours_max_type='85eme_percentile'
+            dico_tps_max['date'].append(self.date_debut)
+            dico_tps_max['temps'].append(temps_parcours_max)
+            dico_tps_max['type'].append(tps_parcours_max_type)
+            dico_tps_max['o_d'].append(od)    
             self.temps_parcours_max=pd.DataFrame(dico_tps_max)
         
     def trajet_direct(self):
