@@ -93,7 +93,7 @@ class trajet():
         #temps de parcours
         if typeTrajet in ['Direct', 'Indirect'] :
             try : 
-                self.temps_parcours_max=self.temp_max_cluster(self.df_transit,725)[1]
+                self.temps_parcours_max=self.temp_max_cluster(self.df_transit,800)[1]
                 self.tps_parcours_max_type='Cluster'
             except ClusterError :
                 self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
@@ -106,7 +106,7 @@ class trajet():
                 for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
                             self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())): 
                     try : 
-                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],700)[1]
+                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],800)[1]
                         tps_parcours_max_type='Cluster'
                     except ClusterError :
                         temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
@@ -120,7 +120,7 @@ class trajet():
             else :
                 for od in self.df_transit.o_d.unique().tolist():
                     try : 
-                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],700)[1]
+                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],800)[1]
                         tps_parcours_max_type='Cluster'
                     except ClusterError :
                         temps_parcours_max=self.df_transit.loc[self.df_transit['o_d']==od].tps_parcours.quantile(0.85)
@@ -481,25 +481,26 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
     for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') : 
         if date.hour in [6,7,8,14,15,16,17,18,19] : 
             for date_15m in pd.date_range(date, periods=4, freq='15T') :
-               liste_date.append(date_15m)
+               liste_date.append([date_15m,15])
         else: 
-            liste_date.append(date)
+            liste_date.append([date,60])
     #selection de 1 jour par boucle
-    for date in liste_date :
+    for date, duree in liste_date :
         if date.weekday()==5 : # si on est le semadi on laisse la journee de dimanche passer et le pl repart
             df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=32)]
         else : 
             df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
-        print(f"date : {date} debut_traitement : {dt.datetime.now()}")
+        if date.minute==0 : print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         for cameras in zip([15,12,8,10,19,6],range(6)) : #dans ce mode peu importe la camera d'arrivée, elle sont toutes analysées
             #print(f"cameras{cameras}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
                 if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
                     #print(dico_passag.loc[dico_passag['created']>=date])
-                    donnees_trajet=trajet(df_journee,date,60,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy())
+                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy())
                 else : 
-                    donnees_trajet=trajet(df_journee,date,60,cameras, typeTrajet='Global')
+                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global')
                 df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max
+                #print (df_tps_max)
                 
             except PasDePlError :
                 continue
@@ -557,12 +558,36 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique):
             else: 
                 return 0
             
-    df_transit['period']=df_transit.apply(lambda x : x['date_cam_1'].to_period('H'),axis=1)
-    df_tps_parcours['period']=df_tps_parcours.apply(lambda x : x['date'].to_period('H'),axis=1)
-    df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period']).merge(df_theorique[['cameras','tps_parcours_theoriq' ]], on='cameras')
+    def periode_carac(date_passage) :
+        """
+        pour calculer la période de passage selon une date
+        """
+        if date_passage.hour in [6,7,8,14,15,16,17,18,19] : 
+            return date_passage.floor('15min').to_period('15min')
+        else : 
+            return date_passage.to_period('H')
+            
+    df_transit['period']=df_transit.apply(lambda x : periode_carac(x['date_cam_1']),axis=1)
+    df_tps_parcours['period']=df_tps_parcours.apply(lambda x : periode_carac(x['date']),axis=1)
+    df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq' ]], 
+                                                                                                    on='cameras')
     df_transit_tps_parcours['filtre_tps']=df_transit_tps_parcours.apply(lambda x : filtre_tps_parcours(x['date_cam_1'],
-                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],10), axis=1)
+                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],5), axis=1)
     return df_transit_tps_parcours
        
-    
+def graph_transit_filtre(df_transit, o_d):
+    """
+    pour visualiser les graph de seprataion des trajets de transit et des autres
+    """
+    test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime('2019-01-29 00:00:00')) &
+                                             (df_transit['date_cam_1']<pd.to_datetime('2019-01-29 23:59:59')) &
+                                             (df_transit['o_d']==o_d)])
+    copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps']].head(5000).copy()
+    copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
+    graph_filtre_tps = alt.Chart(copie_df).mark_point().encode(
+                                x='date_cam_1',
+                                y='hoursminutes(tps_parcours)',
+                                tooltip='hoursminutes(tps_parcours)',
+                                color='filtre_tps:N').interactive()
+    return graph_filtre_tps    
     
