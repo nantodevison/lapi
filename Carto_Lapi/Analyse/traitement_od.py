@@ -437,7 +437,18 @@ class trajet():
                 dico_graph[od]=points+line#graph_tps_parcours+graph_tps_filtre
             return dico_graph
                     
-                
+def trouver_passages_consecutif(df, date_debut, date_fin, camera_1, camera_2) : 
+    """
+    pour obtenir une df des immat passées par une camera puis de suite une autre
+    """
+    df_duree=df.loc[date_debut:date_fin] #limiter la df de base
+    df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==camera_1]#isoler camera 1
+    df_duree_autres_cam=df.loc[(df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]#on retrouve ces immatriculation mais qui ne sont pas à la 1ere camera
+    cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')#on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
+    cam1_croise_suivant=cam1_croise_autre_cam.loc[(cam1_croise_autre_cam.loc[:,'created_x']<cam1_croise_autre_cam.loc[:,'created_y'])]#on ne garde que les passages à la 2ème caméra postérieur au passage à la première
+    cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]#on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
+    cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==camera_2].copy()#on ne garde que les passage le plus rapide devant la camera 2
+    return cam1_puis_cam2                
 
 class ClusterError(Exception):
     """Excpetion si pb dans la construction du cluster
