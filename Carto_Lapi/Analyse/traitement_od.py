@@ -142,26 +142,11 @@ class trajet():
         """
         #trouver tt les bagnoles passée par cam1 dont la 2eme camera est cam2
         #isoler camera 1
-        df_duree_cam1=self.df_duree.loc[self.df_duree.loc[:,'camera_id']==self.cameras_suivantes[0]]
-        #on retrouve ces immatriculation mais qui ne sont pas à la 1ere camera
-        df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
-        #on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
-        cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')
-        #on ne garde que les passages à la 2ème caméra postérieur au passage à la première
-        cam1_croise_suivant=cam1_croise_autre_cam.loc[(cam1_croise_autre_cam.loc[:,'created_x']<cam1_croise_autre_cam.loc[:,'created_y'])]
-        #print(cam1_croise_suivant[['camera_id_x','created_x','created_y','camera_id_y']])
-        #on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
-        cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]
-        #print(cam1_fastest_next[['camera_id_x','created_x','created_y','camera_id_y']])
-        #Si la df cam1_fastest_next est vide ça crée une erreur ValueError dans la creation de 'l', donc je filtre avant avec une levee d'erreur PasdePl
-        if cam1_fastest_next.empty : 
-            raise PasDePlError()
+        cam1_puis_cam2=trouver_passages_consecutif(self.df, self.date_debut, self.date_fin,self.cameras_suivantes[0], self.cameras_suivantes[1])
         # on regroupe les attributs de description de type et de fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi)
-        cam1_fastest_next['l']=cam1_fastest_next.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='unique'), axis=1)
+        cam1_puis_cam2['l']=cam1_puis_cam2.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='unique'), axis=1)
         #pour la fiabilite on peut faire varier le critere. ici c'est 0 : tous le spassages sont pris
-        cam1_fastest_next['fiability']=cam1_fastest_next.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
-        #on ne garde que les passage le plus rapide devant la camera 2
-        cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==self.cameras_suivantes[1]]
+        cam1_puis_cam2['fiability']=cam1_puis_cam2.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on trie puis on ajoute un filtre surle temps entre les 2 camera.
         cam1_cam2_passages=cam1_puis_cam2.set_index('created_y').sort_index()
         cam1_cam2_passages_filtres=cam1_cam2_passages[self.date_debut:self.date_debut+pd.Timedelta(hours=self.temps_max_autorise)]
@@ -447,6 +432,8 @@ def trouver_passages_consecutif(df, date_debut, date_fin, camera_1, camera_2) :
     cam1_croise_autre_cam=df_duree_cam1.reset_index().merge(df_duree_autres_cam.reset_index(), on='immat')#on fait une jointure entre cam 1 et les autres cam pour avoir une correspondance entre le passage devan la 1ere cmaera et la seconde
     cam1_croise_suivant=cam1_croise_autre_cam.loc[(cam1_croise_autre_cam.loc[:,'created_x']<cam1_croise_autre_cam.loc[:,'created_y'])]#on ne garde que les passages à la 2ème caméra postérieur au passage à la première
     cam1_fastest_next=cam1_croise_suivant.loc[cam1_croise_suivant.groupby(['immat'])['created_y'].idxmin()]#on isole le passage le plus rapide devant cam suivante pour chaque immatriculation
+    if cam1_fastest_next.empty : 
+        raise PasDePlError()
     cam1_puis_cam2=cam1_fastest_next.loc[cam1_fastest_next.loc[:,'camera_id_y']==camera_2].copy()#on ne garde que les passage le plus rapide devant la camera 2
     return cam1_puis_cam2                
 
