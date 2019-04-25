@@ -13,7 +13,7 @@ import geopandas as gp
 import numpy as np
 import Connexion_Transfert as ct
 import altair as alt
-import os, datetime as dt
+import os,math, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
@@ -51,7 +51,7 @@ class trajet():
         typeCluster -- pour typeTrajet='Global' : regroupement des temps de parcours par o_d ou parcameras parcourue 
     """
     
-    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18, typeCluster='o_d') :
+    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18, typeCluster='o_d',modeRegroupement='1/2') :
         """
         Constrcuteur
         Attributs de sortie : 
@@ -76,7 +76,7 @@ class trajet():
         
         #attributs
         self.date_debut, self.duree, self.cameras_suivantes, self.temps_max_autorise=pd.to_datetime(date_debut), duree, cameras,temps_max_autorise
-        self.typeTrajet=typeTrajet
+        self.typeTrajet,self.modeRegroupement = typeTrajet, modeRegroupement
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin]   
         
@@ -144,7 +144,7 @@ class trajet():
         #isoler camera 1
         cam1_puis_cam2=trouver_passages_consecutif(self.df, self.date_debut, self.date_fin,self.cameras_suivantes[0], self.cameras_suivantes[1])
         # on regroupe les attributs de description de type et de fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi)
-        cam1_puis_cam2['l']=cam1_puis_cam2.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode='unique'), axis=1)
+        cam1_puis_cam2['l']=cam1_puis_cam2.apply(lambda x:self.test_unicite_type([x['l_x'],x['l_y']],mode=self.modeRegroupement), axis=1)
         #pour la fiabilite on peut faire varier le critere. ici c'est 0 : tous le spassages sont pris
         cam1_puis_cam2['fiability']=cam1_puis_cam2.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on trie puis on ajoute un filtre surle temps entre les 2 camera.
@@ -176,12 +176,13 @@ class trajet():
             nom_variable='trajet'+str(indice)
             #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
             if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
-                trajet_elem=trajet(self.df, self.date_debut, self.duree, couple_cam,temps_max_autorise=self.temps_max_autorise)
+                trajet_elem=trajet(self.df, self.date_debut, self.duree, couple_cam,temps_max_autorise=self.temps_max_autorise,
+                                   modeRegroupement=self.modeRegroupement)
             else : 
                 cle_traj_prec='trajet'+str(indice-1)
                 trajet_elem=(trajet(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
                                          dico_traj_directs[cle_traj_prec].duree_traj_fut,
-                                         couple_cam, temps_max_autorise=self.temps_max_autorise))
+                                         couple_cam, temps_max_autorise=self.temps_max_autorise,modeRegroupement=self.modeRegroupement))
             dico_traj_directs[nom_variable]=trajet_elem
         
         return dico_traj_directs
@@ -272,7 +273,7 @@ class trajet():
            raise PasDePlError() 
         #on recupere ces immat aux autres cameras
         df_duree_autres_cam=self.df.loc[(self.df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
-        groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),'1/2'),
+        groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : self.test_unicite_type(list(x),mode=self.modeRegroupement),
                                                                                        'created':lambda x: tuple(x)}))
         groupe_pl=groupe.loc[groupe['l']==1].copy() #on ne garde que les pl
         if groupe_pl.empty :
@@ -310,7 +311,7 @@ class trajet():
         timedelta_max=self.df_transit.tps_parcours.max()
         timestamp_mini=self.date_debut+timedelta_min
         timestamp_maxi=self.date_fin+timedelta_max
-        duree_traj_fut=(((timestamp_maxi-timestamp_mini).seconds)//60)+1
+        duree_traj_fut=math.ceil(((timestamp_maxi-timestamp_mini)/ np.timedelta64(1, 'm')))
         
         return timedelta_min,timedelta_max,timestamp_mini,timestamp_maxi,duree_traj_fut
         
@@ -368,6 +369,8 @@ class trajet():
                 return 1
             else : 
                 return -1
+        elif mode=='aucun' :
+            return 1
     
     def graph(self):
         """
@@ -460,7 +463,7 @@ class TypeTrajet_NbCamera_Error(Exception):
     def __init__(self, nb_cam, typeTrajet):
         Exception.__init__(self,f"le nb de camera ({nb_cam}) ne correspond pas au type de trajet, ou le type : {typeTrajet} n'est pas connu")
 
-def transit_temps_complet(date_debut, nb_jours, df_3semaines):
+def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2'):
     """
     Calcul des trajets et passages des poids lourds en transit, sur une période de temps minimale d'1j (peut etre regle et affiné dans la fonction selon date_debut, nb_jours et periode)
     en entree : 
@@ -494,9 +497,10 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines):
             try : 
                 if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
                     #print(dico_passag.loc[dico_passag['created']>=date])
-                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy())
+                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy(),
+                                          modeRegroupement=Regroupement)
                 else : 
-                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global')
+                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',modeRegroupement=Regroupement)
                 df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max
                 #print (df_tps_max)
                 
