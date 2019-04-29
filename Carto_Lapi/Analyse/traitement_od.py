@@ -17,12 +17,12 @@ import os,math, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
-liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
+liste_complete_trajet=pd.read_json(r'E:\Boulot\lapi\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -31,7 +31,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('gti_lapi') as c : 
+    with ct.ConnexionBdd('lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
@@ -577,8 +577,8 @@ def temp_max_cluster(df_pl_ok, delai, coeff=4):
     liste_valeur=donnees_src.tps_parcours.apply(lambda x : ((pd.to_datetime('2018-01-01')+x)-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()#convertir les temps en integer
     liste_date=donnees_src.date_cam_1.apply(lambda x :(x - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()
     liste=[[liste_date[i],liste_valeur[i]] for i in range(len(liste_valeur))]
-    #if len(liste_valeur)<10 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
-        #raise ClusterError()
+    if len(liste_valeur)<10 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
+        raise ClusterError()
     #mise en forme des données pour passer dans sklearn 
     matrice=np.array(liste_valeur).reshape(-1, 1)
     #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
@@ -596,8 +596,7 @@ def temp_max_cluster(df_pl_ok, delai, coeff=4):
     results.columns = ['index_base', 'cluster_num']
     results = pd.merge(results,df_pl_ok, left_on='index_base', right_index=True )
     #obtenir un timedelta unique
-    temp_parcours_max=results.loc[results.loc[:,'cluster_num']==0].groupby(['cluster_num'])['tps_parcours'].max()
-    temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
+    temp_parcours_max=results.loc[results.loc[:,'cluster_num']!=-1].groupby(['cluster_num'])['tps_parcours'].max().min()
     
     return n_clusters_, temp_parcours_max  
     
