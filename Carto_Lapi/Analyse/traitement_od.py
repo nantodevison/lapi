@@ -516,7 +516,7 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique):
         """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
         
         if date_passage.hour in [20,21,22,23,0,1,2,3,4,5,6] : 
-            marge += 480 #si le gars passe la nuit, on lui ajoute 8 heure de marge
+            marge += 660 #si le gars passe la nuit, on lui ajoute 11 heure de marge
         if type_tps_lapi=='Cluster':
             if tps_parcours < tps_lapi+pd.Timedelta(str(marge)+'min') :
                 return 1
@@ -552,13 +552,13 @@ def graph_transit_filtre(df_transit, o_d):
     test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime('2019-01-29 00:00:00')) &
                                              (df_transit['date_cam_1']<pd.to_datetime('2019-01-29 23:59:59')) &
                                              (df_transit['o_d']==o_d)])
-    copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps']].head(5000).copy()
+    copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps', 'type']].head(5000).copy()
     copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
     graph_filtre_tps = alt.Chart(copie_df).mark_point().encode(
                                 x='date_cam_1',
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
-                                color='filtre_tps:N').interactive()
+                                color='filtre_tps:N', shape='type:N').interactive()
     return graph_filtre_tps  
 
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
@@ -577,7 +577,7 @@ def temp_max_cluster(df_pl_ok, delai, coeff=4):
     liste_valeur=donnees_src.tps_parcours.apply(lambda x : ((pd.to_datetime('2018-01-01')+x)-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()#convertir les temps en integer
     liste_date=donnees_src.date_cam_1.apply(lambda x :(x - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()
     liste=[[liste_date[i],liste_valeur[i]] for i in range(len(liste_valeur))]
-    if len(liste_valeur)<10 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
+    if len(liste_valeur)<5 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
         raise ClusterError()
     #mise en forme des données pour passer dans sklearn 
     matrice=np.array(liste_valeur).reshape(-1, 1)
