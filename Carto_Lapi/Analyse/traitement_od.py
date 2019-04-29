@@ -330,7 +330,7 @@ class trajet():
         liste_valeur=donnees_src.tps_parcours.apply(lambda x : ((pd.to_datetime('2018-01-01')+x)-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()#convertir les temps en integer
         liste_date=donnees_src.date_cam_1.apply(lambda x :(x - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()
         liste=[[liste_date[i],liste_valeur[i]] for i in range(len(liste_valeur))]
-        if len(liste_valeur)<20 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
+        if len(liste_valeur)<10 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
             raise ClusterError()
         #mise en forme des données pour passer dans sklearn 
         matrice=np.array(liste_valeur).reshape(-1, 1)
@@ -349,7 +349,7 @@ class trajet():
         results.columns = ['index_base', 'cluster_num']
         results = pd.merge(results,df_pl_ok, left_on='index_base', right_index=True )
         #obtenir un timedelta unique
-        temp_parcours_max=results.loc[results.loc[:,'cluster_num']!=-1].groupby(['cluster_num'])['tps_parcours'].max()
+        temp_parcours_max=results.loc[results.loc[:,'cluster_num']==0].groupby(['cluster_num'])['tps_parcours'].max()
         temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
         
         return n_clusters_, temp_parcours_max
