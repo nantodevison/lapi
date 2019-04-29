@@ -22,6 +22,8 @@ liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x[
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
+param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
     l'ouvertur se fait par appel d'une connexionBdd Python (scripts de travail ici https://github.com/nantodevison/Outils/blob/master/Outils/Martin_Perso/Connexion_Transfert.py)
@@ -78,7 +80,7 @@ class trajet():
         self.date_debut, self.duree, self.cameras_suivantes, self.temps_max_autorise=pd.to_datetime(date_debut), duree, cameras,temps_max_autorise
         self.typeTrajet,self.modeRegroupement = typeTrajet, modeRegroupement
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
-        self.df_duree=self.df.loc[self.date_debut:self.date_fin]   
+        self.df_duree=self.df.loc[self.date_debut:self.date_fin] 
         
         #calcul des df
         if typeTrajet=='Direct' :
@@ -93,7 +95,7 @@ class trajet():
         #temps de parcours
         if typeTrajet in ['Direct', 'Indirect'] :
             try : 
-                self.temps_parcours_max=self.temp_max_cluster(self.df_transit,800)[1]
+                self.temps_parcours_max=temp_max_cluster(self.df_transit,800)[1]
                 self.tps_parcours_max_type='Cluster'
             except ClusterError :
                 self.temps_parcours_max=self.df_transit.tps_parcours.quantile(0.85)
@@ -106,7 +108,7 @@ class trajet():
                 for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
                             self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())): 
                     try : 
-                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],800)[1]
+                        temps_parcours_max=temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],800)[1]
                         tps_parcours_max_type='Cluster'
                     except ClusterError :
                         temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
@@ -120,7 +122,10 @@ class trajet():
             else :
                 for od in self.df_transit.o_d.unique().tolist():
                     try : 
-                        temps_parcours_max=self.temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],800)[1]
+                        t_ref=15 if self.date_debut.hour in [6,7,8,14,15,16,17,18,19] else 60 
+                        delai_ref=param_cluster[(param_cluster.trajet.apply(lambda x : od in x)) & (param_cluster['temps_etudie']==t_ref)].delai.values[0]  
+                        coef=param_cluster[(param_cluster.trajet.apply(lambda x : od in x)) & (param_cluster['temps_etudie']==t_ref)].nb_pt_min.values[0]
+                        temps_parcours_max=temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],delai_ref,coef)[1]
                         tps_parcours_max_type='Cluster'
                     except ClusterError :
                         temps_parcours_max=self.df_transit.loc[self.df_transit['o_d']==od].tps_parcours.quantile(0.85)
@@ -156,6 +161,7 @@ class trajet():
         #isoler les pl fiables
         df_pl=cam1_cam2_passages_filtres.loc[(cam1_cam2_passages_filtres.loc[:,'l']==1) & (cam1_cam2_passages_filtres.loc[:,'fiability']==True)]
         df_tps_parcours_pl_final=df_pl[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
+        df_tps_parcours_pl_final['cameras']=df_tps_parcours_pl_final.apply(lambda x : tuple(self.cameras_suivantes),axis=1)
         if df_tps_parcours_pl_final.empty :
             raise PasDePlError()
         
@@ -229,6 +235,7 @@ class trajet():
         #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
 
         df_transit['cameras']=df_transit.apply(lambda x:tuple(self.cameras_suivantes), axis=1)
+        
         #print(df_transit)
 
         return df_transit
@@ -314,45 +321,6 @@ class trajet():
         duree_traj_fut=math.ceil(((timestamp_maxi-timestamp_mini)/ np.timedelta64(1, 'm')))
         
         return timedelta_min,timedelta_max,timestamp_mini,timestamp_maxi,duree_traj_fut
-        
-    def temp_max_cluster(self, df_pl_ok, delai):
-        """obtenir le temps max de parcours en faisant un cluster par dbscan
-        on peut faire un cluster sur le couple date + tps de parcours (forme actuelle)
-        ou en faire un unqieuemnt sur un ecart sur le tempsde parcour (en enlevant le commentaire devant matrice et en l'utilisant dans le fit
-        en entree : la df des temps de parcours pl final
-                    le delai max pour regrouper en luster,en seconde
-        en sortie : le nombre de clusters,
-                    un apndas timedelta
-        """
-        if df_pl_ok.empty:
-            raise ClusterError()
-        donnees_src=df_pl_ok.loc[:,['date_cam_1','tps_parcours']].copy() #isoler les données necessaires
-        liste_valeur=donnees_src.tps_parcours.apply(lambda x : ((pd.to_datetime('2018-01-01')+x)-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()#convertir les temps en integer
-        liste_date=donnees_src.date_cam_1.apply(lambda x :(x - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()
-        liste=[[liste_date[i],liste_valeur[i]] for i in range(len(liste_valeur))]
-        if len(liste_valeur)<10 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
-            raise ClusterError()
-        #mise en forme des données pour passer dans sklearn 
-        matrice=np.array(liste_valeur).reshape(-1, 1)
-        #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
-        try :
-            clustering=DBSCAN(eps=delai, min_samples=len(liste_valeur)/4).fit(liste)
-        except ValueError :
-            raise ClusterError()
-        labels = clustering.labels_
-        n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-        # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
-        if n_clusters_== 0 :
-            raise ClusterError()
-        #mettre en forme au format pandas
-        results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
-        results.columns = ['index_base', 'cluster_num']
-        results = pd.merge(results,df_pl_ok, left_on='index_base', right_index=True )
-        #obtenir un timedelta unique
-        temp_parcours_max=results.loc[results.loc[:,'cluster_num']==0].groupby(['cluster_num'])['tps_parcours'].max()
-        temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
-        
-        return n_clusters_, temp_parcours_max
     
     def test_unicite_type(self,liste_l, mode='unique'):
         """test pour voir si un vehicule a ete toujours vu de la mme façon ou non
@@ -591,5 +559,45 @@ def graph_transit_filtre(df_transit, o_d):
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
                                 color='filtre_tps:N').interactive()
-    return graph_filtre_tps    
+    return graph_filtre_tps  
+
+def temp_max_cluster(df_pl_ok, delai, coeff=4):
+    """obtenir le temps max de parcours en faisant un cluster par dbscan
+    on peut faire un cluster sur le couple date + tps de parcours (forme actuelle)
+    ou en faire un unqieuemnt sur un ecart sur le tempsde parcour (en enlevant le commentaire devant matrice et en l'utilisant dans le fit
+    en entree : la df des temps de parcours pl final
+                le delai max pour regrouper en luster,en seconde
+                coeff : entier : pour la partd'objet totaux à conserver pour faire un cluster
+    en sortie : le nombre de clusters,
+                un apndas timedelta
+    """
+    if df_pl_ok.empty:
+        raise ClusterError()
+    donnees_src=df_pl_ok.loc[:,['date_cam_1','tps_parcours']].copy() #isoler les données necessaires
+    liste_valeur=donnees_src.tps_parcours.apply(lambda x : ((pd.to_datetime('2018-01-01')+x)-pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()#convertir les temps en integer
+    liste_date=donnees_src.date_cam_1.apply(lambda x :(x - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')).tolist()
+    liste=[[liste_date[i],liste_valeur[i]] for i in range(len(liste_valeur))]
+    #if len(liste_valeur)<10 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
+        #raise ClusterError()
+    #mise en forme des données pour passer dans sklearn 
+    matrice=np.array(liste_valeur).reshape(-1, 1)
+    #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
+    try :
+        clustering=DBSCAN(eps=delai, min_samples=len(liste_valeur)/coeff).fit(liste)
+    except ValueError :
+        raise ClusterError()
+    labels = clustering.labels_
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
+    if n_clusters_== 0 :
+        raise ClusterError()
+    #mettre en forme au format pandas
+    results = pd.DataFrame(pd.DataFrame([donnees_src.index,labels]).T)
+    results.columns = ['index_base', 'cluster_num']
+    results = pd.merge(results,df_pl_ok, left_on='index_base', right_index=True )
+    #obtenir un timedelta unique
+    temp_parcours_max=results.loc[results.loc[:,'cluster_num']==0].groupby(['cluster_num'])['tps_parcours'].max()
+    temp_parcours_max=pd.to_timedelta(temp_parcours_max.values[0])
+    
+    return n_clusters_, temp_parcours_max  
     
