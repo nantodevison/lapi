@@ -252,6 +252,9 @@ class trajet():
         def filtrer_passage(liste, df_liste_trajet,cam) :
             """
             Récuperer les cameras qui correpondent à un trajet
+            en entre : liste : tuple des cameras associée à une immat
+                       df_liste_trajet : dataframe des trajets pssibles issus de liste_complete_trajet
+            en sortie : liste des cameras retenues dans le trajet
             """
             for liste_cams in [a for a in liste_complete_trajet.cameras.tolist() if a[0]==cam] :
                 if liste[:len(liste_cams)]==tuple(liste_cams):
@@ -261,6 +264,10 @@ class trajet():
         def recuperer_date_cam2(liste,liste_created,df_liste_trajet,cam):
             """
             Récuperer les horaires de passage des cameras qui correpondent à un trajet
+            en entre : liste : tuple des cameras associée à une immat
+                       liste_created : tuple des horodate associées à une immat
+                       df_liste_trajet : dataframe des trajets pssibles issus de liste_complete_trajet
+            en sortie : liste des horodates retenues dans le trajet
             """
             for liste_cams in [a for a in liste_complete_trajet.cameras.tolist() if a[0]==cam] :
                 if liste[:len(liste_cams)]==tuple(liste_cams):
@@ -613,6 +620,26 @@ def verif_doublons_trajet(dico_od, destination):
     df_doublons=(jointure.loc[((jointure.date_cam_1_y>=jointure.date_cam_1_x) & (jointure.date_cam_1_y<=jointure.date_cam_2_x)) |
                   ((jointure.date_cam_2_y>=jointure.date_cam_1_x) & (jointure.date_cam_2_y<=jointure.date_cam_2_x))])
     return df_doublons
+
+def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats) :
+    """
+    trouver la camera avant ou apres le passage sur A63 Cestas
+    en entree : immat : immatriiculation issu du dico_od
+                horodate : string ou pd.datetime :  au format YYYY-MM-DD HH:MM:SS issu du dico_od
+                o_d : string : orgine et destination issu du dico_od
+                df_immats : dataframes des immats concernées : limite le temps de traitement
+    en sortie
+    """
+    cam_immat=df_immats.loc[df_immats['immat']==immat].reset_index()#localiser les passages liés à l'immat
+    camera_a660, coeff_index=(19,-1) if o_d.split('-')[0]=='A660' else (18,1)
+    try : #dans le cas ou il n'y a pas de passage avant ou apres
+        position_cam_adjacente=(cam_immat.loc[(cam_immat['created']==date_cam_1) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index #trouver la position de la camera suivante
+                            if o_d.split('-')[0]=='A660' else
+                            cam_immat.loc[(cam_immat['created']==date_cam_2) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index)
+        cam_suivante=cam_immat.iloc[position_cam_suivante]['camera_id']#la camera suivante
+        return cam_suivante
+    except IndexError : 
+        return 0
     
     
     
