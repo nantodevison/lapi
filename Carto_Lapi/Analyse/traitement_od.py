@@ -522,8 +522,8 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique):
     def filtre_tps_parcours(date_passage,tps_parcours, type_tps_lapi, tps_lapi, tps_theoriq, marge) : 
         """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
         
-        if date_passage.hour in [20,21,22,23,0,1,2,3,4,5,6] : 
-            marge += 660 #si le gars passe la nuit, on lui ajoute 11 heure de marge
+        if date_passage.hour in [19,20,21,22,23,0,1,2,3,4,5,6] : 
+            marge += 720 #si le gars passe la nuit, on lui ajoute 11 heure de marge
         if type_tps_lapi=='Cluster':
             if tps_parcours < tps_lapi+pd.Timedelta(str(marge)+'min') :
                 return 1
@@ -621,25 +621,31 @@ def verif_doublons_trajet(dico_od, destination):
                   ((jointure.date_cam_2_y>=jointure.date_cam_1_x) & (jointure.date_cam_2_y<=jointure.date_cam_2_x))])
     return df_doublons
 
-def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats) :
+def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats, point_ref='A660') :
     """
-    trouver la camera avant ou apres le passage sur A63 Cestas
-    en entree : immat : immatriiculation issu du dico_od
-                horodate : string ou pd.datetime :  au format YYYY-MM-DD HH:MM:SS issu du dico_od
-                o_d : string : orgine et destination issu du dico_od
-                df_immats : dataframes des immats concernées : limite le temps de traitement
-    en sortie
+    trouver la camera avant ou apres le passage à une origine ou destination
+    en entree : 
+        immat : immatriiculation issu du dico_od
+        horodate : string ou pd.datetime :  au format YYYY-MM-DD HH:MM:SS issu du dico_od
+        o_d : string : orgine et destination issu du dico_od
+        df_immats : dataframes des immats concernées : limite le temps de traitement
+    en sortie : 
+        cam_adjacente : integer : le code de la camera proche, ou 0
+        horodate_adjacente : pd.datetime ou pd.NaT
     """
     cam_immat=df_immats.loc[df_immats['immat']==immat].reset_index()#localiser les passages liés à l'immat
-    camera_a660, coeff_index=(19,-1) if o_d.split('-')[0]=='A660' else (18,1)
+    camera_a660, coeff_index=(19,-1) if o_d.split('-')[0]==point_ref else (18,1)
     try : #dans le cas ou il n'y a pas de passage avant ou apres
         position_cam_adjacente=(cam_immat.loc[(cam_immat['created']==date_cam_1) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index #trouver la position de la camera suivante
-                            if o_d.split('-')[0]=='A660' else
+                            if o_d.split('-')[0]==point_ref else
                             cam_immat.loc[(cam_immat['created']==date_cam_2) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index)
-        cam_suivante=cam_immat.iloc[position_cam_suivante]['camera_id']#la camera suivante
-        return cam_suivante
+        if position_cam_adjacente==-1 : 
+            return 0, pd.NaT 
+        cam_adjacente=cam_immat.iloc[position_cam_adjacente]['camera_id']#la camera suivante
+        horodate_adjacente=cam_immat.iloc[position_cam_adjacente]['created']
+        return cam_adjacente, horodate_adjacente # et l'heure associées
     except IndexError : 
-        return 0
+        return 0, pd.NaT
     
     
     
