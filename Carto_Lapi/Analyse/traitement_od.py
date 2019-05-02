@@ -313,6 +313,8 @@ class trajet():
         df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
                         [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
         
+        #et par opposition la liste des passages ne relevant pas des trajets de transit
+        df_duree.loc[df_duree.index.isin()]
         
         return df_agrege,df_passag_transit
         
