@@ -17,12 +17,12 @@ import os,math, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
-liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
+liste_complete_trajet=pd.read_json(r'E:\Boulot\lapi\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -31,7 +31,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('gti_lapi') as c : 
+    with ct.ConnexionBdd('lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
@@ -562,6 +562,13 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
 def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     """
     pour visualiser les graph de seprataion des trajets de transit et des autres
+    en entree :
+        df_transit : df des o_d
+        date_debut : string au format 2019-01-28 00:00:00
+        date_fin : string au format 2019-01-28 00:00:00
+        o_d : origine destination parmi les possibles du df_transit
+    en sortie : 
+        une chart altair avec en couleur le type de transit ou non, et en forme la source du temps de parcours pour filtrer   
     """
     test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime(date_debut)) &
                                              (df_transit['date_cam_1']<pd.to_datetime(date_fin)) &
@@ -569,12 +576,31 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps', 'type']].head(5000).copy()
     copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
     graph_filtre_tps = alt.Chart(copie_df).mark_point().encode(
-                                x='date_cam_1',
+                                x='hoursminutes(date_cam_1)',
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
                                 color='filtre_tps:N', shape='type:N').interactive().properties(width=600)
-    return graph_filtre_tps  
+    return graph_filtre_tps 
 
+def graph_transit_filtre_multiple(df_transit, date_debut, date_fin, o_d, nb_jours):
+    """
+    Regroupement de charts altair issues de graph_transit_filtre sur un plusieurs jours
+    en entre :
+        cf graph_transit_filtre
+        nb_jours : integer : nb de jours à concatener
+    en sortie : 
+        une chart altair concatenee verticalement avec un pour chaque jour
+    """
+    dico_graph={'graph'+str(indice):t.graph_transit_filtre(df_transit_avec_filtre,str(dates[0]),str(dates[1]), o_d) 
+                 for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=1, freq='D')],
+                        [str(x) for x in pd.date_range(date_fin, periods=1, freq='D')]))}
+    liste_graph=[dico_graph[key] for key in dico_graph.keys()]
+    
+    return alt.VConcatChart(vconcat=(liste_graph))
+    
+    
+    
+    
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
     """obtenir le temps max de parcours en faisant un cluster par dbscan
     on peut faire un cluster sur le couple date + tps de parcours (forme actuelle)
