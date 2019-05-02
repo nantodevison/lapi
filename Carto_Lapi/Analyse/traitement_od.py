@@ -515,16 +515,23 @@ def filtrer_df(df_global,df_filtre):
     df_global_filtre=df_global.loc[~df_global.index.isin(df_filtre.index)].reset_index().set_index('created')
     return df_global_filtre
     
-def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique):
+def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marge):
     """
-    jointure des 3 sources de données :le tempsde arcours, le temps max issus du lapi, le temps theorique
+    Création du temps de parcours et affectation d'un attribut drapeau pour identifier le trafci de transit
+    en entree : 
+        df_transit : df des o_d issu de transit_temps_complet
+        df_tps_parcours : df des temps de parcours issu du lapi df_tps_parcours (transit_temps_complet)
+        df_theorique : liste des trajets possibles etdes temps theoriques associés : liste_complete_trajet
+        marge : integer: marge possible entre le temps theorique ou lapi et le temsp de passage. comme les camions doivent faire une pause de 45min toute les 4h30...
+    en sortie : 
+        df_transit_tps_parcours : df des o_d complété par un attribut drapeau sur le transit, et les temps de parcours, et le type de temps de parcours
     """
     def filtre_tps_parcours(date_passage,tps_parcours, type_tps_lapi, tps_lapi, tps_theoriq, marge) : 
         """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
         
         if date_passage.hour in [19,20,21,22,23,0,1,2,3,4,5,6] : 
             marge += 720 #si le gars passe la nuit, on lui ajoute 11 heure de marge
-        if type_tps_lapi=='Cluster':
+        if type_tps_lapi in ['Cluster','moyenne Cluster']:
             if tps_parcours < tps_lapi+pd.Timedelta(str(marge)+'min') :
                 return 1
             else: 
@@ -549,7 +556,7 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique):
     df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq' ]], 
                                                                                                     on='cameras')
     df_transit_tps_parcours['filtre_tps']=df_transit_tps_parcours.apply(lambda x : filtre_tps_parcours(x['date_cam_1'],
-                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],5), axis=1)
+                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],marge), axis=1)
     return df_transit_tps_parcours
        
 def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
@@ -565,7 +572,7 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
                                 x='date_cam_1',
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
-                                color='filtre_tps:N', shape='type:N').interactive()
+                                color='filtre_tps:N', shape='type:N').interactive().properties(width=600)
     return graph_filtre_tps  
 
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
@@ -732,5 +739,28 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_filtre.set_index(['date_adj','immat']).index.tolist()),'correction_o_d']=True
     
     return dico_od_origine
+
+def corriger_df_tps_parcours (dico_tps_max):
+    """ fonction de correction de la df_tps_parcours issue de transit_temps_complet.
+    On moyenne les valuers de temps de parcours de type '85_percentile' si encadrer par des Cluster
+    en entree : 
+        dico_tps_max issu de transit_temps_complet
+    en sortie :
+        dico_tps_max modifiée
+    """
+    def moyenne_tps_85pct(type_la, type_avant, type_apres, tps,tpsla) : 
+        if type_la=='85eme_percentile' and type_avant=='Cluster' and type_apres=='Cluster' : 
+            return tps,'moyenne Cluster'
+        else : return tpsla,type_la
     
+    dico_tps_max2=dico_tps_max.reset_index().drop('index',axis=1).sort_values(['o_d','date']).copy()
+    dico_tps_max2['tps']=(dico_tps_max2.temps.shift(1)+dico_tps_max2.temps.shift(-1)) / 2
+    dico_tps_max2['type_tps_1']=dico_tps_max2.type.shift(1)
+    dico_tps_max2['type_tps_2']=dico_tps_max2.type.shift(-1)
+    dico_tps_max2['temps']=dico_tps_max2.apply(lambda x : moyenne_tps_85pct(x['type'], x['type_tps_1'],x['type_tps_2'], x['tps'], x['temps'])[0],axis=1)
+    dico_tps_max2['type']=dico_tps_max2.apply(lambda x : moyenne_tps_85pct(x['type'], x['type_tps_1'],x['type_tps_2'], x['tps'], x['temps'])[1],axis=1)
+    dico_tps_max2.drop(['tps','type_tps_1','type_tps_2'],axis=1, inplace=True)
+    
+    return dico_tps_max2
+
     
