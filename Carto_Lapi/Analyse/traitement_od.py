@@ -570,19 +570,20 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     en sortie : 
         une chart altair avec en couleur le type de transit ou non, et en forme la source du temps de parcours pour filtrer   
     """
+    titre=pd.to_datetime(date_debut).day_name(locale ='French')+' '+pd.to_datetime(date_debut).strftime('%Y-%m-%d')
     test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime(date_debut)) &
                                              (df_transit['date_cam_1']<pd.to_datetime(date_fin)) &
                                              (df_transit['o_d']==o_d)])
     copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps', 'type']].head(5000).copy()
     copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
-    graph_filtre_tps = alt.Chart(copie_df).mark_point().encode(
-                                x='hoursminutes(date_cam_1)',
+    graph_filtre_tps = alt.Chart(copie_df, title=titre).mark_point().encode(
+                                x='date_cam_1',
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
                                 color='filtre_tps:N', shape='type:N').interactive().properties(width=600)
     return graph_filtre_tps 
 
-def graph_transit_filtre_multiple(df_transit, date_debut, date_fin, o_d, nb_jours):
+def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, o_d, nb_jours):
     """
     Regroupement de charts altair issues de graph_transit_filtre sur un plusieurs jours
     en entre :
@@ -591,9 +592,9 @@ def graph_transit_filtre_multiple(df_transit, date_debut, date_fin, o_d, nb_jour
     en sortie : 
         une chart altair concatenee verticalement avec un pour chaque jour
     """
-    dico_graph={'graph'+str(indice):t.graph_transit_filtre(df_transit_avec_filtre,str(dates[0]),str(dates[1]), o_d) 
-                 for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=1, freq='D')],
-                        [str(x) for x in pd.date_range(date_fin, periods=1, freq='D')]))}
+    dico_graph={'graph'+str(indice):graph_transit_filtre(df_transit_avec_filtre,str(dates[0]),str(dates[1]), o_d) 
+                 for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jours, freq='D')],
+                        [str(x) for x in pd.date_range(date_fin, periods=nb_jours, freq='D')]))}
     liste_graph=[dico_graph[key] for key in dico_graph.keys()]
     
     return alt.VConcatChart(vconcat=(liste_graph))
