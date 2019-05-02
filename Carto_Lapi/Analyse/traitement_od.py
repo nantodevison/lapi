@@ -646,6 +646,41 @@ def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats, point_ref='A660
         return cam_adjacente, horodate_adjacente # et l'heure associées
     except IndexError : 
         return 0, pd.NaT
+
+def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_ref_2=15, cam_ref_3=19) : 
+    """
+    Fonction qui va ré-assigner les origines-destinations à A63 si certanes conditions sont remplie : 
+    cas 1 : vue a A660 puis dans l'autre sens sur A63, ou inversement
+    cas 2 : vue sur A660 Nord-Sud, puis A660 Sud-Nord, avec plus de 1jd'écart entre les deux
+    en entree : 
+        df_3semaines : dataframe des passages
+        dico_od : dataframe des o_d issue de transit_temps_complet
+        voie_ref : string : nom de la voie que l'on souhaite changer
+        cam_ref_1 : integer : camera de a changer pour le sens 1 (cas 1)
+        cam_ref_2 : integer : camera de a changer pour le sens 2 (cas 1)
+        cam_ref_3 : integer camera a changer dans les deux sens (cas2)
+    en sortie : 
+    """
+    
+    def MaJ_o_d(correctionType, o, d):
+        """
+        Fonction de mise à jour des o_d pour les trajets concernants A660 que l'on rabat sur A63
+        """
+        if correctionType : 
+            if o=='A660' : 
+                new_o, new_d, od='A63',d,'A63-'+d
+            elif o!='A63': 
+                new_o, new_d, od=o,'A63',o+'-A63'
+            else : 
+                new_o, new_d, od=o,d,o+'-'+d
+        else : 
+            new_o, new_d, od=o,d,o+'-'+d 
+        return new_o, new_d, od
+        
+        dico_od_origine=dico_od.copy()
+        dico_od_copie=dico_od.loc[(dico_od['origine']=='A660') | (dico_od['destination']=='A660')].head(1000).reset_index().copy() #isoler les o_d liées au points en question
+        df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())] #limiter le df_3semaines aux immats concernée    
+        
     
     
     
