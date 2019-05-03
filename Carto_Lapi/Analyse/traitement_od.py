@@ -17,12 +17,18 @@ import os,math, datetime as dt
 from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
-liste_complete_trajet=pd.read_json(r'E:\Boulot\lapi\trajets_possibles.json', orient='index')
+
+liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
-param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
+liste_trajet_incomplet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json', orient='index')
+liste_trajet_incomplet['cameras']=liste_trajet_incomplet.apply(lambda x : tuple(x['cameras']),axis=1)
+liste_trajet_incomplet['tps_parcours_theoriq']=liste_trajet_incomplet.apply(lambda x : pd.Timedelta(x['tps_parcours_theoriq']),axis=1)
+liste_trajet_incomplet.sort_values('nb_cams', ascending=False, inplace=True)
+
+param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -31,7 +37,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('lapi') as c : 
+    with ct.ConnexionBdd('gti_lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
@@ -313,9 +319,7 @@ class trajet():
         df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
                         [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
         
-        #et par opposition la liste des passages ne relevant pas des trajets de transit
-        df_duree.loc[df_duree.index.isin()]
-        
+        #et par opposition la liste des passages ne relevant pas des trajets de transit        
         return df_agrege,df_passag_transit
         
     def temps_timedeltas_direct(self):
@@ -440,6 +444,24 @@ class TypeTrajet_NbCamera_Error(Exception):
     def __init__(self, nb_cam, typeTrajet):
         Exception.__init__(self,f"le nb de camera ({nb_cam}) ne correspond pas au type de trajet, ou le type : {typeTrajet} n'est pas connu")
 
+def creer_liste_date(date_debut, nb_jours):
+    """
+    générer une liste de date à parcourir
+    en entree : 
+       date_debut : string : de type YYYY-MM-DD hh:mm:ss
+        nb_jours : integer : nb de jours considéré (mini 1)
+    en sortie : 
+        liste_date : liste de liste de [date, ecart_temps] au format pd.timestamps et integer en minutes
+    """
+    liste_date=[]
+    for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') : 
+        if date.hour in [6,7,8,14,15,16,17,18,19] : 
+            for date_15m in pd.date_range(date, periods=4, freq='15T') :
+                liste_date.append([date_15m,15])
+        else: 
+            liste_date.append([date,60])
+    return liste_date
+        
 def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2'):
     """
     Calcul des trajets et passages des poids lourds en transit, sur une période de temps minimale d'1j (peut etre regle et affiné dans la fonction selon date_debut, nb_jours et periode)
@@ -451,19 +473,10 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2')
         dico_od : pandas dataframe : liste des trajet de transit (cf Classe trajet, fonction loc_trajet_gloabl)
         dico_passag : pandas dataframe : liste des passgaes liés au trajet de transit (cf Classe trajet, fonction loc_trajet_gloabl)
     """
-    #utiliser ouvrir_fichier_lapi pour ouvrir un df sur 3 semaine
+
     date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
-    #df_3semaines=ouvrir_fichier_lapi(date_debut,date_fin).set_index('created').sort_index()
-    #générer des dates
-    liste_date=[] # on pourrait faire une ofnction a part sur la generation de dates
-    for date in pd.date_range(date_debut, periods=nb_jours*24, freq='H') : 
-        if date.hour in [6,7,8,14,15,16,17,18,19] : 
-            for date_15m in pd.date_range(date, periods=4, freq='15T') :
-               liste_date.append([date_15m,15])
-        else: 
-            liste_date.append([date,60])
-    #selection de 1 jour par boucle
-    for date, duree in liste_date :
+
+    for date, duree in creer_liste_date(date_debut, nb_jours) :
         if date.weekday()==5 : # si on est le semadi on laisse la journee de dimanche passer et le pl repart
             df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=32)]
         else : 
@@ -572,7 +585,7 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     en sortie : 
         une chart altair avec en couleur le type de transit ou non, et en forme la source du temps de parcours pour filtrer   
     """
-    titre=pd.to_datetime(date_debut).day_name(locale ='French')+' '+pd.to_datetime(date_debut).strftime('%Y-%m-%d')
+    titre=pd.to_datetime(date_debut).day_name(locale ='French')+' '+pd.to_datetime(date_debut).strftime('%Y-%m-%d')+' : '+o_d
     test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime(date_debut)) &
                                              (df_transit['date_cam_1']<pd.to_datetime(date_fin)) &
                                              (df_transit['o_d']==o_d)])
