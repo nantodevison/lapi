@@ -385,7 +385,7 @@ def grouper_pl(df,date_debut,date_fin,camera,modeRegroupement,df_filtre):
     
     return groupe_pl, df_duree_cam1,df_duree_autres_cam
 
-def filtre_et_forme_passage(camera,groupe_pl, liste_trajet, df_duree_cam1):
+def filtre_et_forme_passage(camera,groupe_pl_init, liste_trajet, df_duree_cam1):
     """
     filtre des pl groupes selon une liste de trajets prédéfinie,
     traitements des données filtrées pour ajouts attributs o_d et tps de parcours
@@ -403,7 +403,7 @@ def filtre_et_forme_passage(camera,groupe_pl, liste_trajet, df_duree_cam1):
                    df_liste_trajet : dataframe des trajets pssibles issus de liste_complete_trajet
         en sortie : liste des cameras retenues dans le trajet
         """
-        for liste_cams in [a for a in liste_complete_trajet.cameras.tolist() if a[0]==cam] :
+        for liste_cams in [a for a in df_liste_trajet.cameras.tolist() if a[0]==cam] :
             if liste[:len(liste_cams)]==tuple(liste_cams):
                 return liste[:len(liste_cams)]
         else : return liste
@@ -416,10 +416,11 @@ def filtre_et_forme_passage(camera,groupe_pl, liste_trajet, df_duree_cam1):
                    df_liste_trajet : dataframe des trajets pssibles issus de liste_complete_trajet
         en sortie : liste des horodates retenues dans le trajet
         """
-        for liste_cams in [a for a in liste_complete_trajet.cameras.tolist() if a[0]==cam] :
+        for liste_cams in [a for a in df_liste_trajet.cameras.tolist() if a[0]==cam] :
             if liste[:len(liste_cams)]==tuple(liste_cams):
                 return liste_created[len(liste_cams)-1]
         else : return liste_created[-1]
+    groupe_pl=groupe_pl_init.copy()
     groupe_pl['camera_id']=groupe_pl.apply(lambda x : filtrer_passage(x['camera_id'],liste_trajet,camera),axis=1)#on filtre les cameras selon la liste des trajets existants
     groupe_pl['created']=groupe_pl.apply(lambda x : recuperer_date_cam2(x['camera_id'],x['created'],liste_trajet,camera),axis=1)#on recupère les datetimede passages correspondants
     df_ts_trajets=(groupe_pl.reset_index().merge(liste_trajet[['cameras','origine','destination']],right_on='cameras', left_on='camera_id').
@@ -712,8 +713,13 @@ def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats, point_ref='A660
         cam_adjacente : integer : le code de la camera proche, ou 0
         horodate_adjacente : pd.datetime ou pd.NaT
     """
+    # il faudrait mettre ce dico en entree
+    dico_coresp_od_cam={'A660':{'o':'19','d':'18'},
+                        'N10':{'o':'6','d':'5'},
+                        'A89':{'o':'8','d':'7'},
+                        'A62':{'o':'10','d':'12'}}
     cam_immat=df_immats.loc[df_immats['immat']==immat].reset_index()#localiser les passages liés à l'immat
-    camera_a660, coeff_index=(19,-1) if o_d.split('-')[0]==point_ref else (18,1)
+    camera_a660, coeff_index=(dico_coresp_od_cam[point_ref]['o'],-1) if o_d.split('-')[0]==point_ref else (dico_coresp_od_cam[point_ref]['d'],1)
     try : #dans le cas ou il n'y a pas de passage avant ou apres
         position_cam_adjacente=(cam_immat.loc[(cam_immat['created']==date_cam_1) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index #trouver la position de la camera suivante
                             if o_d.split('-')[0]==point_ref else
@@ -725,6 +731,21 @@ def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats, point_ref='A660
         return cam_adjacente, horodate_adjacente # et l'heure associées
     except IndexError : 
         return 0, pd.NaT
+    
+def cam_voisines(immat, date, camera, df) :
+    """
+    Retrouver les dates et camera de passages d'un vehicule avant et apres un passage donne
+    en entree : 
+        immat : string : immatribualtion
+        date : string : date de passage
+        camera : cam de passage
+        df : df contenant tous les passages de immats concernees (df 3 semianes ou extraction)
+    """
+    passage_immat=df.loc[df['immat']==immat].reset_index().copy()
+    idx=passage_immat.loc[(passage_immat['created']==date) & (passage_immat['camera_id']==camera)].index
+    cam_suivant, date_suivant=passage_immat.shift(-1).iloc[idx]['camera_id'].values[0], passage_immat.shift(-1).iloc[idx]['created'].values[0]
+    cam_precedent, date_precedent=passage_immat.shift(1).iloc[idx]['camera_id'].values[0], passage_immat.shift(1).iloc[idx]['created'].values[0]
+    return cam_suivant,date_suivant, cam_precedent,date_precedent
 
 def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_ref_2=15, cam_ref_3=19) : 
     """
@@ -761,7 +782,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_od_origine=dico_od.copy()
     dico_od_copie=dico_od.loc[(dico_od['origine']=='A660') | (dico_od['destination']=='A660')].reset_index().copy() #isoler les o_d liées au points en question
     df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())] #limiter le df_3semaines aux immats concernée   df_adj=dico_od_copie.apply(lambda x : t.cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj=dico_od_copie.apply(lambda x : cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
+    df_adj_cam1=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_1'],x['cameras']),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
     df_adj.columns=['cam_adj', 'date_adj']
     dico_od_copie_adj=pd.concat([dico_od_copie,df_adj],axis=1)
     #on creer une df de correction 
