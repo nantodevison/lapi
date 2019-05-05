@@ -743,8 +743,14 @@ def cam_voisines(immat, date, camera, df) :
     """
     passage_immat=df.loc[df['immat']==immat].reset_index().copy()
     idx=passage_immat.loc[(passage_immat['created']==date) & (passage_immat['camera_id']==camera)].index
-    cam_suivant, date_suivant=passage_immat.shift(-1).iloc[idx]['camera_id'].values[0], passage_immat.shift(-1).iloc[idx]['created'].values[0]
-    cam_precedent, date_precedent=passage_immat.shift(1).iloc[idx]['camera_id'].values[0], passage_immat.shift(1).iloc[idx]['created'].values[0]
+    try :
+        cam_suivant, date_suivant=passage_immat.shift(-1).iloc[idx]['camera_id'].values[0], passage_immat.shift(-1).iloc[idx]['created'].values[0]
+    except IndexError :
+        cam_suivant, date_suivant=0, pd.NaT
+    try :
+        cam_precedent, date_precedent=passage_immat.shift(1).iloc[idx]['camera_id'].values[0], passage_immat.shift(1).iloc[idx]['created'].values[0]
+    except IndexError :
+        cam_precedent, date_precedent=0, pd.NaT
     return cam_suivant,date_suivant, cam_precedent,date_precedent
 
 def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_ref_2=15, cam_ref_3=19) : 
@@ -780,16 +786,20 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
         
     #cas 1 : passer sur A660 et vu avant ou apres sur A63
     dico_od_origine=dico_od.copy()
-    dico_od_copie=dico_od.loc[(dico_od['origine']=='A660') | (dico_od['destination']=='A660')].reset_index().copy() #isoler les o_d liées au points en question
+    dico_od_copie=dico_od_origine.loc[(dico_od_origine['origine']==voie_ref) | (dico_od_origine['destination']==voie_ref)].reset_index().copy() #isoler les o_d liées au points en question
     df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())] #limiter le df_3semaines aux immats concernée   df_adj=dico_od_copie.apply(lambda x : t.cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj_cam1=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_1'],x['cameras']),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj.columns=['cam_adj', 'date_adj']
-    dico_od_copie_adj=pd.concat([dico_od_copie,df_adj],axis=1)
+    df_adj_cam1=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_1'],x['cameras'][0],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
+    df_adj_cam1.columns=['cam_suivant','date_suivant','cam_precedent1','date_precedent1']
+    df_adj_cam1.drop(['cam_suivant','date_suivant'], axis=1, inplace=True)
+    df_adj_cam2=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_2'],x['cameras'][-1],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
+    df_adj_cam2.columns=['cam_suivant2','date_suivant2','cam_precedent','date_precedent']
+    df_adj_cam2.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
+    dico_od_copie_adj=pd.concat([dico_od_copie,df_adj_cam1,df_adj_cam2],axis=1)
     #on creer une df de correction 
-    dico_od_a_corrige_s_n=dico_od_copie_adj.loc[(dico_od_copie_adj['origine']=='A660') & (dico_od_copie_adj['cam_adj']==13)].copy()#recherche des lignes pour lesquelles origine=A660 et camera adjacente = 13 ou destination=A660 et et camera_adjacente = 15
-    dico_od_a_corrige_s_n['temps_passage']=dico_od_a_corrige_s_n['date_cam_1']-dico_od_a_corrige_s_n['date_adj']#calcul du timedelta
-    dico_od_a_corrige_n_s=dico_od_copie_adj.loc[(dico_od_copie_adj['destination']=='A660') & (dico_od_copie_adj['cam_adj']==15)].copy()
-    dico_od_a_corrige_n_s['temps_passage']=dico_od_a_corrige_n_s['date_adj']-dico_od_a_corrige_n_s['date_cam_2']
+    dico_od_a_corrige_s_n=dico_od_copie_adj.loc[(dico_od_copie_adj['origine']=='A660') & (dico_od_copie_adj['cam_precedent1']==cam_ref_1)].copy()#recherche des lignes pour lesquelles origine=A660 et camera adjacente = 13 ou destination=A660 et et camera_adjacente = 15
+    dico_od_a_corrige_s_n['temps_passage']=dico_od_a_corrige_s_n['date_cam_1']-dico_od_a_corrige_s_n['date_precedent1']#calcul du timedelta
+    dico_od_a_corrige_n_s=dico_od_copie_adj.loc[(dico_od_copie_adj['destination']=='A660') & (dico_od_copie_adj['cam_suivant2']==cam_ref_2)].copy()
+    dico_od_a_corrige_n_s['temps_passage']=dico_od_a_corrige_n_s['date_suivant2']-dico_od_a_corrige_n_s['date_cam_2']
     dico_temp=pd.concat([dico_od_a_corrige_n_s,dico_od_a_corrige_s_n])
     dico_correction=dico_temp.loc[~dico_temp.temps_passage.isna()]#on ne conserve que les ligne qui ont un timedelta !=NaT 
     dico_od_origine['correction_o_d']=False #création de l'attribut drapeau modification des o_d
@@ -801,13 +811,14 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'o_d']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[2],axis=1) 
     
     #cas 2 : passer sur A660 Nord-Sud puis Sud-Nord avec au moins 1 jour d'écart
-    dico_od_copie=dico_od_origine.loc[(dico_od_origine['destination']=='A660')].head(1000).reset_index().copy()
+    dico_od_copie=dico_od_origine.loc[(dico_od_origine['destination']=='A660')].reset_index().copy()
     
-    df_adj=dico_od_copie.apply(lambda x : cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj.columns=['cam_adj', 'date_adj']
-    dico_od_copie_adj=pd.concat([dico_od_copie,df_adj],axis=1)
-    dico_od_a_corrige=dico_od_copie_adj.loc[dico_od_copie_adj['cam_adj']==19].copy()#filtrer les résultats sur la cameras de fin
-    dico_od_a_corrige['temps_passage']=dico_od_a_corrige['date_adj']-dico_od_a_corrige['date_cam_2']#calcul du temps de passages entre les cameras
+    df_adj_cam2=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_2'],x['cameras'][-1],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
+    df_adj_cam2.columns=['cam_suivant','date_suivant','cam_precedent','date_precedent']
+    df_adj_cam2.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
+    dico_od_copie_adj=pd.concat([dico_od_copie,df_adj_cam1,df_adj_cam2],axis=1)
+    dico_od_a_corrige=dico_od_copie_adj.loc[dico_od_copie_adj['cam_suivant']==cam_ref_3].copy()#filtrer les résultats sur la cameras de fin
+    dico_od_a_corrige['temps_passage']=dico_od_a_corrige['date_suivant']-dico_od_a_corrige['date_cam_2']#calcul du temps de passages entre les cameras
     dico_filtre=dico_od_a_corrige.loc[dico_od_a_corrige['temps_passage']>=pd.Timedelta('1 days')]
     
     #pour les lignes ayant 1 temps de passage sup à 1 jour, on va réaffecter d à A63
@@ -822,15 +833,15 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_filtre.set_index(['date_cam_1','immat','date_cam_2']).index.tolist()),'correction_o_d']=True
     #pour les lignes ayant 1 temps de passage sup à 1 jour, on va réaffecter o à A63
     dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_adj','immat']).index.tolist()),'origine']='A63'
+    dico_filtre.set_index(['date_suivant','immat']).index.tolist()),'origine']='A63'
     #on modifie o_d aussi
     dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_adj','immat']).index.tolist()),'o_d']=(dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_adj','immat']).index.tolist())].apply(lambda x : x['origine']+'-'+x['destination'], axis=1))
+    dico_filtre.set_index(['date_suivant','immat']).index.tolist()),'o_d']=(dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
+    dico_filtre.set_index(['date_suivant','immat']).index.tolist())].apply(lambda x : x['origine']+'-'+x['destination'], axis=1))
     #puis on met à jour correction_o_d
     dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_adj','immat']).index.tolist()),'correction_o_d']=True
-    
+    dico_filtre.set_index(['date_suivant','immat']).index.tolist()),'correction_o_d']=True
+
     return dico_od_origine
 
 def corriger_df_tps_parcours (dico_tps_max):
