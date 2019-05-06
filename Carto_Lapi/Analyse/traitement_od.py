@@ -612,6 +612,8 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
             trajet_transit_incomplet=trajets_possible_enrichi.loc[trajets_possible_enrichi.apply(lambda x : (x['cam_suivant'] in dico_filtre['destination']) & (
                                                                         x['o_d_immat']==x['o_d_liste_trajet']),axis=1)].copy()
             trajet_transit_incomplet.rename(columns={'o_d_liste_trajet':'o_d'}, inplace=True)
+            #POUR TEST !!!!!
+            #trajet_transit_incomplet=trajets_possible_enrichi
             if trajet_transit_incomplet.empty : 
                 continue
             #extrapolation des passages
