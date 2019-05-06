@@ -505,7 +505,6 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2',
         dico_passag : pandas dataframe : liste des passgaes liés au trajet de transit (cf Classe trajet, fonction loc_trajet_gloabl)
     """
 
-    date_fin=(pd.to_datetime(date_debut)+pd.Timedelta(days=nb_jours)).strftime('%Y-%m-%d')
 
     for date, duree in creer_liste_date(date_debut, nb_jours) :
         if date.weekday()==5 : # si on est le semadi on laisse la journee de dimanche passer et le pl repart
@@ -540,6 +539,94 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2',
             #df_journee=filtrer_df(df_journee, df_passag)
     dico_tps_max=pd.DataFrame(dico_tps_max)
     return dico_od,  dico_passag, dico_tps_max
+
+def param_trajet_incomplet(date_debut,df_od_corrige,df_3semaines,dico_passag):
+    """
+    Récupérer les paramètres necessaires à la fonction transit_trajet_incomplet
+    en entree : 
+        dico_passag : df des passages de transit issu des précédentes fonctions
+        date_debut : string : de type YYYY-MM-DD hh:mm:ss
+        df_od_corrige df des trajet de  transit issu des précédentes fonctions
+        df_3semaines : df de base de tous les passages
+    en sortie 
+        df_filtre_A63 : df 
+        df_non_transit : df des passages qui ne sont pas dans dico_passag
+        df_passage_transit : df des passages qui ne sont pas dans dico_passag mais qui ont une immat dans dico passage
+    """
+    #detreminer les passages non_transit (ne peut pas etre fait dans la fonction loc_trajet_global)
+    df_non_transit=df_3semaines.loc[(~df_3semaines.reset_index().set_index(['created','camera_id','immat']).index.isin(
+                                dico_passag.set_index(['created','camera_id','immat']).index.tolist()))]
+    
+    #grouper les passage transit, associer le nombre de fois où ils ont passés puis ne conserver que ceux qui sont passé au moins 2 fois
+    df_transit_nb_passage=df_od_corrige.groupby(['immat','o_d'])['l'].count().reset_index().rename(columns={'l':'Nb_occ'})
+    df_immat_transit_nb_passage_sup2=df_transit_nb_passage.loc[df_transit_nb_passage['Nb_occ']>=2]
+    
+    #df des passages qui n'ont pas été identiiés comme transit, mais qui ont une immat qui a déjà fait du transit
+    df_passage_transit=df_non_transit.loc[(df_non_transit.immat.isin(dico_passag.immat.unique()))]
+    
+    #identifier les doucblons : tel que présente le fichier présente bcp d'immat en double avec par exempele les o_d A660-N10 puis N10-A660.
+    #or tout les trajets finissant par A660 ou A63 sont déja traites plus haut, donc on les vire
+    df_filtre_A63=df_immat_transit_nb_passage_sup2.loc[df_immat_transit_nb_passage_sup2.apply(lambda x : x['o_d'].split('-')[1] not in ['A660','A63'],axis=1)]
+    
+    return df_filtre_A63, df_passage_transit, df_non_transit
+    
+
+def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,date_debut,nb_jours, df_3semaines,Regroupement='1/2',liste_trajet_loc=liste_trajet_incomplet):
+    """
+    Extrapoler des trajest à partir des immats en transit,sur des trajets où il manque la camera de fin
+    en entree : 
+        date_debut : string : de type YYYY-MM-DD hh:mm:ss
+        dico_passag : dico des passages de transit, issus de transit_temps_complet
+    """
+    df_passage_transit_incomplet=None
+    dico_od=None
+    for date, duree in creer_liste_date(date_debut, nb_jours) :
+        if date.hour==0 : print(f"date : {date} debut_traitement : {dt.datetime.now()}")
+        date_fin=date + pd.Timedelta(minutes=duree)
+        for cameras in [15,12,8,10,6] :
+            #regrouper les pl
+            try : 
+                groupe_pl,df_duree_cam1,df_duree_autres_cam=grouper_pl(df_passage_transit
+                                                        , date, date_fin, cameras, Regroupement,df_passage_transit_incomplet)
+            except PasDePlError :
+                continue 
+            #le pb c'est qu epour le trajet qui s'arrete sur Rocade Ouest, le PL est susceptible d'aller soit sur A89 soit sur N10.
+            #on doit donc faire une jointure sur l'immat pour connaitre ses o_d possibles
+            #1. Trouver les immat de groupe PL concernées par du transit
+            groupe_pl_transit=groupe_pl.merge(df_filtre_A63, left_index=True, right_on='immat').rename(columns={'o_d':'o_d_immat'})
+            if groupe_pl_transit.empty : 
+                continue
+            #2.filtrer selon les trajets possibles
+            try : 
+                trajets_possibles=(filtre_et_forme_passage(cameras,groupe_pl_transit, liste_trajet_loc, df_duree_cam1).drop(
+                   'index',axis=1).rename(columns={'o_d':'o_d_liste_trajet'}))
+            except PasDePlError :
+                continue 
+            #3. ajouter les infos sur les cameras avant / apres le passage final
+            cam_proches=trajets_possibles.apply(lambda x : cam_voisines(x['immat'], x['date_cam_2'],x['cameras'][-1], df_3semaines),axis=1, result_type='expand')
+            cam_proches.columns=['cam_suivant','date_suivant','cam_precedent','date_precedent']
+            cam_proches.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
+            trajets_possible_enrichi=pd.concat([trajets_possibles,cam_proches],axis=1)
+            #4.filtrer selon un critère de camera suivante qui est une des entrée du dispositif Lapi
+            dico_filtre = {'destination':[15,6,8,10,12]}
+            trajet_transit_incomplet=trajets_possible_enrichi.loc[trajets_possible_enrichi.apply(lambda x : (x['cam_suivant'] in dico_filtre['destination']) & (
+                                                                        x['o_d_immat']==x['o_d_liste_trajet']),axis=1)].copy()
+            trajet_transit_incomplet.rename(columns={'o_d_liste_trajet':'o_d'}, inplace=True)
+            if trajet_transit_incomplet.empty : 
+                continue
+            #extrapolation des passages
+            df_joint_passag_transit=trajets_possibles.merge(df_duree_autres_cam.reset_index(), on='immat')
+            df_passag_transit1=df_joint_passag_transit.loc[(df_joint_passag_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1))]
+            df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
+                            [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
+            #ajoute les passages concernes au dico_passage qui sert de filtre
+
+            df_passage_transit_incomplet=pd.concat([df_passage_transit_incomplet,df_passag_transit])
+            dico_od=pd.concat([dico_od,trajet_transit_incomplet], sort=False)
+            
+    return dico_od,df_passage_transit_incomplet
+
+
 
 def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
     #isoler les pl de la source
@@ -597,7 +684,8 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
             return date_passage.floor('15min').to_period('15min')
         else : 
             return date_passage.to_period('H')
-    
+    if df_transit.empty :
+        raise PasDePlError()
     df_transit=df_transit.copy()        
     df_transit['period']=df_transit.apply(lambda x : periode_carac(x['date_cam_1']),axis=1)
     df_tps_parcours['period']=df_tps_parcours.apply(lambda x : periode_carac(x['date']),axis=1)
@@ -605,7 +693,7 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
         df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq' ]], 
                                                                                                     on='cameras')
     else : #dans ce cas la jointure avec les temps theorique ne se sur les cameras et l'od, car doublons de cameras pour certains trajet (possibilité d'aller vers A89 ou N10 apres Rocade)
-        df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq' ]], 
+        df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq','o_d']], 
                                                                                                     on=['cameras','o_d'])
     df_transit_tps_parcours['filtre_tps']=df_transit_tps_parcours.apply(lambda x : filtre_tps_parcours(x['date_cam_1'],
                                                                     x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],marge), axis=1)
