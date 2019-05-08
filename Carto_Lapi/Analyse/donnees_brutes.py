@@ -18,17 +18,17 @@ from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
 
-liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
+liste_complete_trajet=pd.read_json(r'E:\Boulot\lapi\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
-liste_trajet_incomplet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json', orient='index')
+liste_trajet_incomplet=pd.read_json(r'E:\Boulot\lapi\liste_trajet_incomplet.json', orient='index')
 liste_trajet_incomplet['cameras']=liste_trajet_incomplet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_trajet_incomplet['tps_parcours_theoriq']=liste_trajet_incomplet.apply(lambda x : pd.Timedelta(x['tps_parcours_theoriq']),axis=1)
 liste_trajet_incomplet.sort_values('nb_cams', ascending=False, inplace=True)
 
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -37,7 +37,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('gti_lapi') as c : 
+    with ct.ConnexionBdd('lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
@@ -645,17 +645,19 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
 
 
 
-def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
+def pourcentage_pl_camera(date, nb_jours,df_3semaines,dico_passag):
+    def pct_pl(a,b):
+        try :
+            return a*100/b
+        except ZeroDivisionError : 
+            return 0
     #isoler les pl de la source
     df_pl_3semaines=df_3semaines.loc[df_3semaines['l']==1]
-    df_pl_3semaines.set_index('created',inplace=True)
-    #comparer les pl en transit avec l'ensembles des pl, par heure, par camera
-    #obtenir les nb de pl par heure et par camera sur la source
-    df_synthese_pl_tot=df_pl_3semaines.groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_tot'})
-    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_transit'})
-    df_pct_pl_transit=pd.concat([df_synthese_pl_tot,df_synthese_pl_transit], axis=1, join='inner')
-    df_pct_pl_transit.columns=[['nb_pl_tot','nb_pl_transit']]
-    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : float(x['nb_pl_transit'])*100 / x['nb_pl_tot'] ,axis=1)
+    df_synthese_pl_tot=df_pl_3semaines.groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_tot'}).reset_index()
+    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].rename(
+        column={'immat':'nb_pl_transit'}).reset_index()
+    df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'0_x':'nb_pl_tot',
+                                                                                            '0_y':'nb_pl_transit'})
     
     return df_pct_pl_transit
     
