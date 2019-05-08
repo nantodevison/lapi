@@ -645,7 +645,7 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
 
 
 
-def pourcentage_pl_camera(date, nb_jours,df_3semaines,dico_passag):
+def pourcentage_pl_camera(df_3semaines,dico_passag):
     def pct_pl(a,b):
         try :
             return a*100/b
@@ -658,6 +658,7 @@ def pourcentage_pl_camera(date, nb_jours,df_3semaines,dico_passag):
         column={'immat':'nb_pl_transit'}).reset_index()
     df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'0_x':'nb_pl_tot',
                                                                                             '0_y':'nb_pl_transit'})
+    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1)
     
     return df_pct_pl_transit
     
