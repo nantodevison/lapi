@@ -742,6 +742,21 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
     df_transit_tps_parcours['filtre_tps']=df_transit_tps_parcours.apply(lambda x : filtre_tps_parcours(x['date_cam_1'],
                                                                     x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],marge), axis=1)
     return df_transit_tps_parcours
+
+def graph_nb_veh_ttjours_ttcam(df) : 
+    """
+    Fonction de graph du nb ceh par jour et par pour l'ensembles des cameras
+    en entree : 
+       df : la df des passages isssue de la bdd
+    en sortie : 
+        graph_filtre_tps : une chart altair concatenee vertical. en x les jours, en y le nb de veh
+    """
+    nb_passage_j_cam=df.reset_index().set_index('created').groupby('camera_id').resample('D').count().drop('camera_id',axis=1).reset_index()
+    graph_filtre_tps = alt.Chart(nb_passage_j_cam).mark_bar(size=20).encode(
+                                    x='created',
+                                    y='immat').properties(width=800).facet(row='camera_id')
+    return graph_filtre_tps
+
        
 def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     """
