@@ -18,17 +18,17 @@ from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
 
-liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
+liste_complete_trajet=pd.read_json(r'E:\Boulot\lapi\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
-liste_trajet_incomplet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json', orient='index')
+liste_trajet_incomplet=pd.read_json(r'E:\Boulot\lapi\liste_trajet_incomplet.json', orient='index')
 liste_trajet_incomplet['cameras']=liste_trajet_incomplet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_trajet_incomplet['tps_parcours_theoriq']=liste_trajet_incomplet.apply(lambda x : pd.Timedelta(x['tps_parcours_theoriq']),axis=1)
 liste_trajet_incomplet.sort_values('nb_cams', ascending=False, inplace=True)
 
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -37,7 +37,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('gti_lapi') as c : 
+    with ct.ConnexionBdd('lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
@@ -765,7 +765,7 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
                                 color='filtre_tps:N', shape='type:N').interactive().properties(width=600)
-    return graph_filtre_tps 
+    return graph_filtre_tps
 
 def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, o_d, nb_jours):
     """
@@ -782,9 +782,40 @@ def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, 
     liste_graph=[dico_graph[key] for key in dico_graph.keys()]
     
     return alt.VConcatChart(vconcat=(liste_graph))
-    
-    
-    
+
+def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4) : 
+    """
+    pour creer des graph du nb de veh  par heue sur une journee à 1 camera
+    en entree : 
+        df : df des passages initiales, telle qu'importee depuis la bdd
+        date_d : string : date de debut, generalement de la forme YYYY-MM-DD 00:00:00
+        date_f : string : date de debut, generalement de la forme YYYY-MM-DD 23:59:59
+        camera : integer : nume de la camera etudiee
+    en sortie : 
+        graph : chart altair avec en x l'heure et en y le nb de veh
+    """
+    test2=df.loc[(df['created'].between(date_d,date_f)) & 
+                 (df['camera_id']==camera)]
+    graph=alt.Chart(test2.set_index('created').resample('H').count().reset_index(),title=date_d+' cam '+ str(camera)).mark_bar().encode(
+                   x='created',
+                    y='immat' )
+    return graph  
+
+def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour): 
+    """
+    Regroupement de charts altair issues de graph_nb_veh_jour_camera sur plusieurs jours
+    en entre :
+        cf graph_nb_veh_jour_camera
+        nb_jours : integer : nb de jours à concatener
+    en sortie : 
+        une chart altair concatenee verticalement avec un pour chaque jour
+    """
+    df_index_ok=df.reset_index()
+    dico_graph={'graph'+str(indice):graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam) 
+               for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jour, freq='D')],
+                                [str(x) for x in pd.date_range(date_fin, periods=nb_jour, freq='D')]))}
+    liste_graph=[dico_graph[key] for key in dico_graph.keys()]
+    return alt.VConcatChart(vconcat=(liste_graph))  
     
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
     """obtenir le temps max de parcours en faisant un cluster par dbscan
