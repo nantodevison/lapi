@@ -749,7 +749,7 @@ def graph_nb_veh_ttjours_ttcam(df) :
     en entree : 
        df : la df des passages isssue de la bdd
     en sortie : 
-        graph_filtre_tps : une chart altair concatenee vertical. en x les jours, en y le nb de veh
+        graph_filtre_tps : une chart altair concatenee vertical. en x les jours, en y le nb de veh 
     """
     nb_passage_j_cam=df.reset_index().set_index('created').groupby('camera_id').resample('D').count().drop('camera_id',axis=1).reset_index()
     graph_filtre_tps = alt.Chart(nb_passage_j_cam).mark_bar(size=20).encode(
