@@ -18,17 +18,17 @@ from sklearn.cluster import DBSCAN
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
 
-liste_complete_trajet=pd.read_json(r'E:\Boulot\lapi\trajets_possibles.json', orient='index')
+liste_complete_trajet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json', orient='index')
 liste_complete_trajet['cameras']=liste_complete_trajet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_complete_trajet['tps_parcours_theoriq']=liste_complete_trajet.apply(lambda x : pd.Timedelta(milliseconds=x['tps_parcours_theoriq']),axis=1)
 liste_complete_trajet.sort_values('nb_cams', ascending=False, inplace=True)
 
-liste_trajet_incomplet=pd.read_json(r'E:\Boulot\lapi\liste_trajet_incomplet.json', orient='index')
+liste_trajet_incomplet=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json', orient='index')
 liste_trajet_incomplet['cameras']=liste_trajet_incomplet.apply(lambda x : tuple(x['cameras']),axis=1)
 liste_trajet_incomplet['tps_parcours_theoriq']=liste_trajet_incomplet.apply(lambda x : pd.Timedelta(x['tps_parcours_theoriq']),axis=1)
 liste_trajet_incomplet.sort_values('nb_cams', ascending=False, inplace=True)
 
-param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
+param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
 
 def ouvrir_fichier_lapi(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
@@ -37,7 +37,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('lapi') as c : 
+    with ct.ConnexionBdd('gti_lapi') as c : 
         requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
@@ -646,6 +646,15 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
 
 
 def pourcentage_pl_camera(df_3semaines,dico_passag):
+    """
+    fonction de regroupement des nb de vl, pl, et pl en trasit, par heure et par camera
+    en entree : 
+        df_3semaines : df des passages sur les semaines concernees
+        dico_passag : dico de spassages de transit
+    en sortie : 
+        jointure_pct_pl : df allant servir pour representation graphique : 
+            colonnes : created, camera_id, nb_veh, type, pct_pl_transit
+    """
     def pct_pl(a,b):
         try :
             return a*100/b
@@ -653,14 +662,29 @@ def pourcentage_pl_camera(df_3semaines,dico_passag):
             return 0
     #isoler les pl de la source
     df_pl_3semaines=df_3semaines.loc[df_3semaines['l']==1]
-    df_synthese_pl_tot=df_pl_3semaines.groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_tot'}).reset_index()
-    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].rename(
-        column={'immat':'nb_pl_transit'}).reset_index()
-    df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'0_x':'nb_pl_tot',
-                                                                                            '0_y':'nb_pl_transit'})
-    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1)
+    df_vl_3semaines=df_3semaines.reset_index().set_index(['created','camera_id', 'immat'])
+    df_vl_3semaines=df_vl_3semaines.loc[~df_vl_3semaines.index.isin(df_pl_3semaines.reset_index().set_index(
+        ['created','camera_id', 'immat']).index.values)].reset_index().set_index('created')
     
-    return df_pct_pl_transit
+    df_synthese_pl_tot=df_pl_3semaines.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
+    df_synthese_vl_tot=df_vl_3semaines.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
+    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
+            columns={'immat':'nb_veh'})
+    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
+            columns={'immat':'nb_veh'})
+    
+    df_synthese_pl_tot['type']='pl_tot'
+    df_synthese_vl_tot['type']='vl_tot'
+    df_synthese_pl_transit['type']='pl_transit'
+    
+    df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'nb_veh_x':'nb_pl_tot',
+                                                                                            'nb_veh_y':'nb_pl_transit'})
+    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1) 
+    
+    concat_tv=pd.concat([df_synthese_pl_tot,df_synthese_vl_tot,df_synthese_pl_transit], axis=0, sort=False).rename(columns={'0':'nb_veh'})
+    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit[['camera_id','created','pct_pl_transit']], on=['camera_id','created'], how='left')
+    
+    return jointure_pct_pl
     
 def filtrer_df(df_global,df_filtre): 
     df_global=df_global.reset_index().set_index(['created','immat'])
