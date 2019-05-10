@@ -59,7 +59,21 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
         df_immat=pd.read_sql_query(requete_immat, c.sqlAlchemyConn)
         return df_passage,df_plaque, df_immat
 
-
+def supprimer_doublons(df):
+    """
+    Suppression des doublons exact entre les attributs created et immat et suppresion des doublons proches (inf a 10s) entre created, camera_id
+    et immat, avec conservation de la ligne avec la fiability la plus haute
+    en entree : 
+        df : df issue de l'import des données de la bdd
+    en sortie : df_3semaines : df avec les doublons supprimes
+    """
+    #supprimer les doublons
+    df_3semaines=df.reset_index().drop_duplicates(['created','immat'])
+    #doublons "proches" : même immat, même camera, passages écartés de moins de 10s
+    df_3semaines=df_3semaines.sort_values(['immat','created','camera_id','fiability']).copy()
+    df_3semaines['id']=(df_3semaines.created - df_3semaines.created.shift(1) > pd.Timedelta(seconds=10)).fillna(99999999).cumsum(skipna=False)
+    df_3semaines=df_3semaines.sort_values(['immat','id','fiability'], ascending=False).copy().drop_duplicates(['immat','id'])
+    return df_3semaines
 
 class trajet():
     """
