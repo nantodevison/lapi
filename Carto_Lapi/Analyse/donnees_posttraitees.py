@@ -72,7 +72,7 @@ def supprimer_doublons(df):
     #doublons "proches" : même immat, même camera, passages écartés de moins de 10s
     df_3semaines=df_3semaines.sort_values(['immat','created','camera_id','fiability']).copy()
     df_3semaines['id']=(df_3semaines.created - df_3semaines.created.shift(1) > pd.Timedelta(seconds=10)).fillna(99999999).cumsum(skipna=False)
-    df_3semaines=df_3semaines.sort_values(['immat','id','fiability'], ascending=False).copy().drop_duplicates(['immat','id'])
+    df_3semaines=df_3semaines.sort_values(['immat','id','fiability'], ascending=False).copy().drop_duplicates(['immat','id']).set_index('created')
     return df_3semaines
 
 class trajet():

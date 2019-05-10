@@ -38,7 +38,7 @@ def ouvrir_fichier_lapi(date_debut, date_fin) :
     en sortie : dataframe pandas
     """
     with ct.ConnexionBdd('gti_lapi') as c : 
-        requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
+        requete=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df=pd.read_sql_query(requete, c.sqlAlchemyConn)
         return df
     
@@ -50,7 +50,7 @@ def ouvrir_fichier_lapi_final() :
     en sortie : dataframe pandas
     """
     with ct.ConnexionBdd('gti_lapi_final') as c : 
-        requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
+        requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df_passage=pd.read_sql_query(requete, c.sqlAlchemyConn)
         requete_plaque=f"select plaque_ouverte, chiffree from data.te_plaque_longue"
         df_plaque=pd.read_sql_query(requete_plaque, c.sqlAlchemyConn)
