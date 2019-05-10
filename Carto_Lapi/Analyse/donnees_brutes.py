@@ -894,7 +894,8 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
                                 x='date_cam_1',
                                 y='hoursminutes(tps_parcours)',
                                 tooltip='hoursminutes(tps_parcours)',
-                                color='filtre_tps:N', shape='type:N').interactive().properties(width=600)
+                                color=alt.Color('filtre_tps:N', legend=alt.Legend(title="Type de trajet", values=['local', 'transit'])),
+                                shape=alt.Shape('type:N',legend=alt.Legend(title="Source temps de référence"))).interactive().properties(width=600)
     return graph_filtre_tps
 
 def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, o_d, nb_jours):
