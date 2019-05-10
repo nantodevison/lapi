@@ -54,7 +54,64 @@ def ouvrir_fichier_lapi_final() :
         df_plaque=pd.read_sql_query(requete_plaque, c.sqlAlchemyConn)
         return df_plaque
 
+def passages_proches(df):
+    """
+    Trouver et tariter les passages trop proches à des cameras différentes
+    en entre : 
+        df : df des données issues de la Bdd
+    en sortie :
+        groupe_pl : pl groupes par immat
+        groupe_pl_rappro : PL trop proche
+        
+    """
+    #fonction de test d'ecart entre les passages
+    def ecart_passage(liste_passage, liste_camera,state) : 
+        for i in range(len(liste_passage)-1):
+            if (pd.to_datetime(liste_passage[i+1])-pd.to_datetime(liste_passage[i])<pd.Timedelta('00:05:00') and 
+                pd.to_datetime(liste_passage[i])!=pd.to_datetime(liste_passage[i+1]) and state!='!!') : #on trouve l'enchainement en moins de 5minutes, sans prendre les doublons
+                return True
+        else : return False
+    def conserver_state(liste_state):
+        if '!!' in liste_state : 
+            return '!!'
+        else : return liste_state[0]
 
+    def liste_passage(liste_cam, liste_created) : 
+        liste_passage=[]
+        for i in range(len(liste_created)-1):
+            if pd.to_datetime(liste_created[i+1])-pd.to_datetime(liste_created[i])<pd.Timedelta('00:05:00') :
+                liste_passage.append(liste_cam[i])
+                liste_passage.append(liste_cam[i+1])
+        return liste_passage
+    def liste_created(liste_cam, liste_created) : 
+        liste_created_fin=[]
+        for i in range(len(liste_created)-1):
+            if pd.to_datetime(liste_created[i+1])-pd.to_datetime(liste_created[i])<pd.Timedelta('00:05:00') :
+                liste_created_fin.append(liste_created[i])
+                liste_created_fin.append(liste_created[i+1])
+        return liste_created_fin
+    def liste_fiability(liste_fiab, liste_created) : 
+        liste_fiab_fin=[]
+        for i in range(len(liste_created)-1):
+            if pd.to_datetime(liste_created[i+1])-pd.to_datetime(liste_created[i])<pd.Timedelta('00:05:00') :
+                liste_fiab_fin.append(liste_fiab[i])
+                liste_fiab_fin.append(liste_fiab[i+1])
+        return liste_fiab_fin
+    
+    
+    #on grouep les données et modifie les colonnes
+    groupe=(df_3semaines.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x),'l': lambda x : test_unicite_type(list(x),'1/2'), 
+                                                                  'created':lambda x: tuple(x),'state':lambda x : conserver_state(list(x)),
+                                                                  'fiability':lambda x: tuple(x)}))
+    #on isole les pl
+    groupe_pl=groupe.loc[groupe['l']==1].copy()
+    #on ajoute une colonne drapeau pour localiser le pb
+    groupe_pl['erreur_tps_passage']=groupe_pl.apply(lambda x :  ecart_passage(x['created'], x['camera_id'], x['state']),axis=1)
+    #et on extrait unqiement les passages problemetaique
+    groupe_pl_rappro=groupe_pl[groupe_pl['erreur_tps_passage']].copy()
+    groupe_pl_rappro['liste_passag_faux']=groupe_pl_rappro.apply(lambda x : liste_passage(x['camera_id'],x['created']),axis=1)
+    groupe_pl_rappro['liste_created_faux']=groupe_pl_rappro.apply(lambda x : liste_created(x['camera_id'],x['created']),axis=1)
+    groupe_pl_rappro['fiability_faux']=groupe_pl_rappro.apply(lambda x : liste_fiability(x['fiability'],x['created']),axis=1)
 
 class trajet():
     """
