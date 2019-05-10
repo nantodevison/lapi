@@ -15,6 +15,8 @@ import Connexion_Transfert as ct
 import altair as alt
 import os,math, datetime as dt
 from sklearn.cluster import DBSCAN
+import statistics 
+from statistics import mode
 
 dico_renommage={'created_x':'date_cam_1', 'created_y':'date_cam_2'}
 
@@ -56,7 +58,7 @@ def ouvrir_fichier_lapi_final() :
 
 def passages_proches(df):
     """
-    Trouver et tariter les passages trop proches à des cameras différentes
+    Trouver les passages trop proches à des cameras différentes
     en entre : 
         df : df des données issues de la Bdd
     en sortie :
@@ -74,7 +76,7 @@ def passages_proches(df):
     def conserver_state(liste_state):
         if '!!' in liste_state : 
             return '!!'
-        else : return liste_state[0]
+        else : return mode(liste_state) #element le plus represente
 
     def liste_passage(liste_cam, liste_created) : 
         liste_passage=[]

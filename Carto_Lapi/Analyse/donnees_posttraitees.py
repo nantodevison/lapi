@@ -38,9 +38,9 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\liste_trajet_incomplet.json','incomplet')
+param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
 
     
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
@@ -59,21 +59,49 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
         df_immat=pd.read_sql_query(requete_immat, c.sqlAlchemyConn)
         return df_passage,df_plaque, df_immat
 
-def supprimer_doublons(df):
+def supprimer_doublons(df_passage):
     """
     Suppression des doublons exact entre les attributs created et immat et suppresion des doublons proches (inf a 10s) entre created, camera_id
     et immat, avec conservation de la ligne avec la fiability la plus haute
     en entree : 
-        df : df issue de l'import des données de la bdd
-    en sortie : df_3semaines : df avec les doublons supprimes
+        df_passage : df issue de l'import des données de la bdd
+    en sortie : 
+        df_3semaines : df avec les doublons supprimes
     """
     #supprimer les doublons
-    df_3semaines=df.reset_index().drop_duplicates(['created','immat'])
+    df_3semaines=df_passage.reset_index().drop_duplicates(['created','immat'])
     #doublons "proches" : même immat, même camera, passages écartés de moins de 10s
     df_3semaines=df_3semaines.sort_values(['immat','created','camera_id','fiability']).copy()
     df_3semaines['id']=(df_3semaines.created - df_3semaines.created.shift(1) > pd.Timedelta(seconds=10)).fillna(99999999).cumsum(skipna=False)
     df_3semaines=df_3semaines.sort_values(['immat','id','fiability'], ascending=False).copy().drop_duplicates(['immat','id']).set_index('created')
     return df_3semaines
+
+def affecter_type(df_passage,df_immat ):
+    """
+    affecter le type de vehicule dans le df des passage selon les infos fournies dans df_immat
+    en entree : 
+       df_passage : df des passages issues de ouvrir_fichier_lapi_final
+       df_immat : df des immatriculations issues de ouvrir_fichier_lapi_final
+    en sortie : 
+        df_passage : df des passages avec l'attribut 'l' modifié
+    """
+    #definir le type de veh dans df_immat
+    def type_veh(pl_tot, vl_tot, vul_tot):
+        if pl_tot>0 and vl_tot==0 and  vul_tot==0 : 
+            return 1
+        elif pl_tot==0 and vl_tot>0 and  vul_tot==0 :
+            return 0
+        elif pl_tot==0 and vl_tot==0 and  vul_tot>0 :
+            return 2
+        else :
+            return -1
+    
+    df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_tot'], x['vl_tot'], x['vul_tot']),axis=1)
+    df_passage=df_passage.merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
+    df_passage['l']=df_passage['type_veh']
+    df_passage.drop('type_veh', inplace=True)
+    return df_passage
+    
 
 class trajet():
     """
