@@ -61,7 +61,7 @@ def passages_proches(df):
         df : df des données issues de la Bdd
     en sortie :
         groupe_pl : pl groupes par immat
-        groupe_pl_rappro : PL trop proche
+        groupe_pl_rappro : PL trop proche, groupe par immat avec tuple des created, fiability, camera_id
         
     """
     #fonction de test d'ecart entre les passages
@@ -100,7 +100,7 @@ def passages_proches(df):
     
     
     #on grouep les données et modifie les colonnes
-    groupe=(df_3semaines.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x),'l': lambda x : test_unicite_type(list(x),'1/2'), 
+    groupe=(df.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x),'l': lambda x : test_unicite_type(list(x),'1/2'), 
                                                                   'created':lambda x: tuple(x),'state':lambda x : conserver_state(list(x)),
                                                                   'fiability':lambda x: tuple(x)}))
     #on isole les pl
@@ -112,6 +112,52 @@ def passages_proches(df):
     groupe_pl_rappro['liste_passag_faux']=groupe_pl_rappro.apply(lambda x : liste_passage(x['camera_id'],x['created']),axis=1)
     groupe_pl_rappro['liste_created_faux']=groupe_pl_rappro.apply(lambda x : liste_created(x['camera_id'],x['created']),axis=1)
     groupe_pl_rappro['fiability_faux']=groupe_pl_rappro.apply(lambda x : liste_fiability(x['fiability'],x['created']),axis=1)
+    
+    return groupe_pl_rappro, groupe_pl
+
+def analyse_passage_proches(groupe_pl_rappro, groupe_pl):
+    """
+    Creer des df d'analyse des passages proches
+    en entree : 
+        groupe_pl_rappro : df issues de passages_proches
+        groupe_pl : df issues de passages_proches
+    en sortie : 
+        jointure : df des passages proches et totaux par camera
+        
+    """
+    #isoler les passages rapprochés avec une fiabilité foireuse
+    #1. reconversion de la df de liste en df de passages uniques par passage paruneliste
+    liste=zip(groupe_pl_rappro.index.tolist(),groupe_pl_rappro.liste_passag_faux.tolist(),groupe_pl_rappro.liste_created_faux.tolist(),groupe_pl_rappro.fiability_faux.tolist())
+    liste_finale=[]
+    for a in liste :
+        for i,l in enumerate(a[1]) :
+            liste_inter=[a[0],l,a[2][i],a[3][i]]
+            liste_finale.append(liste_inter)    
+    #2. conversion en df
+    df_passage_rapproches=pd.DataFrame.from_records(liste_finale, columns=['immat', 'camera_id','created','fiability'])
+    
+    #analyse des cameras concernée
+    #nb de pl par camera
+    liste=zip(groupe_pl.index.tolist(),groupe_pl.camera_id.tolist(),groupe_pl.created.tolist())
+    liste_finale=[]
+    for a in liste :
+        for i,l in enumerate(a[1]) :
+            liste_inter=[a[0],l,a[2][i]]
+            liste_finale.append(liste_inter)    
+    df_pl=pd.DataFrame.from_records(liste_finale, columns=['immat', 'camera_id','created'])
+    nb_pl_cam=df_pl.groupby('camera_id').count()['immat'].reset_index().rename(columns={'immat':'nb_pl'})
+    nb_pl_cam['type']='tot'
+    #nb_pl faux par cam
+    nb_passage_faux_cam=df_passage_rapproches.groupby('camera_id').count()['immat'].reset_index().rename(columns={'immat':'nb_pl'})
+    nb_passage_faux_cam['type']='faux'
+    
+    #jointure
+    jointure=nb_pl_cam.merge(nb_passage_faux_cam, on='camera_id')
+    jointure['pct_faux']=jointure.apply(lambda x: x['nb_pl_y']/x['nb_pl_x']*100,axis=1)
+    
+    return jointure
+
+
 
 class trajet():
     """
