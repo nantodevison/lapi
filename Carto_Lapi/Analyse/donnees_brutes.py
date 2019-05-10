@@ -844,6 +844,20 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
                                                                     x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],marge), axis=1)
     return df_transit_tps_parcours
 
+def graph_passages_proches(jointure, groupe_pl_rappro):
+    """
+    Visualiser les stats sur les pasages trop proches
+    """
+    cam_proche_liste=groupe_pl_rappro.groupby('liste_passag_faux').count()['l']
+    cam_proche_liste_triee=cam_proche_liste.sort_values(ascending=False).reset_index()
+    base=alt.Chart(jointure).encode(x=alt.X('camera_id:N', axis=alt.Axis(title='num caméra')))
+    bar=base.mark_bar().encode(y=alt.Y('nb_pl_x:Q', axis=alt.Axis(title='nb PL')))
+    line=base.mark_line(color="#ffd100", strokeWidth=5).encode(y=alt.Y('pct_faux:Q', axis=alt.Axis(title='% PL faux')))
+    return (bar+line).resolve_scale(y='independent') | (
+        alt.Chart(cam_proche_liste_triee.iloc[:10]).mark_bar().encode(
+            x=alt.X('liste_passag_faux', axis=alt.Axis(title='trajet')),
+                    y=alt.Y('l:Q', axis=alt.Axis(title='Nb occurence'))))
+
 def graph_nb_veh_ttjours_ttcam(df) : 
     """
     Fonction de graph du nb ceh par jour et par pour l'ensembles des cameras
