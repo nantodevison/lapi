@@ -9,7 +9,6 @@ Module de traitement des donnees lapi
 
 import matplotlib #pour éviter le message d'erreurrelatif a rcParams
 import pandas as pd
-import geopandas as gp
 import numpy as np
 import Connexion_Transfert as ct
 import altair as alt
@@ -97,9 +96,10 @@ def affecter_type(df_passage,df_immat ):
             return -1
     
     df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_total'], x['vl_total'], x['vul_total']),axis=1)
-    df_passage=df_passage.merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
+    df_passage=df_passage.reset_index().merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
     df_passage['l']=df_passage['type_veh']
-    #df_passage.drop('type_veh', inplace=True)
+    df_passage=df_passage.set_index('created').sort_index()
+    df_passage.drop('type_veh',axis=1,inplace=True)
     return df_passage
     
 
@@ -119,8 +119,8 @@ class trajet():
         typeCluster -- pour typeTrajet='Global' : regroupement des temps de parcours par o_d ou parcameras parcourue 
     """
     
-    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct', df_filtre=None,temps_max_autorise=18, 
-                 typeCluster='o_d',modeRegroupement='1/2',liste_trajet=liste_complete_trajet) :
+    def __init__(self,df,date_debut, duree, cameras,typeTrajet='Direct',df_filtre=None,temps_max_autorise=18, 
+                 liste_trajet=liste_complete_trajet,typeVeh=1 ) :
         """
         Constrcuteur
         Attributs de sortie : 
@@ -139,13 +139,16 @@ class trajet():
             self.df=df
         else :
             self.df=df.set_index('created').sort_index()
+            
+        #on filtre sur le type de vehicule étudié
+        self.df=self.df.loc[self.df['l']==typeVeh].copy()
         
         if self.df.empty:    
             raise PasDePlError()
         
         #attributs
         self.date_debut, self.duree, self.cameras_suivantes, self.temps_max_autorise=pd.to_datetime(date_debut), duree, cameras,temps_max_autorise
-        self.typeTrajet,self.modeRegroupement = typeTrajet, modeRegroupement
+        self.typeTrajet = typeTrajet
         self.date_fin=self.date_debut+pd.Timedelta(minutes=self.duree)
         self.df_duree=self.df.loc[self.date_debut:self.date_fin] 
         
@@ -170,37 +173,20 @@ class trajet():
         else : 
             dico_tps_max={}
             dico_tps_max['date'], dico_tps_max['temps'], dico_tps_max['type'], dico_tps_max['o_d']=[],[],[],[]
-            if typeCluster!='o_d' : #on pourrait le remplacer par ='cam' et mettre une erreur comme pour le typetrajet
-                dico_tps_max['cameras'] = []
-                for cam,od in (zip(self.df_transit[['cameras','o_d']].drop_duplicates().cameras.tolist(), 
-                            self.df_transit[['cameras','o_d']].drop_duplicates().o_d.tolist())): 
-                    try : 
-                        temps_parcours_max=temp_max_cluster(self.df_transit.loc[self.df_transit['cameras']==cam],800)[1]
-                        tps_parcours_max_type='Cluster'
-                    except ClusterError :
-                        temps_parcours_max=self.df_transit.loc[self.df_transit['cameras']==cam].tps_parcours.quantile(0.85)
-                        tps_parcours_max_type='85eme_percentile'
-                    dico_tps_max['date'].append(self.date_debut)
-                    dico_tps_max['date'].append(self.date_debut)
-                    dico_tps_max['temps'].append(temps_parcours_max)
-                    dico_tps_max['type'].append(tps_parcours_max_type)
-                    dico_tps_max['o_d'].append(od)    
-                    dico_tps_max['cameras'].append(cam)
-            else :
-                for od in self.df_transit.o_d.unique().tolist():
-                    try : 
-                        t_ref=15 if self.date_debut.hour in [6,7,8,14,15,16,17,18,19] else 60 
-                        delai_ref=param_cluster[(param_cluster.trajet.apply(lambda x : od in x)) & (param_cluster['temps_etudie']==t_ref)].delai.values[0]  
-                        coef=param_cluster[(param_cluster.trajet.apply(lambda x : od in x)) & (param_cluster['temps_etudie']==t_ref)].nb_pt_min.values[0]
-                        temps_parcours_max=temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],delai_ref,coef)[1]
-                        tps_parcours_max_type='Cluster'
-                    except ClusterError :
-                        temps_parcours_max=self.df_transit.loc[self.df_transit['o_d']==od].tps_parcours.quantile(0.85)
-                        tps_parcours_max_type='85eme_percentile'
-                    dico_tps_max['date'].append(self.date_debut)
-                    dico_tps_max['temps'].append(temps_parcours_max)
-                    dico_tps_max['type'].append(tps_parcours_max_type)
-                    dico_tps_max['o_d'].append(od)    
+            for od in self.df_transit.o_d.unique().tolist():
+                try : 
+                    t_ref=15 if self.date_debut.hour in [6,7,8,14,15,16,17,18,19] else 60 
+                    delai_ref=param_cluster[(param_cluster.trajet.apply(lambda x : od in x)) & (param_cluster['temps_etudie']==t_ref)].delai.values[0]  
+                    coef=param_cluster[(param_cluster.trajet.apply(lambda x : od in x)) & (param_cluster['temps_etudie']==t_ref)].nb_pt_min.values[0]
+                    temps_parcours_max=temp_max_cluster(self.df_transit.loc[self.df_transit['o_d']==od],delai_ref,coef)[1]
+                    tps_parcours_max_type='Cluster'
+                except ClusterError :
+                    temps_parcours_max=self.df_transit.loc[self.df_transit['o_d']==od].tps_parcours.quantile(0.85)
+                    tps_parcours_max_type='85eme_percentile'
+                dico_tps_max['date'].append(self.date_debut)
+                dico_tps_max['temps'].append(temps_parcours_max)
+                dico_tps_max['type'].append(tps_parcours_max_type)
+                dico_tps_max['o_d'].append(od)    
             self.temps_parcours_max=pd.DataFrame(dico_tps_max)
         
     def trajet_direct(self):
@@ -215,8 +201,6 @@ class trajet():
         #trouver tt les bagnoles passée par cam1 dont la 2eme camera est cam2
         #isoler camera 1
         cam1_puis_cam2=trouver_passages_consecutif(self.df, self.date_debut, self.date_fin,self.cameras_suivantes[0], self.cameras_suivantes[1])
-        # on regroupe les attributs de description de type et de fiabilite de camera dans des listes (comme ça si 3 camera on pourra faire aussi)
-        cam1_puis_cam2['l']=cam1_puis_cam2.apply(lambda x:test_unicite_type([x['l_x'],x['l_y']],mode=self.modeRegroupement), axis=1)
         #pour la fiabilite on peut faire varier le critere. ici c'est 0 : tous le spassages sont pris
         cam1_puis_cam2['fiability']=cam1_puis_cam2.apply(lambda x: all(element > 0 for element in [x['fiability_x'],x['fiability_y']]), axis=1)
         #on trie puis on ajoute un filtre surle temps entre les 2 camera.
@@ -225,8 +209,8 @@ class trajet():
         #on ressort la colonne de tempsde l'index et on cree la colonne des differentiel de temps
         cam1_cam2_passages_filtres=cam1_cam2_passages_filtres.reset_index()
         cam1_cam2_passages_filtres['tps_parcours']=cam1_cam2_passages_filtres['created_y']-cam1_cam2_passages_filtres['created_x'] #creer la colonne des differentiel de temps
-        #isoler les pl fiables
-        df_pl=cam1_cam2_passages_filtres.loc[(cam1_cam2_passages_filtres.loc[:,'l']==1) & (cam1_cam2_passages_filtres.loc[:,'fiability']==True)]
+        #isoler les passages fiables
+        df_pl=cam1_cam2_passages_filtres.loc[cam1_cam2_passages_filtres.loc[:,'fiability']==True]
         df_tps_parcours_pl_final=df_pl[['immat','created_x', 'created_y','tps_parcours']].rename(columns=dico_renommage)
         df_tps_parcours_pl_final['cameras']=df_tps_parcours_pl_final.apply(lambda x : tuple(self.cameras_suivantes),axis=1)
         if df_tps_parcours_pl_final.empty :
@@ -249,13 +233,12 @@ class trajet():
             nom_variable='trajet'+str(indice)
             #calculer les temps de parcours et autres attributs issus de trajet_direct selon les resultats du precedent
             if indice==0 : # si c'est le premier tarjet on se base sur des paramètres classiques
-                trajet_elem=trajet(self.df, self.date_debut, self.duree, couple_cam,temps_max_autorise=self.temps_max_autorise,
-                                   modeRegroupement=self.modeRegroupement)
+                trajet_elem=trajet(self.df, self.date_debut, self.duree, couple_cam,temps_max_autorise=self.temps_max_autorise)
             else : 
                 cle_traj_prec='trajet'+str(indice-1)
                 trajet_elem=(trajet(self.df, dico_traj_directs[cle_traj_prec].timestamp_mini,
                                          dico_traj_directs[cle_traj_prec].duree_traj_fut,
-                                         couple_cam, temps_max_autorise=self.temps_max_autorise,modeRegroupement=self.modeRegroupement))
+                                         couple_cam, temps_max_autorise=self.temps_max_autorise))
             dico_traj_directs[nom_variable]=trajet_elem
         
         return dico_traj_directs
@@ -297,13 +280,8 @@ class trajet():
                     #print(f" apres boucle df_trajet_indirect, df_transit : {df_transit.columns}")
                     df_transit['tps_parcours']=df_transit['tps_parcours_x']+df_transit['tps_parcours_y']
                     df_transit=(df_transit.rename(columns=dico_rename))[['immat','date_cam_1','date_cam_2','tps_parcours']]
-            
-            #print(f"1_df_trajet_indirect, df_transit : {df_transit.columns}")
-        #print(f"2_df_trajet_indirect, df_transit : {df_transit.columns}")
 
         df_transit['cameras']=df_transit.apply(lambda x:tuple(self.cameras_suivantes), axis=1)
-        
-        #print(df_transit)
 
         return df_transit
         
@@ -316,7 +294,7 @@ class trajet():
             df_passag_transit : pandas dataframe conteant les passages considérés en transit
             
         """       
-        groupe_pl,df_duree_cam1,df_duree_autres_cam=grouper_pl(self.df, self.date_debut, self.date_fin, self.cameras_suivantes[0], self.modeRegroupement,df_filtre)
+        groupe_pl,df_duree_cam1,df_duree_autres_cam=grouper_pl(self.df, self.date_debut, self.date_fin, self.cameras_suivantes[0],df_filtre)
         
         df_agrege=filtre_et_forme_passage(self.cameras_suivantes[0],groupe_pl, liste_trajet, df_duree_cam1)
         
@@ -383,38 +361,10 @@ class trajet():
                 line = alt.Chart(copie_df.loc[copie_df['o_d']==od]).mark_line().encode(
                                 x='date_cam_1',
                                 y='hoursminutes(temps):T').interactive()
-                """graph_tps_parcours = alt.Chart(copie_df.loc[copie_df['o_d_x']==od]).mark_point().encode(
-                                x='date_cam_1',
-                                y='hoursminutes(tps_parcours)',
-                                color='cameras',
-                                shape='cameras',
-                                tooltip='hoursminutes(tps_parcours)').interactive()
-                graph_tps_filtre=alt.Chart(copie_df.loc[copie_df['o_d_x']==od]).mark_line().encode(
-                                        x='date_cam_1',
-                                        y='hoursminutes(temps)')
-                """
-                dico_graph[od]=points+line#graph_tps_parcours+graph_tps_filtre
+                dico_graph[od]=points+line
             return dico_graph
 
-def test_unicite_type(liste_l, mode='unique'):
-        """test pour voir si un vehicule a ete toujours vu de la mme façon ou non
-           en entre : liste de valeur de l (qui traduit si c'est u pl ou non) iisues d'une df
-           en sortie : integer 0  ou 1 ou -1
-           """ 
-        if mode=='unique' : 
-            if len(set(liste_l))==1 :
-                return liste_l[0]
-            else : 
-                return -1
-        elif mode=='1/2' :
-            if any(liste_l)==1 : 
-                return 1
-            else : 
-                return -1
-        elif mode=='aucun' :
-            return 1
-
-def grouper_pl(df,date_debut,date_fin,camera,modeRegroupement,df_filtre):
+def grouper_pl(df,date_debut,date_fin,camera,df_filtre):
     """
     Regroupement des PL par immat en fonction des attributs de dates de debuts et de fin et de la camera1 de l'objet, 
     avec filtre des passages deja present dans un autre trajet. les cameras et date de passages devant sont stockées dans des tuples
@@ -437,13 +387,12 @@ def grouper_pl(df,date_debut,date_fin,camera,modeRegroupement,df_filtre):
        raise PasDePlError() 
     #on recupere ces immat aux autres cameras
     df_duree_autres_cam=df.loc[(df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
-    groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 'l': lambda x : test_unicite_type(list(x),mode=modeRegroupement),
-                                                                                   'created':lambda x: tuple(x)}))
-    groupe_pl=groupe.loc[groupe['l']==1].copy() #on ne garde que les pl
-    if groupe_pl.empty :
+    groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 
+                                                                                 'created':lambda x: tuple(x)}))
+    if groupe.empty :
         raise PasDePlError()
     
-    return groupe_pl, df_duree_cam1,df_duree_autres_cam
+    return groupe, df_duree_cam1,df_duree_autres_cam
 
 def filtre_et_forme_passage(camera,groupe_pl_init, liste_trajet, df_duree_cam1):
     """
@@ -488,7 +437,7 @@ def filtre_et_forme_passage(camera,groupe_pl_init, liste_trajet, df_duree_cam1):
     if df_ts_trajets.empty :
         raise PasDePlError()
     df_ts_trajets['o_d']=df_ts_trajets.apply(lambda x : x['origine']+'-'+x['destination'],axis=1)
-    df_agrege=df_duree_cam1.reset_index().merge(df_ts_trajets,on='immat').drop(['camera_id', 'l_x','fiability'],axis=1).rename(columns={'l_y':'l','created':'date_cam_1'})
+    df_agrege=df_duree_cam1.reset_index().merge(df_ts_trajets,on='immat').drop(['camera_id','fiability'],axis=1).rename(columns={'l_y':'l','created':'date_cam_1'})
     df_agrege['tps_parcours']=df_agrege.apply(lambda x : x.date_cam_2-x.date_cam_1, axis=1)
     df_agrege=df_agrege.loc[df_agrege['date_cam_2'] > df_agrege['date_cam_1']]#pour les cas bizarres de plaques vu a qq minutes d'intervalle au sein d'une même heure
     
@@ -553,7 +502,7 @@ def creer_liste_date(date_debut, nb_jours):
             liste_date.append([date,60])
     return liste_date
         
-def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2',liste_trajet_loc=liste_complete_trajet):
+def transit_temps_complet(date_debut, nb_jours, df_3semaines,liste_trajet_loc=liste_complete_trajet):
     """
     Calcul des trajets et passages des poids lourds en transit, sur une période de temps minimale d'1j (peut etre regle et affiné dans la fonction selon date_debut, nb_jours et periode)
     en entree : 
@@ -573,16 +522,13 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2',
             df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
         if date.hour==0 : print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         for cameras in zip([15,12,8,10,19,6],range(6)) : #dans ce mode peu importe la camera d'arrivée, elle sont toutes analysées
-            #print(f"cameras{cameras}, date : {date}, debut_traitement : {dt.datetime.now()}")
             try : 
                 if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
-                    #print(dico_passag.loc[dico_passag['created']>=date])
                     donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy(),
-                                          modeRegroupement=Regroupement,liste_trajet=liste_trajet_loc)
+                                          liste_trajet=liste_trajet_loc)
                 else : 
-                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',modeRegroupement=Regroupement,liste_trajet=liste_trajet_loc)
+                    donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',liste_trajet=liste_trajet_loc)
                 df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max
-                #print (df_tps_max)
                 
             except PasDePlError :
                 continue
@@ -595,8 +541,6 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,Regroupement='1/2',
                 dico_passag=df_passag
                 dico_od=df_trajet 
                 dico_tps_max=df_tps_max
-            
-            #df_journee=filtrer_df(df_journee, df_passag)
     dico_tps_max=pd.DataFrame(dico_tps_max)
     return dico_od,  dico_passag, dico_tps_max
 
@@ -631,12 +575,16 @@ def param_trajet_incomplet(date_debut,df_od_corrige,df_3semaines,dico_passag):
     return df_filtre_A63, df_passage_transit, df_non_transit
     
 
-def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,date_debut,nb_jours, df_3semaines,Regroupement='1/2',liste_trajet_loc=liste_trajet_incomplet):
+def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jours, df_3semaines,liste_trajet_loc=liste_trajet_incomplet):
     """
     Extrapoler des trajest à partir des immats en transit,sur des trajets où il manque la camera de fin
     en entree : 
+        df_filtre_A63 : df des immat de transit qui ne sont pas passées par A63. issu de param_trajet_incomplet()
+        df_passage_transit : df des passages d'immatricluation identifiées en transit. issu de param_trajet_incomplet()
         date_debut : string : de type YYYY-MM-DD hh:mm:ss
-        dico_passag : dico des passages de transit, issus de transit_temps_complet
+        nb_jours : integer : nb de jours que l'on souhiate etudie depuis la date_debut
+        df_3semaines : df des passages totaux filtres (cf supprimer_doublons() )
+        liste_trajet_loc : df de filtre selon les trajets prévus, cf mise_en_forme_dfs_trajets
     """
     df_passage_transit_incomplet=None
     dico_od=None
@@ -647,7 +595,7 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
             #regrouper les pl
             try : 
                 groupe_pl,df_duree_cam1,df_duree_autres_cam=grouper_pl(df_passage_transit
-                                                        , date, date_fin, cameras, Regroupement,df_passage_transit_incomplet)
+                                                        , date, date_fin, cameras, df_passage_transit_incomplet)
             except PasDePlError :
                 continue 
             #le pb c'est qu epour le trajet qui s'arrete sur Rocade Ouest, le PL est susceptible d'aller soit sur A89 soit sur N10.
@@ -658,8 +606,7 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
                 continue
             #2.filtrer selon les trajets possibles
             try : 
-                trajets_possibles=(filtre_et_forme_passage(cameras,groupe_pl_transit, liste_trajet_loc, df_duree_cam1).drop(
-                   'index',axis=1).rename(columns={'o_d':'o_d_liste_trajet'}))
+                trajets_possibles=(filtre_et_forme_passage(cameras,groupe_pl_transit, liste_trajet_loc, df_duree_cam1).rename(columns={'o_d':'o_d_liste_trajet'}))
             except PasDePlError :
                 continue 
             #3. ajouter les infos sur les cameras avant / apres le passage final
@@ -692,7 +639,7 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,df_non_transit,dat
 
 def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
     #isoler les pl de la source
-    df_pl_3semaines=df_3semaines.loc[df_3semaines['l']==1]
+    df_pl_3semaines=df_3semaines.copy()
     df_pl_3semaines.set_index('created',inplace=True)
     #comparer les pl en transit avec l'ensembles des pl, par heure, par camera
     #obtenir les nb de pl par heure et par camera sur la source
@@ -761,49 +708,6 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
                                                                     x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],marge), axis=1)
     return df_transit_tps_parcours
        
-def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
-    """
-    pour visualiser les graph de seprataion des trajets de transit et des autres
-    en entree :
-        df_transit : df des o_d
-        date_debut : string au format 2019-01-28 00:00:00
-        date_fin : string au format 2019-01-28 00:00:00
-        o_d : origine destination parmi les possibles du df_transit
-    en sortie : 
-        une chart altair avec en couleur le type de transit ou non, et en forme la source du temps de parcours pour filtrer   
-    """
-    titre=pd.to_datetime(date_debut).day_name(locale ='French')+' '+pd.to_datetime(date_debut).strftime('%Y-%m-%d')+' : '+o_d
-    test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime(date_debut)) &
-                                             (df_transit['date_cam_1']<pd.to_datetime(date_fin)) &
-                                             (df_transit['o_d']==o_d)])
-    copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps', 'type']].head(5000).copy()
-    copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
-    graph_filtre_tps = alt.Chart(copie_df, title=titre).mark_point().encode(
-                                x='date_cam_1',
-                                y='hoursminutes(tps_parcours)',
-                                tooltip='hoursminutes(tps_parcours)',
-                                color='filtre_tps:N', shape='type:N').interactive().properties(width=600)
-    return graph_filtre_tps 
-
-def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, o_d, nb_jours):
-    """
-    Regroupement de charts altair issues de graph_transit_filtre sur un plusieurs jours
-    en entre :
-        cf graph_transit_filtre
-        nb_jours : integer : nb de jours à concatener
-    en sortie : 
-        une chart altair concatenee verticalement avec un pour chaque jour
-    """
-    dico_graph={'graph'+str(indice):graph_transit_filtre(df_transit_avec_filtre,str(dates[0]),str(dates[1]), o_d) 
-                 for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jours, freq='D')],
-                        [str(x) for x in pd.date_range(date_fin, periods=nb_jours, freq='D')]))}
-    liste_graph=[dico_graph[key] for key in dico_graph.keys()]
-    
-    return alt.VConcatChart(vconcat=(liste_graph))
-    
-    
-    
-    
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
     """obtenir le temps max de parcours en faisant un cluster par dbscan
     on peut faire un cluster sur le couple date + tps de parcours (forme actuelle)
@@ -856,37 +760,6 @@ def verif_doublons_trajet(dico_od, destination):
     df_doublons=(jointure.loc[((jointure.date_cam_1_y>=jointure.date_cam_1_x) & (jointure.date_cam_1_y<=jointure.date_cam_2_x)) |
                   ((jointure.date_cam_2_y>=jointure.date_cam_1_x) & (jointure.date_cam_2_y<=jointure.date_cam_2_x))])
     return df_doublons
-
-def cam_adjacente(immat, date_cam_1, date_cam_2, o_d, df_immats, point_ref='A660') :
-    """
-    trouver la camera avant ou apres le passage à une origine ou destination
-    en entree : 
-        immat : immatriiculation issu du dico_od
-        horodate : string ou pd.datetime :  au format YYYY-MM-DD HH:MM:SS issu du dico_od
-        o_d : string : orgine et destination issu du dico_od
-        df_immats : dataframes des immats concernées : limite le temps de traitement
-    en sortie : 
-        cam_adjacente : integer : le code de la camera proche, ou 0
-        horodate_adjacente : pd.datetime ou pd.NaT
-    """
-    # il faudrait mettre ce dico en entree
-    dico_coresp_od_cam={'A660':{'o':'19','d':'18'},
-                        'N10':{'o':'6','d':'5'},
-                        'A89':{'o':'8','d':'7'},
-                        'A62':{'o':'10','d':'12'}}
-    cam_immat=df_immats.loc[df_immats['immat']==immat].reset_index()#localiser les passages liés à l'immat
-    camera_a660, coeff_index=(dico_coresp_od_cam[point_ref]['o'],-1) if o_d.split('-')[0]==point_ref else (dico_coresp_od_cam[point_ref]['d'],1)
-    try : #dans le cas ou il n'y a pas de passage avant ou apres
-        position_cam_adjacente=(cam_immat.loc[(cam_immat['created']==date_cam_1) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index #trouver la position de la camera suivante
-                            if o_d.split('-')[0]==point_ref else
-                            cam_immat.loc[(cam_immat['created']==date_cam_2) & (cam_immat['camera_id']==camera_a660)].index[0]+coeff_index)
-        if position_cam_adjacente==-1 : 
-            return 0, pd.NaT 
-        cam_adjacente=cam_immat.iloc[position_cam_adjacente]['camera_id']#la camera suivante
-        horodate_adjacente=cam_immat.iloc[position_cam_adjacente]['created']
-        return cam_adjacente, horodate_adjacente # et l'heure associées
-    except IndexError : 
-        return 0, pd.NaT
     
 def cam_voisines(immat, date, camera, df) :
     """
