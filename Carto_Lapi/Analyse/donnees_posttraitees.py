@@ -50,7 +50,7 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('gti_lapi_final') as c : 
+    with ct.ConnexionBdd('lapi_final') as c : 
         requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
         df_passage=pd.read_sql_query(requete_passage, c.sqlAlchemyConn)
         requete_plaque=f"select plaque_ouverte, chiffree from data.te_plaque_courte"
@@ -96,10 +96,10 @@ def affecter_type(df_passage,df_immat ):
         else :
             return -1
     
-    df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_tot'], x['vl_tot'], x['vul_tot']),axis=1)
+    df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_total'], x['vl_total'], x['vul_total']),axis=1)
     df_passage=df_passage.merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
     df_passage['l']=df_passage['type_veh']
-    df_passage.drop('type_veh', inplace=True)
+    #df_passage.drop('type_veh', inplace=True)
     return df_passage
     
 
