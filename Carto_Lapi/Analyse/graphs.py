@@ -86,27 +86,28 @@ def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, 
     
     return alt.VConcatChart(vconcat=(liste_graph))
 
-def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4) : 
+def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) : 
     """
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
-        df : df des passages initiales, telle qu'importee depuis la bdd
-        date_d : string : date de debut, generalement de la forme YYYY-MM-DD 00:00:00
-        date_f : string : date de debut, generalement de la forme YYYY-MM-DD 23:59:59
+        synt_nb_veh_cam : df agregeant les donnees de VL, PL, PL en transit et %PL transit. issu de donnees_postraitees.pourcentage_pl_camera
+        date : string : date de debut, forme YYYY-MM-DD
         camera : integer : nume de la camera etudiee
     en sortie : 
         graph : chart altair avec en x l'heure et en y le nb de veh
     """
-    test2=df.loc[(df['created'].between(date_d,date_f)) & 
-                 (df['camera_id']==camera)]
-    graph=alt.Chart(test2.set_index('created').resample('H').count().reset_index(),title=date_d+' cam '+ str(camera)).mark_bar().encode(
-                   x='created',
-                    y='immat' )
-    return graph  
+    #selection df pour graphique
+    pour_graph=synt_nb_veh_cam.loc[(synt_nb_veh_cam.apply(lambda x : x['created'].dayofyear==pd.to_datetime(date).dayofyear,axis=1))
+                                  &(synt_nb_veh_cam['camera_id']==cam)]
+    #graphique
+    base=alt.Chart(pour_graph).encode(x=alt.X('created', axis=alt.Axis(title='Heure', format='%H:%M')))
+    bar = base.mark_bar(opacity=0.7, size=20).encode(y=alt.Y('nb_veh:Q',stack=None, axis=alt.Axis(title='Nb de véhicules')),color='type')
+    line=base.mark_line(color='green').encode(y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% de PL en transit')))
+    return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
-def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour): 
+def graph_nb_veh_jour_camera_multi_j(synt_nb_veh_cam, date,cam,nb_jour): 
     """
-    Regroupement de charts altair issues de graph_nb_veh_jour_camera sur plusieurs jours
+    Regroupement de charts altair issues de graph_VL_PL_transit_j_cam sur plusieurs jours
     en entre :
         cf graph_nb_veh_jour_camera
         nb_jours : integer : nb de jours à concatener
@@ -114,9 +115,8 @@ def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour):
         une chart altair concatenee verticalement avec un pour chaque jour
     """
     df_index_ok=df.reset_index()
-    dico_graph={'graph'+str(indice):graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam) 
-               for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jour, freq='D')],
-                                [str(x) for x in pd.date_range(date_fin, periods=nb_jour, freq='D')]))}
+    dico_graph={'graph'+str(indice):graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) 
+               for indice,date in enumerate(zip([str(x) for x in pd.date_range(date, periods=nb_jour, freq='D')]))}
     liste_graph=[dico_graph[key] for key in dico_graph.keys()]
     return alt.VConcatChart(vconcat=(liste_graph))  
     

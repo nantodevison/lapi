@@ -37,9 +37,9 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\liste_trajet_incomplet.json','incomplet')
-param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
+param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
 
     
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
@@ -49,8 +49,8 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('lapi_final') as c : 
-        requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage where created between '{date_debut}' and '{date_fin}'"
+    with ct.ConnexionBdd('gti_lapi_final') as c : 
+        requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage3 where created between '{date_debut}' and '{date_fin}'"
         df_passage=pd.read_sql_query(requete_passage, c.sqlAlchemyConn)
         requete_plaque=f"select plaque_ouverte, chiffree from data.te_plaque_courte"
         df_plaque=pd.read_sql_query(requete_plaque, c.sqlAlchemyConn)
@@ -300,10 +300,11 @@ class trajet():
         
         #pour obtenir la liste des passagesrelevant de trajets de transits :
         #limitation des données des cameras par jointures
-        df_joint_passag_transit=df_agrege.merge(df_duree_autres_cam.reset_index(), on='immat')
+        df_passag_transit=trajet2passage(df_agrege,df_duree_autres_cam)
+        """df_joint_passag_transit=df_agrege.merge(df_duree_autres_cam.reset_index(), on='immat')
         df_passag_transit1=df_joint_passag_transit.loc[(df_joint_passag_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1))]
         df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
-                        [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
+                        [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))"""
         
         #et par opposition la liste des passages ne relevant pas des trajets de transit        
         return df_agrege,df_passag_transit
@@ -501,7 +502,22 @@ def creer_liste_date(date_debut, nb_jours):
         else: 
             liste_date.append([date,60])
     return liste_date
-        
+
+def trajet2passage(df_trajets, df_passage) : 
+    """
+    Fonction de passage d'une df des trajets vers la df des passages la composant
+    en entree :
+        df_trajets : df des trajets (formalisme selon class trajet)
+        df_passage : df des passages (formalisme selon export depuis Bdd)
+    en sortie : 
+        df_passag_transit : df des passages compris dans les trajets
+    """
+    df_passages_transit=df_trajets.merge(df_passage.reset_index(), on='immat')
+    df_passag_transit1=df_passages_transit.loc[(df_passages_transit.apply(lambda x : x['camera_id'] in x['cameras'], axis=1))]
+    df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
+                [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
+    return df_passag_transit
+      
 def transit_temps_complet(date_debut, nb_jours, df_3semaines,liste_trajet_loc=liste_complete_trajet):
     """
     Calcul des trajets et passages des poids lourds en transit, sur une période de temps minimale d'1j (peut etre regle et affiné dans la fonction selon date_debut, nb_jours et periode)
@@ -637,19 +653,41 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jour
 
 
 
-def pourcentage_pl_camera(date_debut, nb_jours,df_3semaines,dico_passag):
-    #isoler les pl de la source
-    df_pl_3semaines=df_3semaines.copy()
-    df_pl_3semaines.set_index('created',inplace=True)
-    #comparer les pl en transit avec l'ensembles des pl, par heure, par camera
-    #obtenir les nb de pl par heure et par camera sur la source
-    df_synthese_pl_tot=df_pl_3semaines.groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_tot'})
-    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].rename(column={'immat':'nb_pl_transit'})
-    df_pct_pl_transit=pd.concat([df_synthese_pl_tot,df_synthese_pl_transit], axis=1, join='inner')
-    df_pct_pl_transit.columns=[['nb_pl_tot','nb_pl_transit']]
-    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : float(x['nb_pl_transit'])*100 / x['nb_pl_tot'] ,axis=1)
+def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
+    """
+    fonction de regroupement des nb de vl, pl, et pl en trasit, par heure et par camera
+    en entree : 
+        df_3semaines : df des passages sur les semaines concernees
+        dico_passag : dico de spassages de transit
+    en sortie : 
+        jointure_pct_pl : df allant servir pour representation graphique : 
+            colonnes : created, camera_id, nb_veh, type, pct_pl_transit
+    """
+    def pct_pl(a,b):
+        try :
+            return a*100/b
+        except ZeroDivisionError : 
+            return 0
     
-    return df_pct_pl_transit
+    df_synthese_pl_tot=df_pl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
+    df_synthese_vl_tot=df_vl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
+    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
+            columns={'immat':'nb_veh'})
+    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
+            columns={'immat':'nb_veh'})
+    
+    df_synthese_pl_tot['type']='PL total'
+    df_synthese_vl_tot['type']='VL total'
+    df_synthese_pl_transit['type']='PL transit'
+    
+    df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'nb_veh_x':'nb_pl_tot',
+                                                                                            'nb_veh_y':'nb_pl_transit'})
+    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1) 
+    
+    concat_tv=pd.concat([df_synthese_pl_tot,df_synthese_vl_tot,df_synthese_pl_transit], axis=0, sort=False).rename(columns={'0':'nb_veh'})
+    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit[['camera_id','created','pct_pl_transit']], on=['camera_id','created'], how='left')
+    
+    return jointure_pct_pl
     
 def filtrer_df(df_global,df_filtre): 
     df_global=df_global.reset_index().set_index(['created','immat'])
@@ -726,8 +764,6 @@ def temp_max_cluster(df_pl_ok, delai, coeff=4):
     liste=[[liste_date[i],liste_valeur[i]] for i in range(len(liste_valeur))]
     if len(liste_valeur)<5 : #si il n'y a pas bcp de pl on arrete ; pourraitfair l'objet d'un parametre
         raise ClusterError()
-    #mise en forme des données pour passer dans sklearn 
-    matrice=np.array(liste_valeur).reshape(-1, 1)
     #faire tourner la clusterisation et recupérer le label (i.e l'identifiant cluster) et le nombre de cluster
     try :
         clustering=DBSCAN(eps=delai, min_samples=len(liste_valeur)/coeff).fit(liste)
@@ -814,20 +850,21 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
         return new_o, new_d, od
         
     #cas 1 : passer sur A660 et vu avant ou apres sur A63
-    dico_od_origine=dico_od.copy()
-    dico_od_copie=dico_od_origine.loc[(dico_od_origine['origine']==voie_ref) | (dico_od_origine['destination']==voie_ref)].reset_index().copy() #isoler les o_d liées au points en question
+    dico_od_copie=dico_od.loc[(dico_od['origine']==voie_ref) | (dico_od['destination']==voie_ref)].reset_index().copy() #isoler les o_d liées au points en question
     df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())] #limiter le df_3semaines aux immats concernée   df_adj=dico_od_copie.apply(lambda x : t.cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj_cam1=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_1'],x['cameras'][0],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
+    #on travaille le trajet : date_cam_1 est relatif à l'origine. si l'origine est A660, alors ce qui nous interesse est le passage précédent
+    df_adj_cam1=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_1'],x['cameras'][0],df_immats),axis=1, result_type='expand')  
     df_adj_cam1.columns=['cam_suivant','date_suivant','cam_precedent1','date_precedent1']
     df_adj_cam1.drop(['cam_suivant','date_suivant'], axis=1, inplace=True)
+    #inversement : date_cam_2 est relatif à la destination. si la destination est A660, alors ce qui nous interesse est le passage suivant
     df_adj_cam2=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_2'],x['cameras'][-1],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
     df_adj_cam2.columns=['cam_suivant2','date_suivant2','cam_precedent','date_precedent']
     df_adj_cam2.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
     dico_od_copie_adj=pd.concat([dico_od_copie,df_adj_cam1,df_adj_cam2],axis=1)
     #on creer une df de correction 
-    dico_od_a_corrige_s_n=dico_od_copie_adj.loc[(dico_od_copie_adj['origine']=='A660') & (dico_od_copie_adj['cam_precedent1']==cam_ref_1)].copy()#recherche des lignes pour lesquelles origine=A660 et camera adjacente = 13 ou destination=A660 et et camera_adjacente = 15
+    dico_od_a_corrige_s_n=dico_od_copie_adj.loc[(dico_od_copie_adj['origine']==voie_ref) & (dico_od_copie_adj['cam_precedent1']==cam_ref_1)].copy()#recherche des lignes pour lesquelles origine=A660 et camera adjacente = 13 ou destination=A660 et et camera_adjacente = 15
     dico_od_a_corrige_s_n['temps_passage']=dico_od_a_corrige_s_n['date_cam_1']-dico_od_a_corrige_s_n['date_precedent1']#calcul du timedelta
-    dico_od_a_corrige_n_s=dico_od_copie_adj.loc[(dico_od_copie_adj['destination']=='A660') & (dico_od_copie_adj['cam_suivant2']==cam_ref_2)].copy()
+    dico_od_a_corrige_n_s=dico_od_copie_adj.loc[(dico_od_copie_adj['destination']==voie_ref) & (dico_od_copie_adj['cam_suivant2']==cam_ref_2)].copy()
     dico_od_a_corrige_n_s['temps_passage']=dico_od_a_corrige_n_s['date_suivant2']-dico_od_a_corrige_n_s['date_cam_2']
     dico_temp=pd.concat([dico_od_a_corrige_n_s,dico_od_a_corrige_s_n])
     dico_correction=dico_temp.loc[~dico_temp.temps_passage.isna()]#on ne conserve que les ligne qui ont un timedelta !=NaT 
