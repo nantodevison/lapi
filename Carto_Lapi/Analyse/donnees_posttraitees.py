@@ -37,9 +37,9 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\liste_trajet_incomplet.json','incomplet')
+param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
 
     
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
@@ -49,7 +49,7 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('gti_lapi_final') as c : 
+    with ct.ConnexionBdd('lapi_final') as c : 
         requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage3 where created between '{date_debut}' and '{date_fin}'"
         df_passage=pd.read_sql_query(requete_passage, c.sqlAlchemyConn)
         requete_plaque=f"select plaque_ouverte, chiffree from data.te_plaque_courte"
@@ -99,7 +99,7 @@ def affecter_type(df_passage,df_immat ):
     df_passage=df_passage.reset_index().merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
     df_passage['l']=df_passage['type_veh']
     df_passage=df_passage.set_index('created').sort_index()
-    df_passage.drop('type_veh',axis=1,inplace=True)
+    df_passage.drop(['type_veh','immatriculation'],axis=1,inplace=True)
     return df_passage
     
 
@@ -657,8 +657,9 @@ def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
     """
     fonction de regroupement des nb de vl, pl, et pl en trasit, par heure et par camera
     en entree : 
-        df_3semaines : df des passages sur les semaines concernees
-        dico_passag : dico de spassages de transit
+        df_pl : df des passages pl
+        dico_passag : dico des passages PL de transit
+        df_vl : df des passages vl
     en sortie : 
         jointure_pct_pl : df allant servir pour representation graphique : 
             colonnes : created, camera_id, nb_veh, type, pct_pl_transit
@@ -673,8 +674,6 @@ def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
     df_synthese_vl_tot=df_vl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
     df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
             columns={'immat':'nb_veh'})
-    df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
-            columns={'immat':'nb_veh'})
     
     df_synthese_pl_tot['type']='PL total'
     df_synthese_vl_tot['type']='VL total'
@@ -682,11 +681,12 @@ def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
     
     df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'nb_veh_x':'nb_pl_tot',
                                                                                             'nb_veh_y':'nb_pl_transit'})
+    print(f'pl_tot ={len(df_synthese_pl_tot)} , vl_tot={len(df_synthese_vl_tot)} , pl_transit={len(df_synthese_pl_transit)},pl_tot-joint-transit={len(df_pct_pl_transit)}')
     df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1) 
     
     concat_tv=pd.concat([df_synthese_pl_tot,df_synthese_vl_tot,df_synthese_pl_transit], axis=0, sort=False).rename(columns={'0':'nb_veh'})
-    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit[['camera_id','created','pct_pl_transit']], on=['camera_id','created'], how='left')
-    
+    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit, on=['camera_id','created'], how='left')
+    #[['camera_id','created','pct_pl_transit']]
     return jointure_pct_pl
     
 def filtrer_df(df_global,df_filtre): 
