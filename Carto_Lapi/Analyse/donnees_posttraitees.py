@@ -686,7 +686,7 @@ def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
     df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1) 
     
     concat_tv=pd.concat([df_synthese_pl_tot,df_synthese_vl_tot,df_synthese_pl_transit], axis=0, sort=False).rename(columns={'0':'nb_veh'})
-    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit, on=['camera_id','created'], how='left')
+    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit, on=['camera_id','created'], how='left')[['camera_id','created','nb_veh','type','pct_pl_transit']]
     #[['camera_id','created','pct_pl_transit']]
     return jointure_pct_pl
     
@@ -851,6 +851,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
         return new_o, new_d, od
         
     #cas 1 : passer sur A660 et vu avant ou apres sur A63
+    dico_od_origine=dico_od.copy()
     dico_od_copie=dico_od.loc[(dico_od['origine']==voie_ref) | (dico_od['destination']==voie_ref)].reset_index().copy() #isoler les o_d liées au points en question
     df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())] #limiter le df_3semaines aux immats concernée   df_adj=dico_od_copie.apply(lambda x : t.cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
     #on travaille le trajet : date_cam_1 est relatif à l'origine. si l'origine est A660, alors ce qui nous interesse est le passage précédent
@@ -872,6 +873,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_od_origine['correction_o_d']=False #création de l'attribut drapeau modification des o_d
     dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','cameras']).index.isin(dico_correction.set_index(['date_cam_1','immat','cameras']).index),
                        'correction_o_d']=True #mise à jour de l'attribut drapeau
+    dico_od_origine['correction_o_d_type']=dico_od_origine.apply(lambda x : 'correction_A63' if x['correction_o_d'] else None,axis=1)
     #mise à jour des  3 attributs liées aux o_d
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'origine']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[0],axis=1)
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'destination']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[1],axis=1)
@@ -958,7 +960,7 @@ def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
         else : 
             return -1
     #rechercher les trajets dans le dico des o_d
-    trajets_rocade=dico_od_final.loc[df_od.o_d.isin(liste_trajet.trajets.tolist())]
+    trajets_rocade=df_od.loc[df_od.o_d.isin(liste_trajet.trajets.tolist())]
     #trouver ceux qui ne contiennent aucune référence uax camera de la Rocade
     trajets_rocade_non_vu=trajets_rocade.loc[trajets_rocade.apply(lambda x : all(e not in x['cameras'] for e in [1,2,3,4]),axis=1)].copy()
     #créer des passage fictif au niveau de la Rocade avec comme created la moyenne entre date_cam_1 et date_cam_2
@@ -975,7 +977,7 @@ def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     df_passage_transit_redresse=pd.concat([trajets_rocade_non_vu,df_passages_transit],axis=0,sort=False)
     df_pl_redresse=pd.concat([trajets_rocade_non_vu.set_index('created'),df_pl],axis=0,sort=False)
     #attributs de tracage
-    df_passage_transit_redresse['fictif']=df_passage_transit_redresse.apply(lambda x : True if not x['fiability']>0 else False,axis=1)
+    df_passage_transit_redresse['fictif']=df_passage_transit_redresse.apply(lambda x : 'Rocade' if not x['fiability']>0 else 'Non' ,axis=1)
     df_passage_transit_redresse['fiability']=df_passage_transit_redresse.apply(lambda x : 999 if not x['fiability']>0 else x['fiability'],axis=1)
     return df_passage_transit_redresse, df_pl_redresse, trajets_rocade_non_vu
     
