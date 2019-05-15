@@ -37,9 +37,10 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'E:\Boulot\lapi\liste_trajet_incomplet.json','incomplet')
-param_cluster=pd.read_json(r'E:\Boulot\lapi\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
+liste_trajet_rocade=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_rocade.json', orient='index')
+param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
 
     
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
@@ -49,7 +50,7 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas
     """
-    with ct.ConnexionBdd('lapi_final') as c : 
+    with ct.ConnexionBdd('gti_lapi_final') as c : 
         requete_passage=f"select case when camera_id=13 or camera_id=14 then 13 when camera_id=15 or camera_id=16 then 15 else camera_id end::integer as camera_id , created, immatriculation as immat, fiability, l, state from data.te_passage3 where created between '{date_debut}' and '{date_fin}'"
         df_passage=pd.read_sql_query(requete_passage, c.sqlAlchemyConn)
         requete_plaque=f"select plaque_ouverte, chiffree from data.te_plaque_courte"
@@ -932,5 +933,72 @@ def corriger_df_tps_parcours (dico_tps_max):
     dico_tps_max2.drop(['tps','type_tps_1','type_tps_2'],axis=1, inplace=True)
     
     return dico_tps_max2
+
+def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
+    """
+    Créer des passages pour les trajets de transit non vus sur la Rocade mais qui y sont passé
+    en entree : 
+        liste_trajet : df des trajets concernes, issu de liste_trajet_rocade
+        df_od : df des trajetsde transit validé selon le temps de parcours
+        df_passages_transit : df des passages concernés par un trajet de transit (issu du traitement o_d)
+        df_pl : df de tout passages pl (issu simplement de l'import mise en forme)
+    en sortie : 
+        df_passage_transit_redresse : df des passages concernés par un trajet de transit (issu du traitement o_d) + passages fictifs
+        df_pl_redresse : df de tout passages pl + passages fictifs
+        trajets_rocade_non_vu : df des passgaes fictifs
+    """
+    def camera_fictive(cam1, cam2) : 
+        """
+        Connaitre la camera a affectee selon le trajet parcouru
+        """
+        if cam1 in [15,10,19] and cam2 in [5,11,7] : 
+            return 4
+        elif cam1 in [12,8,6] and cam2 in [13,9,18] :
+            return 3
+        else : 
+            return -1
+    #rechercher les trajets dans le dico des o_d
+    trajets_rocade=dico_od_final.loc[df_od.o_d.isin(liste_trajet.trajets.tolist())]
+    #trouver ceux qui ne contiennent aucune référence uax camera de la Rocade
+    trajets_rocade_non_vu=trajets_rocade.loc[trajets_rocade.apply(lambda x : all(e not in x['cameras'] for e in [1,2,3,4]),axis=1)].copy()
+    #créer des passage fictif au niveau de la Rocade avec comme created la moyenne entre date_cam_1 et date_cam_2
+    trajets_rocade_non_vu['created_fictif']=trajets_rocade_non_vu.apply(lambda x : x['date_cam_1']+((x['date_cam_2']-x['date_cam_1'])/2),axis=1)
+    trajets_rocade_non_vu['camera_fictif']=trajets_rocade_non_vu.apply(lambda x : camera_fictive(x['cameras'][0],x['cameras'][1]),axis=1)
+    #virere clolonne inutiles
+    trajets_rocade_non_vu=trajets_rocade_non_vu.drop(['date_cam_1', 'index','id', 'date_cam_2',
+           'cameras', 'origine', 'destination', 'o_d', 'tps_parcours', 'period',
+           'date', 'temps', 'type', 'tps_parcours_theoriq', 'filtre_tps'],axis=1)
+    trajets_rocade_non_vu.rename(columns={'created_fictif':'created','camera_fictif':'camera_id'},inplace=True)
+    #on ne garde que les trajets concernes par une des cameras fictive de la rocade
+    trajets_rocade_non_vu=trajets_rocade_non_vu.loc[trajets_rocade_non_vu['camera_id']!=-1]
+    #on ajoute les trajets ainsi cree aux autres (pl en transit et pl normaux)
+    df_passage_transit_redresse=pd.concat([trajets_rocade_non_vu,df_passages_transit],axis=0,sort=False)
+    df_pl_redresse=pd.concat([trajets_rocade_non_vu.set_index('created'),df_pl],axis=0,sort=False)
+    #attributs de tracage
+    df_passage_transit_redresse['fictif']=df_passage_transit_redresse.apply(lambda x : True if not x['fiability']>0 else False,axis=1)
+    df_passage_transit_redresse['fiability']=df_passage_transit_redresse.apply(lambda x : 999 if not x['fiability']>0 else x['fiability'],axis=1)
+    return df_passage_transit_redresse, df_pl_redresse, trajets_rocade_non_vu
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     
