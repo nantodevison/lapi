@@ -981,7 +981,31 @@ def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     df_passage_transit_redresse['fiability']=df_passage_transit_redresse.apply(lambda x : 999 if not x['fiability']>0 else x['fiability'],axis=1)
     return df_passage_transit_redresse, df_pl_redresse, trajets_rocade_non_vu
     
-    
+def differencier_rocade(df_od) :
+    """
+    Séparer le trafic Rocade Est du Ouest ou inconnu, pour les trajets entre A10 ou N10 et A63 ou A660
+    en entree : 
+        df_od : une df des o_d issu de l'affectation
+    en sortie : 
+        pivot_type_rocade : pivot table avec en index les o_d, en column le cote de la rocade
+    """
+    def diff_type_rocade(cameras):
+        """
+        Rocade Est ou ouest ou ucune selon les cameras ayant vu les PL
+        en entree : 
+            cameras : liste des cameras, attribut de la df
+        en sortie : string : Ouest, Est, Autre
+        """
+        if any(e in cameras for e in [4,3]) : 
+            return 'Est'
+        elif any(e in cameras for e in [1,2]) :
+            return 'Ouest'
+        else : return 'Autre'
+    #Isoler les trajets concernes et affecte un type de Rocade
+    df_od_concernees=df_od.loc[df_od.o_d.isin(['N10-A63', 'A10-A63', 'N10-A660', 'A10-A660', 'A63-N1O',
+                                                          'A63-A10', 'A660-N10','A660-A10'])].copy()
+    df_od_concernees['type_rocade']=df_od_concernees.apply(lambda x : diff_type_rocade(x['cameras']),axis=1)
+    return pd.pivot_table(df_od_concernees,values='l', index='o_d', columns='type_rocade',aggfunc='count', margins=True)
     
     
     
