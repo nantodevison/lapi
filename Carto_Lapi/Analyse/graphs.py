@@ -91,7 +91,7 @@ def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) :
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
         synt_nb_veh_cam : df agregeant les donnees de VL, PL, PL en transit et %PL transit. issu de donnees_postraitees.pourcentage_pl_camera
-        date : string : date de debut, forme YYYY-MM-DD, ou 'JO' pour jour ouvrés
+        date : string : date de debut, forme YYYY-MM-DD, ou 'JO' pour jour ouvrés, ou 'Ma/Je' pour 
         camera : integer : nume de la camera etudiee
     en sortie : 
         graph : chart altair avec en x l'heure et en y le nb de veh
@@ -101,7 +101,12 @@ def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) :
         synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
         groupe_jo=synt_nb_veh_cam.loc[synt_nb_veh_cam.set_index('created').index.dayofweek < 5].groupby(['camera_id','heure','type']).mean().reset_index()
         groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
-        pour_graph=groupe_jo.loc[groupe_jo['camera_id']==4]
+        pour_graph=groupe_jo.loc[groupe_jo['camera_id']==cam]
+    elif date == 'Ma/Je' : 
+        synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
+        groupe_jo=synt_nb_veh_cam.loc[synt_nb_veh_cam.set_index('created').index.dayofweek.isin([1,3])].groupby(['camera_id','heure','type']).mean().reset_index()
+        groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
+        pour_graph=groupe_jo.loc[groupe_jo['camera_id']==cam]
     else : 
         pour_graph=synt_nb_veh_cam.loc[(synt_nb_veh_cam.apply(lambda x : x['created'].dayofyear==pd.to_datetime(date).dayofyear,axis=1))
                                   &(synt_nb_veh_cam['camera_id']==cam)]

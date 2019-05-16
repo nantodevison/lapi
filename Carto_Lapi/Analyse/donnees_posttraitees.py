@@ -873,7 +873,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_od_origine['correction_o_d']=False #création de l'attribut drapeau modification des o_d
     dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','cameras']).index.isin(dico_correction.set_index(['date_cam_1','immat','cameras']).index),
                        'correction_o_d']=True #mise à jour de l'attribut drapeau
-    dico_od_origine['correction_o_d_type']=dico_od_origine.apply(lambda x : 'correction_A63' if x['correction_o_d'] else None,axis=1)
+    dico_od_origine['correction_o_d_type']=dico_od_origine.apply(lambda x : 'correction_A63' if x['correction_o_d'] else 'autre',axis=1)
     #mise à jour des  3 attributs liées aux o_d
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'origine']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[0],axis=1)
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'destination']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[1],axis=1)
