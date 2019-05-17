@@ -86,22 +86,51 @@ def affecter_type(df_passage,df_immat ):
         df_passage : df des passages avec l'attribut 'l' modifié
     """
     #definir le type de veh dans df_immat
-    def type_veh(pl_tot, vl_tot, vul_tot):
-        if pl_tot>0 and vl_tot==0 and  vul_tot==0 : 
+    def type_veh(pl_siv, pl_3barriere, pl_2barriere,pl_1barriere,pl_mmr75,vul_siv,vul_mmr75,vl_siv,vl_mmr75):
+        if (pl_siv+pl_3barriere+pl_2barriere+pl_1barriere>0) or (pl_mmr75>0 and (vul_mmr75+vl_mmr75)==0) : 
             return 1
-        elif pl_tot==0 and vl_tot>0 and  vul_tot==0 :
+        elif (vl_siv>0) or (vl_mmr75>0 and (vul_mmr75+pl_mmr75)==0) :
             return 0
-        elif pl_tot==0 and vl_tot==0 and  vul_tot>0 :
+        elif vul_siv>0 or (vul_mmr75>0 and (vl_mmr75+pl_mmr75)==0) :
             return 2
         else :
             return -1
-    
+    #affecter selon l'immatriculation uniquement
     df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_total'], x['vl_total'], x['vul_total']),axis=1)
     df_passage=df_passage.reset_index().merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
     df_passage['l']=df_passage['type_veh']
     df_passage=df_passage.set_index('created').sort_index()
     df_passage.drop(['type_veh','immatriculation'],axis=1,inplace=True)
     return df_passage
+
+def affecter_type_nuit(df_passages_affectes, df_immat):
+    """
+    affecter le type à des immats vue de nuit, plque etrangere, sur un trajetde transit, non vu avant, fiabilite ok
+    en entre : 
+        df_passages_affectes : passages issus de affecter_type
+        df_immat : df des immatriculations issues de ouvrir_fichier_lapi_final
+    en sortie : 
+        df_passages_affectes : df_passages_affectes avec attribut l modifié
+    """
+    #nb de passages avec un type inconnu
+    passages_type_inconnu=df_passages_affectes.loc[df_passages2['l']==-1].reset_index()
+    #passages inconnu avec une fiabilite superieure a 75 sur cam autre que 1ou2 et fiab > 35 sr cam 1 et 2
+    passages_type_inconnu_fiab_sup75=(passages_type_inconnu.loc[((passages_type_inconnu['fiability']>75) & (~passages_type_inconnu['camera_id'].isin([1,2]))) |
+                                                            ((passages_type_inconnu['fiability']>35) & (passages_type_inconnu['camera_id'].isin([1,2])))])
+    #grouper les immat, mettre les attributs en tuple ou set
+    groupe=(passages_type_inconnu_fiab_sup75.set_index('created').sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 
+                                                                                 'created':lambda x: tuple(x), 
+                                                                                 'state': lambda x : set(tuple(x))}))
+    #filtrer selon les horaires compris entre 19h et 6h (attention biais possible sur journee différentes), le type de trajet, un seul pays, pas francçais
+    groupe_filtre=groupe.loc[groupe.apply(lambda x: (all((pd.to_datetime(e).hour>19 or pd.to_datetime(e).hour<7) for e in x['created'])) &
+                        (x['camera_id'] in liste_complete_trajet.cameras.tolist()) & (len(x['state'])==1) & 
+                        (x['state']!=set(['FR',])) ,axis=1)].copy()
+    #filtrer les pays non connus
+    groupe_filtre=groupe_filtre.loc[~groupe_filtre.apply(lambda x: [(a) for a in x['state']]==['  '],axis=1)]
+    #modifier la valeur de l
+    df_passages_affectes=df_passages_affectes.loc[df_passages2['immat'].isin(groupe_filtre.index.tolist()),'l']=1
+    return df_passages_affectes
+    
     
 
 class trajet():
@@ -980,7 +1009,8 @@ def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     df_passage_transit_redresse['fictif']=df_passage_transit_redresse.apply(lambda x : 'Rocade' if not x['fiability']>0 else 'Non' ,axis=1)
     df_passage_transit_redresse['fiability']=df_passage_transit_redresse.apply(lambda x : 999 if not x['fiability']>0 else x['fiability'],axis=1)
     return df_passage_transit_redresse, df_pl_redresse, trajets_rocade_non_vu
-    
+
+
 def differencier_rocade(df_od) :
     """
     Séparer le trafic Rocade Est du Ouest ou inconnu, pour les trajets entre A10 ou N10 et A63 ou A660
