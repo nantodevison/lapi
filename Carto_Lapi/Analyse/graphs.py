@@ -20,7 +20,7 @@ def graph_passages_proches(jointure, groupe_pl_rappro):
     """
     Visualiser les stats sur les pasages trop proches
     """
-    cam_proche_liste=groupe_pl_rappro.groupby('liste_passag_faux').count()['l']
+    cam_proche_liste=groupe_pl_rappro.groupby('liste_passag_faux').count()['state']
     cam_proche_liste_triee=cam_proche_liste.sort_values(ascending=False).reset_index()
     base=alt.Chart(jointure).encode(x=alt.X('camera_id:N', axis=alt.Axis(title='num caméra')))
     bar=base.mark_bar().encode(y=alt.Y('nb_pl_x:Q', axis=alt.Axis(title='nb PL')))
@@ -28,7 +28,7 @@ def graph_passages_proches(jointure, groupe_pl_rappro):
     return (bar+line).resolve_scale(y='independent') | (
         alt.Chart(cam_proche_liste_triee.iloc[:10]).mark_bar().encode(
             x=alt.X('liste_passag_faux', axis=alt.Axis(title='trajet')),
-                    y=alt.Y('l:Q', axis=alt.Axis(title='Nb occurence'))))
+                    y=alt.Y('state:Q', axis=alt.Axis(title='Nb occurence'))))
 
 def graph_nb_veh_ttjours_ttcam(df) : 
     """
@@ -131,5 +131,45 @@ def graph_nb_veh_jour_camera_multi_j(synt_nb_veh_cam, date,cam,nb_jour):
     liste_graph=[dico_graph[key] for key in dico_graph.keys()]
     return alt.VConcatChart(vconcat=(liste_graph))  
     
-
+def analyse_passage_proches(groupe_pl_rappro, groupe_pl):
+    """
+    Creer des df d'analyse des passages proches
+    en entree : 
+        groupe_pl_rappro : df issues de passages_proches
+        groupe_pl : df issues de passages_proches
+    en sortie : 
+        jointure : df des passages proches et totaux par camera
+        
+    """
+    #isoler les passages rapprochés avec une fiabilité foireuse
+    #1. reconversion de la df de liste en df de passages uniques par passage paruneliste
+    liste=zip(groupe_pl_rappro.index.tolist(),groupe_pl_rappro.liste_passag_faux.tolist(),groupe_pl_rappro.liste_created_faux.tolist(),groupe_pl_rappro.fiability_faux.tolist())
+    liste_finale=[]
+    for a in liste :
+        for i,l in enumerate(a[1]) :
+            liste_inter=[a[0],l,a[2][i],a[3][i]]
+            liste_finale.append(liste_inter)    
+    #2. conversion en df
+    df_passage_rapproches=pd.DataFrame.from_records(liste_finale, columns=['immat', 'camera_id','created','fiability'])
+    
+    #analyse des cameras concernée
+    #nb de pl par camera
+    liste=zip(groupe_pl.index.tolist(),groupe_pl.camera_id.tolist(),groupe_pl.created.tolist())
+    liste_finale=[]
+    for a in liste :
+        for i,l in enumerate(a[1]) :
+            liste_inter=[a[0],l,a[2][i]]
+            liste_finale.append(liste_inter)    
+    df_pl=pd.DataFrame.from_records(liste_finale, columns=['immat', 'camera_id','created'])
+    nb_pl_cam=df_pl.groupby('camera_id').count()['immat'].reset_index().rename(columns={'immat':'nb_pl'})
+    nb_pl_cam['type']='tot'
+    #nb_pl faux par cam
+    nb_passage_faux_cam=df_passage_rapproches.groupby('camera_id').count()['immat'].reset_index().rename(columns={'immat':'nb_pl'})
+    nb_passage_faux_cam['type']='faux'
+    
+    #jointure
+    jointure=nb_pl_cam.merge(nb_passage_faux_cam, on='camera_id')
+    jointure['pct_faux']=jointure.apply(lambda x: x['nb_pl_y']/x['nb_pl_x']*100,axis=1)
+    
+    return jointure
     
