@@ -76,6 +76,109 @@ def supprimer_doublons(df_passage):
     df_3semaines=df_3semaines.sort_values(['immat','id','fiability'], ascending=False).copy().drop_duplicates(['immat','id']).set_index('created')
     return df_3semaines
 
+def passages_proches(df):
+    """
+    Trouver les passages trop proches à des cameras différentes
+    en entre : 
+        df : df des données issues de la Bdd
+    en sortie :
+        groupe_pl : pl groupes par immat
+        groupe_pl_rappro : PL trop proche, groupe par immat avec tuple des created, fiability, camera_id
+        
+    """
+    #fonction de test d'ecart entre les passages
+    def ecart_passage(liste_passage, liste_camera,state) : 
+        for i in range(len(liste_passage)-1):
+            if (pd.to_datetime(liste_passage[i+1])-pd.to_datetime(liste_passage[i])<pd.Timedelta('00:05:00') and 
+                pd.to_datetime(liste_passage[i])!=pd.to_datetime(liste_passage[i+1]) and state!='!!') : #on trouve l'enchainement en moins de 5minutes, sans prendre les doublons
+                return True
+        else : return False
+    def conserver_state(liste_state):
+        if '!!' in liste_state : 
+            return '!!'
+        else : return mode(liste_state) #element le plus represente
+
+    def liste_passage(liste_cam, liste_created) : 
+        liste_passage=[]
+        for i in range(len(liste_created)-1):
+            if pd.to_datetime(liste_created[i+1])-pd.to_datetime(liste_created[i])<pd.Timedelta('00:05:00') :
+                liste_passage.append(liste_cam[i])
+                liste_passage.append(liste_cam[i+1])
+        return liste_passage
+    def liste_created(liste_cam, liste_created) : 
+        liste_created_fin=[]
+        for i in range(len(liste_created)-1):
+            if pd.to_datetime(liste_created[i+1])-pd.to_datetime(liste_created[i])<pd.Timedelta('00:05:00') :
+                liste_created_fin.append(liste_created[i])
+                liste_created_fin.append(liste_created[i+1])
+        return liste_created_fin
+    def liste_fiability(liste_fiab, liste_created) : 
+        liste_fiab_fin=[]
+        for i in range(len(liste_created)-1):
+            if pd.to_datetime(liste_created[i+1])-pd.to_datetime(liste_created[i])<pd.Timedelta('00:05:00') :
+                liste_fiab_fin.append(liste_fiab[i])
+                liste_fiab_fin.append(liste_fiab[i+1])
+        return liste_fiab_fin
+    
+    
+    #on grouep les données et modifie les colonnes
+    groupe=(df.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x),'l': lambda x : test_unicite_type(list(x),'1/2'), 
+                                                                  'created':lambda x: tuple(x),'state':lambda x : conserver_state(list(x)),
+                                                                  'fiability':lambda x: tuple(x)}))
+    #on isole les pl
+    groupe_pl=groupe.loc[groupe['l']==1].copy()
+    #on ajoute une colonne drapeau pour localiser le pb
+    groupe_pl['erreur_tps_passage']=groupe_pl.apply(lambda x :  ecart_passage(x['created'], x['camera_id'], x['state']),axis=1)
+    #et on extrait unqiement les passages problemetaique
+    groupe_pl_rappro=groupe_pl[groupe_pl['erreur_tps_passage']].copy()
+    groupe_pl_rappro['liste_passag_faux']=groupe_pl_rappro.apply(lambda x : liste_passage(x['camera_id'],x['created']),axis=1)
+    groupe_pl_rappro['liste_created_faux']=groupe_pl_rappro.apply(lambda x : liste_created(x['camera_id'],x['created']),axis=1)
+    groupe_pl_rappro['fiability_faux']=groupe_pl_rappro.apply(lambda x : liste_fiability(x['fiability'],x['created']),axis=1)
+    
+    return groupe_pl_rappro, groupe_pl
+
+def analyse_passage_proches(groupe_pl_rappro, groupe_pl):
+    """
+    Creer des df d'analyse des passages proches
+    en entree : 
+        groupe_pl_rappro : df issues de passages_proches
+        groupe_pl : df issues de passages_proches
+    en sortie : 
+        jointure : df des passages proches et totaux par camera
+        
+    """
+    #isoler les passages rapprochés avec une fiabilité foireuse
+    #1. reconversion de la df de liste en df de passages uniques par passage paruneliste
+    liste=zip(groupe_pl_rappro.index.tolist(),groupe_pl_rappro.liste_passag_faux.tolist(),groupe_pl_rappro.liste_created_faux.tolist(),groupe_pl_rappro.fiability_faux.tolist())
+    liste_finale=[]
+    for a in liste :
+        for i,l in enumerate(a[1]) :
+            liste_inter=[a[0],l,a[2][i],a[3][i]]
+            liste_finale.append(liste_inter)    
+    #2. conversion en df
+    df_passage_rapproches=pd.DataFrame.from_records(liste_finale, columns=['immat', 'camera_id','created','fiability'])
+    
+    #analyse des cameras concernée
+    #nb de pl par camera
+    liste=zip(groupe_pl.index.tolist(),groupe_pl.camera_id.tolist(),groupe_pl.created.tolist())
+    liste_finale=[]
+    for a in liste :
+        for i,l in enumerate(a[1]) :
+            liste_inter=[a[0],l,a[2][i]]
+            liste_finale.append(liste_inter)    
+    df_pl=pd.DataFrame.from_records(liste_finale, columns=['immat', 'camera_id','created'])
+    nb_pl_cam=df_pl.groupby('camera_id').count()['immat'].reset_index().rename(columns={'immat':'nb_pl'})
+    nb_pl_cam['type']='tot'
+    #nb_pl faux par cam
+    nb_passage_faux_cam=df_passage_rapproches.groupby('camera_id').count()['immat'].reset_index().rename(columns={'immat':'nb_pl'})
+    nb_passage_faux_cam['type']='faux'
+    
+    #jointure
+    jointure=nb_pl_cam.merge(nb_passage_faux_cam, on='camera_id')
+    jointure['pct_faux']=jointure.apply(lambda x: x['nb_pl_y']/x['nb_pl_x']*100,axis=1)
+    
+    return jointure
+
 def affecter_type(df_passage,df_immat ):
     """
     affecter le type de vehicule dans le df des passage selon les infos fournies dans df_immat
@@ -96,7 +199,8 @@ def affecter_type(df_passage,df_immat ):
         else :
             return -1
     #affecter selon l'immatriculation uniquement
-    df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_total'], x['vl_total'], x['vul_total']),axis=1)
+    df_immat['type_veh']=df_immat.apply(lambda x : type_veh(x['pl_siv'], x['pl_3barriere'], x['pl_2barriere'],x['pl_1barriere'],
+                                                            x['pl_mmr75'],x['vul_siv'],x['vul_mmr75'],x['vl_siv'],x['vl_mmr75']),axis=1)
     df_passage=df_passage.reset_index().merge(df_immat[['immatriculation','type_veh']], left_on='immat', right_on='immatriculation', how='left')
     df_passage['l']=df_passage['type_veh']
     df_passage=df_passage.set_index('created').sort_index()
@@ -113,7 +217,8 @@ def affecter_type_nuit(df_passages_affectes, df_immat):
         df_passages_affectes : df_passages_affectes avec attribut l modifié
     """
     #nb de passages avec un type inconnu
-    passages_type_inconnu=df_passages_affectes.loc[df_passages2['l']==-1].reset_index()
+    df=df_passages_affectes.copy()
+    passages_type_inconnu=df.loc[df['l']==-1].reset_index()
     #passages inconnu avec une fiabilite superieure a 75 sur cam autre que 1ou2 et fiab > 35 sr cam 1 et 2
     passages_type_inconnu_fiab_sup75=(passages_type_inconnu.loc[((passages_type_inconnu['fiability']>75) & (~passages_type_inconnu['camera_id'].isin([1,2]))) |
                                                             ((passages_type_inconnu['fiability']>35) & (passages_type_inconnu['camera_id'].isin([1,2])))])
@@ -128,8 +233,8 @@ def affecter_type_nuit(df_passages_affectes, df_immat):
     #filtrer les pays non connus
     groupe_filtre=groupe_filtre.loc[~groupe_filtre.apply(lambda x: [(a) for a in x['state']]==['  '],axis=1)]
     #modifier la valeur de l
-    df_passages_affectes=df_passages_affectes.loc[df_passages2['immat'].isin(groupe_filtre.index.tolist()),'l']=1
-    return df_passages_affectes
+    df.loc[df_passages_affectes['immat'].isin(groupe_filtre.index.tolist()),'l']=1
+    return df
     
     
 
