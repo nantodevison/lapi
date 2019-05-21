@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 import Connexion_Transfert as ct
 import altair as alt
-import os,math, datetime as dt
+import os,math,re, datetime as dt
 from sklearn.cluster import DBSCAN
 from statistics import mode, StatisticsError
 
@@ -162,7 +162,8 @@ def filtre_plaque_non_valable(df, df_plaques):
     df_passages_plaque_ouverte=df.reset_index().merge(df_plaques, left_on='immat', right_on='chiffree')
     df_passages_plaque_ouverte['plaque_valide']=df_passages_plaque_ouverte.apply(lambda x : check_valid_plaque(x['plaque_ouverte'],plaques_europ),axis=1)
     #plaques à filtrer
-    plaque_a_filtrer=df_passages_plaque_ouverte.loc[(~valid_plaque['plaque_valide'])].plaque_ouverte.value_counts()
+    plaque_a_filtrer=(df_passages_plaque_ouverte.loc[(~df_passages_plaque_ouverte['plaque_valide'])].plaque_ouverte.
+                      value_counts().reset_index().rename(columns={'index':'plaque_ouverte','plaque_ouverte':'nb_occurence'}))
     #filtre des plques non desirees
     df_passages_filtre_plaque=df_passages_plaque_ouverte.loc[~df_passages_plaque_ouverte.plaque_ouverte.isin(plaque_a_filtrer.plaque_ouverte.tolist())]
     return df_passages_filtre_plaque, plaque_a_filtrer
