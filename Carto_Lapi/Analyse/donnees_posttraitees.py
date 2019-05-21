@@ -42,6 +42,8 @@ liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0
 liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
 liste_trajet_rocade=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_rocade.json', orient='index')
 param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+#fichier des plaques, en df
+plaques_europ=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
 
     
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
@@ -139,6 +141,31 @@ def passages_proches(df):
     
     return groupe_pl_rappro, groupe
 
+def filtre_plaque_non_valable(df, df_plaques):
+    """
+    Filtrer les plaques non valable d'une df
+    en entree : 
+        df : df des passages
+        df_plaques : df des plaques non cryptee
+    en sortie : 
+        df_passages_filtre_plaque : df des passages sans les plaques non valide
+        plaque_a_filtrer : dfdes plaques ouvertes qui ont été filtrees
+    """
+    def check_valid_plaque(plque_ouvert, liste_plaque_europ):
+        """
+        Marqueur si la plque correspond à un type de plaque attendu, cf Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\plaques_europ.txt
+        """
+        if not re.match('^([0-9])+$|^([A-Z])+$',plque_ouvert) :
+            return any([re.match(retest,plque_ouvert) for retest in plaques_europ.re_plaque.tolist()])
+        else : return False
+    #jointure avec les plaques ouvertes
+    df_passages_plaque_ouverte=df.reset_index().merge(df_plaques, left_on='immat', right_on='chiffree')
+    df_passages_plaque_ouverte['plaque_valide']=df_passages_plaque_ouverte.apply(lambda x : check_valid_plaque(x['plaque_ouverte'],plaques_europ),axis=1)
+    #plaques à filtrer
+    plaque_a_filtrer=df_passages_plaque_ouverte.loc[(~valid_plaque['plaque_valide'])].plaque_ouverte.value_counts()
+    #filtre des plques non desirees
+    df_passages_filtre_plaque=df_passages_plaque_ouverte.loc[~df_passages_plaque_ouverte.plaque_ouverte.isin(plaque_a_filtrer.plaque_ouverte.tolist())]
+    return df_passages_filtre_plaque, plaque_a_filtrer
 
 def affecter_type(df_passage,df_immat ):
     """
