@@ -485,7 +485,7 @@ class trajet():
                                 tooltip='hoursminutes(tps_parcours)').interactive()
                 line = alt.Chart(copie_df.loc[copie_df['o_d']==od]).mark_line().encode(
                                 x='date_cam_1',
-                                y='hoursminutes(temps):T').interactive()
+                                y='hoursminutes(temps):T',color='type').interactive()
                 dico_graph[od]=points+line
             return dico_graph
 
@@ -1130,11 +1130,44 @@ def differencier_rocade(df_od) :
                                                           'A63-A10', 'A660-N10','A660-A10'])].copy()
     df_od_concernees['type_rocade']=df_od_concernees.apply(lambda x : diff_type_rocade(x['cameras']),axis=1)
     return pd.pivot_table(df_od_concernees,values='l', index='o_d', columns='type_rocade',aggfunc='count', margins=True)
-    
-    
-    
-    
-    
+
+def predire_type_trajet(df_trajet,o_d, date, gamma, C):
+    """
+    retravailler les trajets non soumis aux cluster pour avoir une différenciation trabsit / local plus pertinente
+    en entree : 
+        df_trajet : df des trajets issu de jointure_temps_reel_theorique
+        o_d : string : origie destination que l'on souhaite etudier
+        date : string : YYYY-MM-DD : date etudiee
+        gamma : integer : paramètre de prediction, cf sklearn
+        C : integer : paramètre de prediction, cf sklearn
+    en sortie :
+        df_trajet : df des trajets avec le type modifie et le filtre_tps aussi
+    """
+    #isoler les données : sur un jour pour une o_d
+    test_predict=df_trajet.loc[(df_trajet['o_d']==o_d) &
+                           (df_trajet.set_index('date_cam_1').index.dayofyear==pd.to_datetime(date).dayofyear) &
+                                       (df_trajet['tps_parcours']<pd.Timedelta('4H'))].copy()
+    #ajouter des champsde ocnversion des dates en integer, limiter les valeusr sinon pb de mémoire avec sklearn
+    test_predict['date_int']=((test_predict.date_cam_1 - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))/1000000
+    test_predict['temps_int']=(((pd.to_datetime('2018-01-01')+test_predict.tps_parcours) - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))/1000000
+    #créer les données d'entrée du modele
+    X=np.array([[a,b] for a,b in zip(test_predict.date_int.tolist(),test_predict.temps_int.tolist())])
+    y=np.array(test_predict.filtre_tps.tolist())
+    #créer le modele
+    clf = svm.SVC(kernel='rbf', gamma=ga, C=C)
+    #alimenter le modele
+    clf.fit(liste_nsample_nfeat, n_sample)
+    #isoler les donner à tester
+    df_a_tester=test_predict.loc[(test_predict['filtre_tps']==0) & (test_predict['type']=='85eme_percentile')].copy()
+    #liste à tester
+    liste_a_tester=np.array([[a,b] for a,b in zip(df_a_tester.date_int.tolist(),df_a_tester.temps_int.tolist())])
+    #dfde résultats de prédiction
+    df_type_predit=pd.DataFrame([[i, v] for i,v in zip(df_a_tester.index.tolist(),[clf.predict([x])[0] for x in liste_a_tester])], 
+                                columns=['index_source','type_predit'])
+    #mise à jourde la df source
+    df_trajet.loc[df_trajet.index.isin(df_type_predit.index_source.tolist()),'type']='predit'
+    df_trajet.loc[df_trajet.index.isin(df_type_predit.loc[df_type_predit['type_predit']==1].index_source.tolist()),'filtre_tps']=1
+    return df_trajet
     
     
     
