@@ -142,6 +142,19 @@ def passages_proches(df):
     
     return groupe_pl_rappro, groupe
 
+def recalage_cam10(df):
+    """
+    retarder de 25 minutes les passages à la caméra 10
+    en entrée : 
+        df : df des passages sans doublons
+    en sortie : 
+        df_recale : df avec l'attribut created modifie
+    """
+    df_recale=df.reset_index().copy()
+    df_recale.loc[df_recale['camera_id']==10,'created']=df_recale.apply(lambda x : x['created']-pd.Timedelta('25min'),axis=1)
+    df_recale=df_recale.set_index('created').sort_index().drop(['index','test'],axis=1)
+    return df_recale
+
 def filtre_plaque_non_valable(df, df_plaques):
     """
     Filtrer les plaques non valable d'une df
