@@ -152,7 +152,7 @@ def recalage_cam10(df):
     """
     df_recale=df.reset_index().copy()
     df_recale.loc[df_recale['camera_id']==10,'created']=df_recale.apply(lambda x : x['created']-pd.Timedelta('25min'),axis=1)
-    df_recale=df_recale.set_index('created').sort_index().drop(['index','test'],axis=1)
+    df_recale=df_recale.set_index('created').sort_index()
     return df_recale
 
 def filtre_plaque_non_valable(df, df_plaques):
@@ -180,6 +180,7 @@ def filtre_plaque_non_valable(df, df_plaques):
                       value_counts().reset_index().rename(columns={'index':'plaque_ouverte','plaque_ouverte':'nb_occurence'}))
     #filtre des plques non desirees
     df_passages_filtre_plaque=df_passages_plaque_ouverte.loc[~df_passages_plaque_ouverte.plaque_ouverte.isin(plaque_a_filtrer.plaque_ouverte.tolist())]
+    df_passages_filtre_plaque=df_passages_filtre_plaque.set_index('created').sort_index()
     return df_passages_filtre_plaque, plaque_a_filtrer
 
 def affecter_type(df_passage,df_immat ):
