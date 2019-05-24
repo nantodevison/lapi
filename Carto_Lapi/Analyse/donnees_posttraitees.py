@@ -1171,6 +1171,8 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
     clf = svm.SVC(kernel='rbf', gamma=gamma, C=C)
     #alimenter le modele
     clf.fit(X, y)
+    
+    #MODIFIER UNIQUEMENT LES VALEUR A 0
     #isoler les donner à tester
     df_a_tester=test_predict.loc[(test_predict['filtre_tps']==0) & (test_predict['type']=='85eme_percentile')].copy()
     #liste à tester

@@ -59,15 +59,20 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     titre=pd.to_datetime(date_debut).day_name(locale ='French')+' '+pd.to_datetime(date_debut).strftime('%Y-%m-%d')+' : '+o_d
     test_filtre_tps=(df_transit.loc[(df_transit['date_cam_1']>pd.to_datetime(date_debut)) &
                                              (df_transit['date_cam_1']<pd.to_datetime(date_fin)) &
-                                             (df_transit['o_d']==o_d)])
-    copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps', 'type']].head(5000).copy()
+                                             (df_transit['o_d']==o_d)]).copy()
+    copie_df=test_filtre_tps[['date_cam_1','tps_parcours','filtre_tps', 'type']].copy()
     copie_df.tps_parcours=pd.to_datetime('2018-01-01')+copie_df.tps_parcours
+    try : 
+        copie_df['filtre_tps']=copie_df.apply(lambda x : 'Transit' if x['filtre_tps'] else 'Local',axis=1)
+        copie_df['type']=copie_df.apply(lambda x : 'Reglementaire' if x['type']=='85eme_percentile' else x['type'],axis=1)
+    except ValueError : 
+        pass
     graph_filtre_tps = alt.Chart(copie_df, title=titre).mark_point().encode(
-                                x='date_cam_1',
-                                y='hoursminutes(tps_parcours)',
+                                x=alt.X('date_cam_1',axis=alt.Axis(title='Horaire', format='%Hh%M')),
+                                y=alt.Y('tps_parcours',axis=alt.Axis(title='Temps de parcours', format='%H:%M')),
                                 tooltip='hoursminutes(tps_parcours)',
-                                color=alt.Color('filtre_tps:N', legend=alt.Legend(title="Type de trajet", values=['local', 'transit'])),
-                                shape=alt.Shape('type:N',legend=alt.Legend(title="Source temps de référence"))).interactive().properties(width=600)
+                                color=alt.Color('filtre_tps:N', legend=alt.Legend(title="Type de trajet")),
+                                shape=alt.Shape('type:N',legend=alt.Legend(title="Source temps de reference"))).interactive().properties(width=600)
     return graph_filtre_tps
 
 def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, o_d, nb_jours):
@@ -111,8 +116,11 @@ def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) :
         pour_graph=synt_nb_veh_cam.loc[(synt_nb_veh_cam.apply(lambda x : x['created'].dayofyear==pd.to_datetime(date).dayofyear,axis=1))
                                   &(synt_nb_veh_cam['camera_id']==cam)]
     #graphique
-    base=alt.Chart(pour_graph).encode(x=alt.X('created', axis=alt.Axis(title='Heure', format='%H:%M')))
-    bar = base.mark_bar(opacity=0.7, size=20).encode(y=alt.Y('nb_veh:Q',stack=None, axis=alt.Axis(title='Nb de véhicules')),color='type')
+    base=alt.Chart(pour_graph).encode(x=alt.X('created', axis=alt.Axis(title='Heure', format='%Hh%M')))
+    bar = base.mark_bar(opacity=0.7, size=20).encode(
+        y=alt.Y('nb_veh:Q',stack=None, axis=alt.Axis(title='Nb de vehicules')),
+        color='type',
+        order=alt.Order("site", sort="ascending"))
     line=base.mark_line(color='green').encode(y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% de PL en transit')))
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
