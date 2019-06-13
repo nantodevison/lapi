@@ -902,7 +902,7 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,type
     return df_transit_tps_parcours
 
 
-def identifier_transit(df_transit_temps, marge): 
+def identifier_transit(df_transit_temps, marge,nom_attribut_temps_filtre='temps_filtre',nom_attribut_tps_parcours='tps_parcours'): 
     """
     affecter un attribut drapeau d'identification du trafic de trabsit, selon une marge
     en entree : 
@@ -918,8 +918,8 @@ def identifier_transit(df_transit_temps, marge):
         else: 
             return 0
     df_transit_temps_final=df_transit_temps.copy()
-    df_transit_temps_final['filtre_tps']=df_transit_temps_final.apply(lambda x : filtre_tps_parcours(x['temps_filtre'],
-                                                                    x['tps_parcours'],marge), axis=1)
+    df_transit_temps_final['filtre_tps']=df_transit_temps_final.apply(lambda x : filtre_tps_parcours(x[nom_attribut_temps_filtre],
+                                                                    x[nom_attribut_tps_parcours],marge), axis=1)
     return df_transit_temps_final
         
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
