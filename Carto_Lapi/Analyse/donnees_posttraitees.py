@@ -834,34 +834,26 @@ def filtrer_df(df_global,df_filtre):
     df_global_filtre=df_global.loc[~df_global.index.isin(df_filtre.index)].reset_index().set_index('created')
     return df_global_filtre
     
-def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marge, typeTrajet='complet'):
+def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,typeTrajet='complet'):
     """
     Création du temps de parcours et affectation d'un attribut drapeau pour identifier le trafci de transit
     en entree : 
         df_transit : df des o_d issu de transit_temps_complet
         df_tps_parcours : df des temps de parcours issu du lapi df_tps_parcours (transit_temps_complet)
         df_theorique : liste des trajets possibles etdes temps theoriques associés : liste_complete_trajet
-        marge : integer: marge possible entre le temps theorique ou lapi et le temsp de passage. comme les camions doivent faire une pause de 45min toute les 4h30...
         typeTrajet : string : si le trajet est issue de cameras de debut et fin connuen ou d'une camera de fin extrapolee. 
     en sortie : 
         df_transit_tps_parcours : df des o_d complété par un attribut drapeau sur le transit, et les temps de parcours, et le type de temps de parcours
     """
-    def filtre_tps_parcours(date_passage,tps_parcours, type_tps_lapi, tps_lapi, tps_theoriq, marge) : 
-        """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
         
-        if date_passage.hour in [19,20,21,22,23,0,1,2,3,4,5,6] : 
-            marge += 720 #si le gars passe la nuit, on lui ajoute 11 heure de marge
-        if type_tps_lapi in ['Cluster','moyenne Cluster']:
-            if tps_parcours < tps_lapi+pd.Timedelta(str(marge)+'min') :
-                return 1
-            else: 
-                return 0
+    def temps_pour_filtre(date_passage,tps_parcours, type_tps_lapi, tps_lapi, tps_theoriq):
+        """pour ajouter un attribut du temps de parcours qui sert à filtrer les trajets de transit"""
+        marge = 660 if date_passage.hour in [19,20,21,22,23,0,1,2,3,4,5,6] else 0  #si le gars passe la nuit, on lui ajoute 11 heure de marge
+        if type_tps_lapi in ['Cluster','moyenne Cluster','predit']:
+            return tps_lapi+pd.Timedelta(str(marge)+'min')
         else : 
-            if tps_parcours < tps_theoriq+pd.Timedelta(str(marge)+'min') :
-                return 1
-            else: 
-                return 0
-            
+            return tps_theoriq+pd.Timedelta(str(marge)+'min')   
+        
     def periode_carac(date_passage) :
         """
         pour calculer la période de passage selon une date
@@ -870,6 +862,7 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
             return date_passage.floor('15min').to_period('15min')
         else : 
             return date_passage.to_period('H')
+    
     if df_transit.empty :
         raise PasDePlError()
     df_transit=df_transit.copy()        
@@ -881,10 +874,35 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,marg
     else : #dans ce cas la jointure avec les temps theorique ne se sur les cameras et l'od, car doublons de cameras pour certains trajet (possibilité d'aller vers A89 ou N10 apres Rocade)
         df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq','o_d']], 
                                                                                                     on=['cameras','o_d'])
-    df_transit_tps_parcours['filtre_tps']=df_transit_tps_parcours.apply(lambda x : filtre_tps_parcours(x['date_cam_1'],
-                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq'],marge), axis=1)
+        df_transit_tps_parcours['type']=df_transit_tps_parcours.type.fillna('85eme_percentile')
+        df_transit_tps_parcours['temps']=df_transit_tps_parcours.temps.fillna(df_transit_tps_parcours['tps_parcours_theoriq'])
+        df_transit_tps_parcours['date']=df_transit_tps_parcours.apply(lambda x : x['period'].to_timestamp(), axis=1)
+    df_transit_tps_parcours['temps_filtre']=df_transit_tps_parcours.apply(lambda x : temps_pour_filtre(x['date_cam_1'],
+                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq']), axis=1)
+    
     return df_transit_tps_parcours
-       
+
+
+def identifier_transit(df_transit_temps, marge): 
+    """
+    affecter un attribut drapeau d'identification du trafic de trabsit, selon une marge
+    en entree : 
+        df_transit_temps : df issue de jointure_temps_reel_theorique
+        marge : integer: marge possible entre le temps theorique ou lapi et le temsp de passage. comme les camions doivent faire une pause de 45min toute les 4h30...
+    en sortie : 
+        df_transit_temps : df avec la'ttribut filtre_tps identifiant le trafic de trabsit (1) ou non (0)
+    """
+    def filtre_tps_parcours(temps_filtre,tps_parcours, marge) : 
+        """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
+        if tps_parcours <= temps_filtre+pd.Timedelta(str(marge)+'min') :
+            return 1
+        else: 
+            return 0
+    df_transit_temps_final=df_transit_temps.copy()
+    df_transit_temps_final['filtre_tps']=df_transit_temps_final.apply(lambda x : filtre_tps_parcours(x['temps_filtre'],
+                                                                    x['tps_parcours'],marge), axis=1)
+    return df_transit_temps_final
+        
 def temp_max_cluster(df_pl_ok, delai, coeff=4):
     """obtenir le temps max de parcours en faisant un cluster par dbscan
     on peut faire un cluster sur le couple date + tps de parcours (forme actuelle)
@@ -910,7 +928,6 @@ def temp_max_cluster(df_pl_ok, delai, coeff=4):
         raise ClusterError()
     labels = clustering.labels_
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-    # A AMELIORER EN CREANT UNE ERREUR PERSONALISEE SI ON OBTIENT  CLUSTER
     if n_clusters_== 0 :
         raise ClusterError()
     #mettre en forme au format pandas
@@ -1074,6 +1091,25 @@ def corriger_df_tps_parcours (dico_tps_max):
     
     return dico_tps_max2
 
+def corriger_tps_parcours_extrapole(dixco_tpsmax_corrige,df_transit_extrapole):
+    """
+    modifier le dico des temps de trajets max de transit pour y inserer les temps issus de l'extrapolation (fonction predire_type_trajet)
+    en entree : 
+        dixco_tpsmax_corrige : df issue de corriger_df_tps_parcours
+        df_transit_extrapole df des trajets de transit extrapole predire_type_trajet
+    en sortie : 
+         : df des temps max avec mise a jour des temps et type pour les periodes et o_d extrapolees
+    """
+    period_od_a_modif=df_transit_extrapole.loc[(df_transit_extrapole['type']=='predit')&(df_transit_extrapole['filtre_tps']==1)].sort_values('date_cam_1').copy()
+    liste_pour_modif=period_od_a_modif[['period','o_d','temps']].drop_duplicates()#.merge(dixco_tpsmax_corrige, on=['period','o_d'], how='right')
+    liste_pour_modif['type']='predit'
+    correction_temps=dixco_tpsmax_corrige.merge(liste_pour_modif, on=['period','o_d'], how='left')
+    correction_temps['temps_x']=np.where(pd.notnull(correction_temps['temps_y']),correction_temps['temps_y'],correction_temps['temps_x'])
+    correction_temps['type_x']=np.where(pd.notnull(correction_temps['type_y']),correction_temps['type_y'],correction_temps['type_x'])
+    correction_temps=correction_temps.rename(columns={'temps_x':'temps','type_x':'type'}).drop(['temps_y','type_y'],axis=1)
+    
+    return correction_temps
+
 def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     """
     Créer des passages pour les trajets de transit non vus sur la Rocade mais qui y sont passé
@@ -1183,10 +1219,17 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
     #mise à jourde la df source : on met à jour le type
     df_trajet.loc[df_trajet.index.isin(df_type_predit.index_source.tolist()),'type']='predit'
     df_trajet.loc[df_trajet.index.isin(df_type_predit.loc[df_type_predit['type_predit']==1].index_source.tolist()),'filtre_tps']=1
+    
+    #MODIFIER L VALEUR DU TEMPS DE PARCOURS DE REFERENCE SUR L'INTERVAL CONSIDERE
+    df_trajet_extra=df_trajet.loc[(df_trajet['filtre_tps']==1)&(df_trajet['type']=='predit')].copy()
+    nw_tps_parcours=df_trajet_extra.groupby('period')['tps_parcours'].max()
+    df_trajet=df_trajet.merge(nw_tps_parcours.reset_index(), on='period', suffixes=('_1','_2'), how='left')
+    df_trajet['temps']=np.where(pd.notnull(df_trajet['tps_parcours_2']),df_trajet['tps_parcours_2'],df_trajet['temps'])
+    df_trajet.drop('tps_parcours_2',axis=1,inplace=True)
+    df_trajet.rename(columns={'tps_parcours_1':'tps_parcours'},inplace=True)
+    
     return df_trajet
 
-def toto():
-    return 1
 
     
     
