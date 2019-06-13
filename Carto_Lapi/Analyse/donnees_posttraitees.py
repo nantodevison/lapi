@@ -59,7 +59,7 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
         df_passage=pd.read_sql_query(requete_passage, c.sqlAlchemyConn)
         requete_plaque=f"select plaque_ouverte, chiffree from data.te_plaque_courte"
         df_plaque=pd.read_sql_query(requete_plaque, c.sqlAlchemyConn)
-        requete_immat=f"select * from data.te_immatriculation"
+        requete_immat=f"select immatriculation,pl_siv,pl_3barriere,pl_2barriere,pl_1barriere,pl_mmr75,vul_siv,vul_mmr75,vl_siv,vl_mmr75  from data.te_immatriculation"
         df_immat=pd.read_sql_query(requete_immat, c.sqlAlchemyConn)
         return df_passage,df_plaque, df_immat
 
@@ -656,6 +656,25 @@ def trajet2passage(df_trajets, df_passage) :
     df_passag_transit=(df_passag_transit1.loc[df_passag_transit1.apply(lambda x : x['date_cam_1']<=x['created']<=x['date_cam_2'], axis=1)]
                 [['created','camera_id','immat','fiability','l_y','state_x']].rename(columns={'l_y':'l','state_x':'state'}))
     return df_passag_transit
+
+def trajet_non_transit(df_transit, df_passage):
+    """
+    obtnir les immat groupees avec camera de passage et temps de passage des passages non concernes par le transit
+    en entree : 
+        df_transit : df des trajets de transit valides
+        df_passage : df de tous les passages
+    en sortie : 
+        passages_non_transit : df des passages non transit regroupes par immat avec date de passage et camera_id dans des tuples tries par date
+    """
+    # trouver les passages correspondants aux trajets
+    passages_transit=trajet2passage(df_transit,df_passage)
+    #trouver les passages non compris dans passages transit
+    passages_non_transit=df_passage.loc[
+        ~df_passage.reset_index().set_index(['created', 'camera_id','immat']).index.isin(
+        passages_transit.set_index(['created', 'camera_id','immat']).index.tolist())]
+    return passages_non_transit.reset_index().sort_values('created').groupby('plaque_ouverte').agg(
+        {'camera_id':lambda x : tuple(x),
+         'created':lambda x: tuple(x)})
       
 def transit_temps_complet(date_debut, nb_jours, df_3semaines,liste_trajet_loc=liste_complete_trajet):
     """
