@@ -1045,10 +1045,10 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     dico_od_a_corrige_n_s['temps_passage']=dico_od_a_corrige_n_s['date_suivant2']-dico_od_a_corrige_n_s['date_cam_2']
     dico_temp=pd.concat([dico_od_a_corrige_n_s,dico_od_a_corrige_s_n])
     dico_correction=dico_temp.loc[~dico_temp.temps_passage.isna()]#on ne conserve que les ligne qui ont un timedelta !=NaT 
-    dico_od_origine['correction_o_d']=False #création de l'attribut drapeau modification des o_d
     dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','cameras']).index.isin(dico_correction.set_index(['date_cam_1','immat','cameras']).index),
                        'correction_o_d']=True #mise à jour de l'attribut drapeau
-    dico_od_origine['correction_o_d_type']=dico_od_origine.apply(lambda x : 'correction_A63' if x['correction_o_d'] else 'autre',axis=1)
+    dico_od_origine.loc[(dico_od_origine['correction_o_d']) &
+                                          (dico_od_origine['correction_o_d_type'].isna()),'correction_o_d_type']='correction_A63'
     #mise à jour des  3 attributs liées aux o_d
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'origine']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[0],axis=1)
     dico_od_origine.loc[dico_od_origine['correction_o_d'],'destination']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[1],axis=1)
@@ -1259,7 +1259,7 @@ def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsm
         df_passages_immat_ok : df des passages valides apres tri des aberrations (doublons, passages proches, plaques foireuses)
         dixco_tpsmax_corrige : df des temps de parcours max, issu de corriger_tps_parcours_extrapole
     en sortie : 
-        
+        df_transit_A63_redresse_tstps : df des trajets concernes, avec tous les attributs relatifs à Cestas, sans correction du filtre temps
     """
     
     def tps_parcours_cestas(od,date_cam_1, date_cam_2, date_cestas):
@@ -1277,7 +1277,15 @@ def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsm
             return date_cam_2-date_cestas
         else : 
             return date_cestas-date_cam_1
-        
+    
+    def temps_pour_filtre(date_passage,type_tps_lapi, tps_lapi, tps_theoriq):
+        """pour ajouter un attribut du temps de parcours qui sert à filtrer les trajets de transit"""
+        marge = 660 if date_passage.hour in [19,20,21,22,23,0,1,2,3,4,5,6] else 0  #si le gars passe la nuit, on lui ajoute 11 heure de marge
+        if type_tps_lapi in ['Cluster','moyenne Cluster','predit']:
+            return tps_lapi+pd.Timedelta(str(marge)+'min')
+        else : 
+            return tps_theoriq+pd.Timedelta(str(marge)+'min')
+       
     #selectionner les trajets realtif à A63, qui ne sont pas identifies comme transit
     df_transit_A63_redresse=df_transit_extrapole.loc[(df_transit_extrapole['filtre_tps']==0)&(
         df_transit_extrapole.apply(lambda x : 'A63' in x['o_d'],axis=1))&(
@@ -1305,13 +1313,29 @@ def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsm
         ,left_on=['cameras_cestas'],right_on=['cameras']).drop('cameras_y',axis=1).rename(
         columns={'tps_parcours_theoriq_y':'tps_parcours_theoriq_cestas'})
     #jointure avec temps reel
-    df_transit_A63_redresse_tstps=df_transit_A63_redresse_tpq_theoriq.merge(dixco_tpsmax_corrige, left_on=['o_d_cestas','period'],right_on=['o_d','period'],
+    df_transit_A63_redresse_tstps=(df_transit_A63_redresse_tpq_theoriq.merge(dixco_tpsmax_corrige, left_on=['o_d_cestas','period'],right_on=['o_d','period'],
         how='left').rename(columns={'cameras_x':'cameras','o_d_x':'o_d','date_x':'date','type_x':'type',
-                                            'temps_x':'temps','tps_parcours_theoriq_x':'tps_parcours_theoriq',
-                                           'temps_y':'temps_cestas','type_y':'type_cestas'}).drop(
-        ['date_y','o_d_y'],axis=1)
-    
-    
+                                    'temps_x':'temps','tps_parcours_theoriq_x':'tps_parcours_theoriq',
+                                    'temps_y':'temps_cestas','type_y':'type_cestas'}).drop(['date_y','o_d_y'],axis=1))
+    #Maj de l'attribut temps_filtre_cestas
+    df_transit_A63_redresse_tstps['temps_filtre_cestas']=df_transit_A63_redresse_tstps.apply(lambda x : temps_pour_filtre(x['date_cam_1'],
+        x['type_cestas'], x['temps_cestas'], x['tps_parcours_theoriq_cestas']), axis=1)
+    return df_transit_A63_redresse_tstps
+
+def forme_df_cestas(df_transit_A63_redresse):  
+    """
+    suppression des attributs relatifs a cestas et creation attributs drapeau de correction
+    en entree : 
+        df_transit_A63_redresse : df des trajets  issu de correction_temps_cestas avec MaJ tps_filtre depuis identifier_transit
+    en sortie : 
+        df_transit_A63_attr_ok : df des trajets épurées avec attributs drapeau de suivi de modif : correction_o_d et correction_o_d_type
+    """
+    #Mise à jour structure table et ajout attribut drapeau de correction
+    df_transit_A63_attr_ok=df_transit_A63_redresse.drop([attr_cestas for attr_cestas in df_transit_A63_redresse.columns.tolist() if attr_cestas[-7:]=='_cestas'],axis=1)
+    df_transit_A63_attr_ok.loc[df_transit_A63_attr_ok['filtre_tps']==1,'correction_o_d']=True
+    df_transit_A63_attr_ok.loc[df_transit_A63_attr_ok['filtre_tps']==0,'correction_o_d']=False
+    df_transit_A63_attr_ok['correction_o_d_type']=df_transit_A63_attr_ok.apply(lambda x : 'temps_cestas' if x['correction_o_d'] else 'autre',axis=1)
+    return df_transit_A63_attr_ok
     
     
     
