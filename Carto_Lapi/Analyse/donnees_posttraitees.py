@@ -917,6 +917,7 @@ def identifier_transit(df_transit_temps, marge,nom_attribut_temps_filtre='temps_
             return 1
         else: 
             return 0
+        
     df_transit_temps_final=df_transit_temps.copy()
     df_transit_temps_final['filtre_tps']=df_transit_temps_final.apply(lambda x : filtre_tps_parcours(x[nom_attribut_temps_filtre],
                                                                     x[nom_attribut_tps_parcours],marge), axis=1)
@@ -1117,7 +1118,7 @@ def corriger_tps_parcours_extrapole(dixco_tpsmax_corrige,df_transit_extrapole):
         dixco_tpsmax_corrige : df issue de corriger_df_tps_parcours
         df_transit_extrapole df des trajets de transit extrapole predire_type_trajet
     en sortie : 
-         : df des temps max avec mise a jour des temps et type pour les periodes et o_d extrapolees
+        correction_temps : df des temps max avec mise a jour des temps et type pour les periodes et o_d extrapolees
     """
     period_od_a_modif=df_transit_extrapole.loc[(df_transit_extrapole['type']=='predit')&(df_transit_extrapole['filtre_tps']==1)].sort_values('date_cam_1').copy()
     liste_pour_modif=period_od_a_modif[['period','o_d','temps']].drop_duplicates()#.merge(dixco_tpsmax_corrige, on=['period','o_d'], how='right')
@@ -1249,13 +1250,66 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
     
     return df_trajet
 
-
+def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsmax_corrige):
+    """
+    Déterminé sui trafic est en transit en fonction du temps entre Cestas et entree ou sortie LAPI plutot que sur l'intégralité du trajet des PL concernes par A63.
+    Permet de s'affranchir des pauses sur aires A63
+    en entree : 
+        df_transit_extrapole : df de transit issus de predire_type_trajet
+        df_passages_immat_ok : df des passages valides apres tri des aberrations (doublons, passages proches, plaques foireuses)
+        dixco_tpsmax_corrige : df des temps de parcours max, issu de corriger_tps_parcours_extrapole
+    en sortie : 
+        
+    """
     
+    def tps_parcours_cestas(od,date_cam_1, date_cam_2, date_cestas):
+        """
+        calculer le temps de paroucrs depuis ou vers Cestas pour les o_d concernees par A63
+        en entree : 
+           od : string : origine_destination du trajet
+           date_cam_1 : pd.timestamp : date de passage du debut du trajet
+           date_cam_2 : pd.timestamp : date de passage de fin du trajet 
+           date_cestas : pd.timestamp : date de passage à la camera de cestas
+        en sortie : 
+            tps_parcours_cestas : pd.timedelta : tps de parcours entre le debut et cestas ou entre cestas et la fin du trajet
+        """
+        if od.split('-')[0]=='A63':
+            return date_cam_2-date_cestas
+        else : 
+            return date_cestas-date_cam_1
+        
+    #selectionner les trajets realtif à A63, qui ne sont pas identifies comme transit
+    df_transit_A63_redresse=df_transit_extrapole.loc[(df_transit_extrapole['filtre_tps']==0)&(
+        df_transit_extrapole.apply(lambda x : 'A63' in x['o_d'],axis=1))&(
+        df_transit_extrapole.apply(lambda x : (18 in x['cameras'] or 19 in x['cameras']),axis=1))]
+    #trouver les passages correspondants
+    passage_transit_A63_redresse=trajet2passage(df_transit_A63_redresse,df_passages_immat_ok)
+    #retrouver le passage correspondants à camera 18 ou 19
+    df_transit_A63_redresse=df_transit_A63_redresse.merge(passage_transit_A63_redresse,on='immat')
+    df_transit_A63_redresse=df_transit_A63_redresse.loc[df_transit_A63_redresse['created'].between(df_transit_A63_redresse['date_cam_1'],df_transit_A63_redresse['date_cam_2'])]
+    df_transit_A63_redresse=df_transit_A63_redresse.loc[(df_transit_A63_redresse['camera_id'].isin([18,19])) & 
+                                                        (df_transit_A63_redresse.apply(lambda x: x['camera_id'] in x['cameras'],axis=1))]
+    df_transit_A63_redresse=df_transit_A63_redresse.rename(columns={'l_x':'l','state_x':'state','created':'date_cestas'}).drop(['l_y','state_y','fiability','camera_id'],axis=1)
+    #affecter tps de parcours vers ou depuis Cestas
+    df_transit_A63_redresse['tps_parcours_cestas']=df_transit_A63_redresse.apply(
+        lambda x : tps_parcours_cestas(x['o_d'], x['date_cam_1'], x['date_cam_2'], x['date_cestas']),axis=1)
     
-    
-    
-    
-    
+    #creer les temps de parcours theorique et reel de Cestas
+    #nouvel attribut pour traduire l'o_d cestas et les cameras cestas
+    df_transit_A63_redresse['o_d_cestas']=df_transit_A63_redresse.apply(
+        lambda x : 'A660-'+x['o_d'].split('-')[1] if x['o_d'].split('-')[0]=='A63' else x['o_d'].split('-')[0]+'-A660',axis=1)
+    df_transit_A63_redresse['cameras_cestas']=df_transit_A63_redresse.apply(
+        lambda x : x['cameras'][1:] if x['o_d'].split('-')[0]=='A63' else x['cameras'][:-1],axis=1)
+    #jointure avec temps theorique
+    df_transit_A63_redresse_tpq_theoriq=df_transit_A63_redresse.merge(liste_complete_trajet[['cameras','tps_parcours_theoriq']]
+        ,left_on=['cameras_cestas'],right_on=['cameras']).drop('cameras_y',axis=1).rename(
+        columns={'tps_parcours_theoriq_y':'tps_parcours_theoriq_cestas'})
+    #jointure avec temps reel
+    df_transit_A63_redresse_tstps=df_transit_A63_redresse_tpq_theoriq.merge(dixco_tpsmax_corrige, left_on=['o_d_cestas','period'],right_on=['o_d','period'],
+        how='left').rename(columns={'cameras_x':'cameras','o_d_x':'o_d','date_x':'date','type_x':'type',
+                                            'temps_x':'temps','tps_parcours_theoriq_x':'tps_parcours_theoriq',
+                                           'temps_y':'temps_cestas','type_y':'type_cestas'}).drop(
+        ['date_y','o_d_y'],axis=1)
     
     
     
