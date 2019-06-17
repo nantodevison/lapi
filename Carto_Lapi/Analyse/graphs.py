@@ -214,4 +214,6 @@ def analyse_passage_proches(groupe_pl_rappro, groupe_pl):
     jointure['pct_faux']=jointure.apply(lambda x: x['nb_pl_y']/x['nb_pl_x']*100,axis=1)
     
     return jointure
+
+def comp_lapi_gest():
     
