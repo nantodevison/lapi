@@ -723,7 +723,7 @@ def param_trajet_incomplet(date_debut,df_od_corrige,df_3semaines,dico_passag):
     Récupérer les paramètres necessaires à la fonction transit_trajet_incomplet
     en entree : 
         dico_passag : df des passages de transit issu des précédentes fonctions
-        date_debut : string : de type YYYY-MM-DD hh:mm:ss
+        date_debut : string : de type YYYY-MM-DD hh:mm:ss : INUTILISE
         df_od_corrige df des trajet de  transit issu des précédentes fonctions
         df_3semaines : df de base de tous les passages
     en sortie 
@@ -731,7 +731,7 @@ def param_trajet_incomplet(date_debut,df_od_corrige,df_3semaines,dico_passag):
         df_non_transit : df des passages qui ne sont pas dans dico_passag
         df_passage_transit : df des passages qui ne sont pas dans dico_passag mais qui ont une immat dans dico passage
     """
-    #detreminer les passages non_transit (ne peut pas etre fait dans la fonction loc_trajet_global)
+    #detreminer les passages non_transit (ne peut pas etre fait dans la fonction loc_trajet_global) 
     df_non_transit=df_3semaines.loc[(~df_3semaines.reset_index().set_index(['created','camera_id','immat']).index.isin(
                                 dico_passag.set_index(['created','camera_id','immat']).index.tolist()))]
     
@@ -765,7 +765,7 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jour
     for date, duree in creer_liste_date(date_debut, nb_jours) :
         if date.hour==0 : print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         date_fin=date + pd.Timedelta(minutes=duree)
-        for cameras in [15,12,8,10,6] :
+        for cameras in [15,12,8,10,6,4,1,2,3,5] :
             #regrouper les pl
             try : 
                 groupe_pl,df_duree_cam1,df_duree_autres_cam=grouper_pl(df_passage_transit
