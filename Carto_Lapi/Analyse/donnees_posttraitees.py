@@ -50,7 +50,7 @@ matrice_nb_jo=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\
     index='origine', columns='destination',values='nb_jo').replace('NC',np.NaN)
 matrice_nb_jo_samedi=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo_samedi').replace('NC',np.NaN)
-matrice_nb_jo=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_j_tot=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_j_tot').replace('NC',np.NaN)
 
 
