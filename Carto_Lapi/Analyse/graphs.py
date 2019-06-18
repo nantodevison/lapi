@@ -91,13 +91,13 @@ def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, 
     
     return alt.VConcatChart(vconcat=(liste_graph))
 
-def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) : 
+def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, *cam) : 
     """
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
         synt_nb_veh_cam : df agregeant les donnees de VL, PL, PL en transit et %PL transit. issu de donnees_postraitees.pourcentage_pl_camera
         date : string : date de debut, forme YYYY-MM-DD, ou 'JO' pour jour ouvrés, ou 'Ma/Je' pour 
-        camera : integer : nume de la camera etudiee
+        camera : integer : nume de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %PL
     en sortie : 
         graph : chart altair avec en x l'heure et en y le nb de veh
     """
@@ -106,21 +106,27 @@ def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) :
         synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
         groupe_jo=synt_nb_veh_cam.loc[synt_nb_veh_cam.set_index('created').index.dayofweek < 5].groupby(['camera_id','heure','type']).mean().reset_index()
         groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
-        pour_graph=groupe_jo.loc[groupe_jo['camera_id']==cam]
+        pour_graph=groupe_jo.loc[groupe_jo['camera_id'].isin(cam)]
+    elif date=='MJA' :
+        synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
+        groupe_jo=synt_nb_veh_cam.groupby(['camera_id','heure','type']).mean().reset_index()
+        groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
+        pour_graph=groupe_jo.loc[groupe_jo['camera_id'].isin(cam)]
     elif date == 'Ma/Je' : 
         synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
         groupe_jo=synt_nb_veh_cam.loc[synt_nb_veh_cam.set_index('created').index.dayofweek.isin([1,3])].groupby(['camera_id','heure','type']).mean().reset_index()
         groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
-        pour_graph=groupe_jo.loc[groupe_jo['camera_id']==cam]
+        pour_graph=groupe_jo.loc[groupe_jo['camera_id'].isin(cam)]
     else : 
         pour_graph=synt_nb_veh_cam.loc[(synt_nb_veh_cam.apply(lambda x : x['created'].dayofyear==pd.to_datetime(date).dayofyear,axis=1))
-                                  &(synt_nb_veh_cam['camera_id']==cam)]
+                                  &(synt_nb_veh_cam['camera_id'].isin(cam))]
+    if len(cam)>1 : 
+        pour_graph=pour_graph.groupby(['heure','type']).agg({'nb_veh':'sum','pct_pl_transit':'mean','created':'min'}).reset_index()
     #graphique
     base=alt.Chart(pour_graph).encode(x=alt.X('created', axis=alt.Axis(title='Heure', format='%Hh%M')))
     bar = base.mark_bar(opacity=0.7, size=20).encode(
         y=alt.Y('nb_veh:Q',stack=None, axis=alt.Axis(title='Nb de vehicules')),
-        color='type',
-        order=alt.Order("site", sort="ascending"))
+        color='type')
     line=base.mark_line(color='green').encode(y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% de PL en transit')))
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 

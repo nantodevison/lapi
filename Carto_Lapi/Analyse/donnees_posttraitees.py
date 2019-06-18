@@ -39,21 +39,21 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
-liste_trajet_rocade=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_rocade.json', orient='index')
-param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\liste_trajet_incomplet.json','incomplet')
+liste_trajet_rocade=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\liste_trajet_rocade.json', orient='index')
+param_cluster=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\param_cluster.json', orient='index')
 #fichier des plaques, en df
-plaques_europ=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
+plaques_europ=pd.read_csv(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
 #matrices des nb de jours
-matrice_nb_jo=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo').replace('NC',np.NaN)
-matrice_nb_jo_samedi=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo_samedi=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo_samedi').replace('NC',np.NaN)
-matrice_nb_j_tot=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_j_tot=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_j_tot').replace('NC',np.NaN)
 #donnees de comptage gestionnaire
-donnees_gest=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\Synthese_trafic_LAPI.csv')
+donnees_gest=pd.read_csv(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\donnees_verif_fiabilite\Synthese_trafic_LAPI.csv')
 donnees_gest['created']=pd.to_datetime(donnees_gest.created)
 
 
@@ -822,7 +822,7 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jour
 
 
 
-def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
+def pourcentage_pl_camera(df_pl,dico_passag):
     """
     fonction de regroupement des nb de vl, pl, et pl en trasit, par heure et par camera
     en entree : 
@@ -840,23 +840,18 @@ def pourcentage_pl_camera(df_pl,dico_passag, df_vl):
             return 0
     
     df_synthese_pl_tot=df_pl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
-    df_synthese_vl_tot=df_vl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
     df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
             columns={'immat':'nb_veh'})
     
     df_synthese_pl_tot['type']='PL total'
-    df_synthese_vl_tot['type']='VL total'
     df_synthese_pl_transit['type']='PL transit'
     
     df_pct_pl_transit=df_synthese_pl_tot.merge(df_synthese_pl_transit, on=['camera_id','created']).rename(columns={'nb_veh_x':'nb_pl_tot',
                                                                                             'nb_veh_y':'nb_pl_transit'})
-    print(f'pl_tot ={len(df_synthese_pl_tot)} , vl_tot={len(df_synthese_vl_tot)} , pl_transit={len(df_synthese_pl_transit)},pl_tot-joint-transit={len(df_pct_pl_transit)}')
-    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1) 
+    df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_pl_transit'],x['nb_pl_tot']) ,axis=1)
+    df_concat_pl=pd.concat([df_synthese_pl_tot,df_synthese_pl_transit],sort=False)
+    return df_concat_pl.merge(df_pct_pl_transit[['created','camera_id','pct_pl_transit']], on=['created','camera_id'])
     
-    concat_tv=pd.concat([df_synthese_pl_tot,df_synthese_vl_tot,df_synthese_pl_transit], axis=0, sort=False).rename(columns={'0':'nb_veh'})
-    jointure_pct_pl=concat_tv.merge(df_pct_pl_transit, on=['camera_id','created'], how='left')[['camera_id','created','nb_veh','type','pct_pl_transit']]
-    #[['camera_id','created','pct_pl_transit']]
-    return jointure_pct_pl
     
 def filtrer_df(df_global,df_filtre): 
     df_global=df_global.reset_index().set_index(['created','immat'])
