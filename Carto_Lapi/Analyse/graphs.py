@@ -215,5 +215,36 @@ def analyse_passage_proches(groupe_pl_rappro, groupe_pl):
     
     return jointure
 
-def comp_lapi_gest():
+def comp_lapi_gest(df_passages_immat_ok,donnees_gest, camera, date_d='2019-01-28', date_f='2019-02-11'):
+    """
+    Graph de comparaison entr eles donnes gestionnaire et les donnees lapi
+    en entree : 
+        df_passages_immat_ok : df des passages valide cf donnees_postraitees.filtre_plaque_non_valable
+        donnees_gest : df des donnes gestionnaires, cf donnees_postraitees.donnees_gest
+        camera : entier : numero de camera
+    en sortie :
+        graph_comp_lapi_gest : chaetr altair de type bar
+    """
+    # regrouper les données PL validées par jour et par camera
+    nb_pl_j_cam=df_passages_immat_ok.groupby('camera_id').resample('D').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
+    nb_pl_j_cam['type']='lapi'
+    comp_traf_lapi_gest=pd.concat([nb_pl_j_cam,donnees_gest],sort=False)
+    comp_traf_lapi_gest_graph=comp_traf_lapi_gest.loc[comp_traf_lapi_gest.created.between(
+        pd.to_datetime(date_d),pd.to_datetime(date_f))].copy()
+    
+    return alt.Chart(comp_traf_lapi_gest_graph.loc[comp_traf_lapi_gest_graph['camera_id']==camera],title=
+                                   f'Camera {camera}').mark_bar(opacity=0.8).encode(
+                x=alt.X('yearmonthdate(created):O',axis=alt.Axis(title='date',format='%A %x')),
+                y=alt.Y('nb_veh:Q', stack=None,axis=alt.Axis(title='Nombre de véhicule')),
+                color='type',
+                order=alt.Order("type", sort="ascending")).properties(width=500)
+  
+def comp_lapi_gest_multicam(df_passages_immat_ok,donnees_gest, date_d='2019-01-28', date_f='2019-02-11',
+                            liste_num_cam=list(range(1,14))+[15,18,19]):  
+    """
+    porposer un graph unique pour toute les cmaraison gest-lapi
+    en entree : la liste des cameras
+    """
+    return alt.VConcatChart(vconcat=[comp_lapi_gest(df_passages_immat_ok,donnees_gest, camera)
+                              for camera in liste_num_cam])
     
