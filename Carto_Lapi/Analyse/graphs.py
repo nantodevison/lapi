@@ -130,7 +130,7 @@ def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, *cam) :
     line=base.mark_line(color='green').encode(y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% de PL en transit')))
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
-def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4) : 
+def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type='TV') : 
     """
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
@@ -138,17 +138,20 @@ def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4) :
         date_d : string : date de debut, generalement de la forme YYYY-MM-DD 00:00:00
         date_f : string : date de debut, generalement de la forme YYYY-MM-DD 23:59:59
         camera : integer : nume de la camera etudiee
+        type : string : dofferenciation des VL, PL ou TV. par defaut : TV        
     en sortie : 
         graph : chart altair avec en x l'heure et en y le nb de veh
     """
     test2=df.loc[(df['created'].between(date_d,date_f)) & 
                  (df['camera_id']==camera)]
+    if type=='PL' : 
+        test2=test2.loc[test2['l']==1]
     graph=alt.Chart(test2.set_index('created').resample('H').count().reset_index(),title=date_d+' cam '+ str(camera)).mark_bar().encode(
                    x='created',
                     y='immat' )
     return graph  
 
-def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour): 
+def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour, type='TV'): 
     """
     Regroupement de charts altair issues de graph_nb_veh_jour_camera sur plusieurs jours
     en entre :
@@ -158,7 +161,7 @@ def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour):
         une chart altair concatenee verticalement avec un pour chaque jour
     """
     df_index_ok=df.reset_index()
-    dico_graph={'graph'+str(indice):graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam) 
+    dico_graph={'graph'+str(indice):graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam, type) 
                for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jour, freq='D')],
                                 [str(x) for x in pd.date_range(date_fin, periods=nb_jour, freq='D')]))}
     liste_graph=[dico_graph[key] for key in dico_graph.keys()]
