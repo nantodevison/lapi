@@ -74,6 +74,13 @@ def ouvrir_fichier_lapi_final(date_debut, date_fin) :
         df_immat=pd.read_sql_query(requete_immat, c.sqlAlchemyConn)
         return df_passage,df_plaque, df_immat
 
+def recalage_passage_1h(df_passage):
+    """
+    ajouter une heure à tous les passage
+    """
+    df_passage['created']=df_passage['created']+pd.Timedelta('1H')
+    return df_passage
+
 def supprimer_doublons(df_passage):
     """
     Suppression des doublons exact entre les attributs created et immat et suppresion des doublons proches (inf a 10s) entre created, camera_id
