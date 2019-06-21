@@ -994,6 +994,11 @@ def cam_voisines(immat, date, camera, df) :
         date : string : date de passage
         camera : cam de passage
         df : df contenant tous les passages de immats concernees (df 3 semianes ou extraction)
+    en sortie : 
+        cam_suivant : entier : camera suivante
+        date_suivant : Pd.Timestamp ou string type YYYY-MM-DD associe à cam suivant
+        cam_precedent : entier : camera precedente
+        date_precedent : Pd.Timestamp ou string type YYYY-MM-DD associe à cam precedent
     """
     passage_immat=df.loc[df['immat']==immat].reset_index().copy()
     idx=passage_immat.loc[(passage_immat['created']==date) & (passage_immat['camera_id']==camera)].index

@@ -177,24 +177,6 @@ def filtre_et_forme_passage(camera,groupe_pl_init, liste_trajet, df_duree_cam1):
     
     return df_agrege
 
-def trajet_non_transit(df_transit, df_passage):
-    """
-    obtnir les immat groupees avec camera de passage et temps de passage des passages non concernes par le transit
-    en entree : 
-        df_transit : df des trajets de transit valides
-        df_passage : df de tous les passages
-    en sortie : 
-        passages_non_transit : df des passages non transit regroupes par immat avec date de passage et camera_id dans des tuples tries par date
-    """
-    # trouver les passages correspondants aux trajets
-    passages_transit=trajet2passage(df_transit,df_passage)
-    #trouver les passages non compris dans passages transit
-    passages_non_transit=df_passage.loc[
-        ~df_passage.reset_index().set_index(['created', 'camera_id','immat']).index.isin(
-        passages_transit.set_index(['created', 'camera_id','immat']).index.tolist())]
-    return passages_non_transit.reset_index().sort_values('created').groupby('plaque_ouverte').agg(
-        {'camera_id':lambda x : tuple(x),
-         'created':lambda x: tuple(x)})
 
 class trajet():
     """
