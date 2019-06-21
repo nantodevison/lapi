@@ -207,3 +207,65 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jour
             dico_od=pd.concat([dico_od,trajet_transit_incomplet], sort=False)
             
     return dico_od,df_passage_transit_incomplet
+
+def verif_doublons_trajet(dico_od, destination):
+    """
+    fonction de vérification qu'un passage contenu dans un trajet n'est pas contenu dans un autre
+    en entrée : dico_od : le dico des passagesde transit issu de la fonction  transit_temps_complet
+                destination : string : destination du trajet (parmi les destination possibles dans liste_complete_trajet
+    en sortie : une dataframe avec les passages en doublons
+    """
+    df_depart=dico_od.loc[dico_od['destination']==destination].copy()
+    jointure=df_depart.merge(dico_od, on='immat')
+    jointure=jointure.loc[jointure.date_cam_1_x!=jointure.date_cam_1_y].copy()
+    df_doublons=(jointure.loc[((jointure.date_cam_1_y>=jointure.date_cam_1_x) & (jointure.date_cam_1_y<=jointure.date_cam_2_x)) |
+                  ((jointure.date_cam_2_y>=jointure.date_cam_1_x) & (jointure.date_cam_2_y<=jointure.date_cam_2_x))])
+    return df_doublons
+
+def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,typeTrajet='complet'):
+    """
+    Création du temps de parcours et affectation d'un attribut drapeau pour identifier le trafci de transit
+    en entree : 
+        df_transit : df des o_d issu de transit_temps_complet
+        df_tps_parcours : df des temps de parcours issu du lapi df_tps_parcours (transit_temps_complet)
+        df_theorique : liste des trajets possibles etdes temps theoriques associés : liste_complete_trajet
+        typeTrajet : string : si le trajet est issue de cameras de debut et fin connuen ou d'une camera de fin extrapolee. 
+    en sortie : 
+        df_transit_tps_parcours : df des o_d complété par un attribut drapeau sur le transit, et les temps de parcours, et le type de temps de parcours
+    """
+        
+    def temps_pour_filtre(date_passage,tps_parcours, type_tps_lapi, tps_lapi, tps_theoriq):
+        """pour ajouter un attribut du temps de parcours qui sert à filtrer les trajets de transit"""
+        marge = 660 if date_passage.hour in [19,20,21,22,23,0,1,2,3,4,5,6] else 0  #si le gars passe la nuit, on lui ajoute 11 heure de marge
+        if type_tps_lapi in ['Cluster','moyenne Cluster','predit']:
+            return tps_lapi+pd.Timedelta(str(marge)+'min')
+        else : 
+            return tps_theoriq+pd.Timedelta(str(marge)+'min')   
+        
+    def periode_carac(date_passage) :
+        """
+        pour calculer la période de passage selon une date
+        """
+        if date_passage.hour in [6,7,8,14,15,16,17,18,19] : 
+            return date_passage.floor('15min').to_period('15min')
+        else : 
+            return date_passage.to_period('H')
+    
+    if df_transit.empty :
+        raise PasDePlError()
+    df_transit=df_transit.copy()        
+    df_transit['period']=df_transit.apply(lambda x : periode_carac(x['date_cam_1']),axis=1)
+    df_tps_parcours['period']=df_tps_parcours.apply(lambda x : periode_carac(x['date']),axis=1)
+    if typeTrajet=='complet' : #dans ce cas la jointure avec les temps theorique ne se fait que sur les cameras
+        df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq' ]], 
+                                                                                                    on='cameras')
+    else : #dans ce cas la jointure avec les temps theorique ne se sur les cameras et l'od, car doublons de cameras pour certains trajet (possibilité d'aller vers A89 ou N10 apres Rocade)
+        df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq','o_d']], 
+                                                                                                    on=['cameras','o_d'])
+        df_transit_tps_parcours['type']=df_transit_tps_parcours.type.fillna('85eme_percentile')
+        df_transit_tps_parcours['temps']=df_transit_tps_parcours.temps.fillna(df_transit_tps_parcours['tps_parcours_theoriq'])
+        df_transit_tps_parcours['date']=df_transit_tps_parcours.apply(lambda x : x['period'].to_timestamp(), axis=1)
+    df_transit_tps_parcours['temps_filtre']=df_transit_tps_parcours.apply(lambda x : temps_pour_filtre(x['date_cam_1'],
+                                                                    x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq']), axis=1)
+    
+    return df_transit_tps_parcours
