@@ -269,3 +269,24 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,type
                                                                     x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq']), axis=1)
     
     return df_transit_tps_parcours
+
+def identifier_transit(df_transit_temps, marge,nom_attribut_temps_filtre='temps_filtre',nom_attribut_tps_parcours='tps_parcours'): 
+    """
+    affecter un attribut drapeau d'identification du trafic de trabsit, selon une marge
+    en entree : 
+        df_transit_temps : df issue de jointure_temps_reel_theorique
+        marge : integer: marge possible entre le temps theorique ou lapi et le temsp de passage. comme les camions doivent faire une pause de 45min toute les 4h30...
+    en sortie : 
+        df_transit_temps : df avec la'ttribut filtre_tps identifiant le trafic de trabsit (1) ou non (0)
+    """
+    def filtre_tps_parcours(temps_filtre,tps_parcours, marge) : 
+        """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
+        if tps_parcours <= temps_filtre+pd.Timedelta(str(marge)+'min') :
+            return 1
+        else: 
+            return 0
+        
+    df_transit_temps_final=df_transit_temps.copy()
+    df_transit_temps_final['filtre_tps']=df_transit_temps_final.apply(lambda x : filtre_tps_parcours(x[nom_attribut_temps_filtre],
+                                                                    x[nom_attribut_tps_parcours],marge), axis=1)
+    return df_transit_temps_final

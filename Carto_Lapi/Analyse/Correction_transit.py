@@ -7,12 +7,14 @@ Created on 21 juin 2019
 Module d'affinage des donn�es calcul�e dans le module transit
 '''
 
-from transit import cam_voisines
-from transit import trajet2passage
+from transit import cam_voisines, trajet2passage, creer_liste_date
 from Import_Forme import liste_complete_trajet
 import pandas as pd
 import numpy as np
 from sklearn import svm
+
+#liste des o_d ok pour predire_ts_trajets
+liste_od_ok=['A660-A62','A62-A63','A63-A62','A62-A10','A660-N10', 'A660-A10','N10-A63','A62-N10']
 
 def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_ref_2=15, cam_ref_3=19) : 
     """
@@ -198,6 +200,16 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
     
     return df_trajet
 
+def predire_ts_trajets(df_transit_marge0_ss_extrapolation):
+    df_transit_extrapole=df_transit_marge0_ss_extrapolation.copy()
+    for od in [x for x in  df_transit_marge0_ss_extrapolation.o_d.unique().tolist() if x not in liste_od_ok ] : 
+        for date in set([a[0].strftime('%Y-%m-%d') for a in creer_liste_date('2019-01-23',22)]):
+                try : 
+                    df_transit_extrapole=predire_type_trajet(df_transit_extrapole, od,date,600,35)
+                except ValueError : 
+                    continue
+    return df_transit_extrapole
+ 
 def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsmax_corrige):
     """
     Déterminé sui trafic est en transit en fonction du temps entre Cestas et entree ou sortie LAPI plutot que sur l'intégralité du trajet des PL concernes par A63.
@@ -284,3 +296,4 @@ def forme_df_cestas(df_transit_A63_redresse):
     df_transit_A63_attr_ok.loc[df_transit_A63_attr_ok['filtre_tps']==0,'correction_o_d']=False
     df_transit_A63_attr_ok['correction_o_d_type']=df_transit_A63_attr_ok.apply(lambda x : 'temps_cestas' if x['correction_o_d'] else 'autre',axis=1)
     return df_transit_A63_attr_ok
+
