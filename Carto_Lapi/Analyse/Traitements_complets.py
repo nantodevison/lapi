@@ -85,11 +85,10 @@ def extrapol_trajets_incomplets(dico_df_od_ok,df_passages_immat_ok,dico_corr_A63
     # dico des df des passages avant correction A660
     dico_passag_avantcorr={'passag_avantcorr'+str(i):
                    trajet2passage(dico_df_od_ok ['df_od_ok_marge'+str(i)],df_passages_immat_ok) 
-                   for i in [45]}
+                   for i in liste_marges}
     #extrapolation trajets icomplets
     for i  in liste_marges:
-        df_filtre_A63,df_passage_transit,df_non_transit=(param_trajet_incomplet('2019-01-23 00:00:00',
-            dico_corr_A63_A660['corr_A63_A660'+str(i)],df_passages_immat_ok,
+        df_filtre_A63,df_passage_transit,df_non_transit=(param_trajet_incomplet(dico_corr_A63_A660['corr_A63_A660'+str(i)],df_passages_immat_ok,
             dico_passag_avantcorr['passag_avantcorr'+str(i)]))
         trajet_transit_incomplet2, passage2=transit_trajet_incomplet(df_filtre_A63,df_passage_transit,'2019-01-23 00:00:00',22, df_passages_immat_ok)
         #affectation des temps de parcours de reference
