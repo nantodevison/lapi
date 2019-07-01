@@ -271,6 +271,8 @@ def import_et_mise_en_forme(type_veh=1):
     df_passages_pl=recalage_cam10(df_passages_pl)
     #filtre des immatriculations
     df_passages_immat_ok, df_immat_suppr=filtre_plaque_non_valable(df_passages_pl, df_plaques)
+    #recaler les passages d'1h
+    df_passages_immat_ok=recalage_passage_1h(df_passages_immat_ok)
     
     return df_passages_immat_ok, df_immat_suppr
     

@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 1 juil. 2019
 
 @author: martin.schoreisz
-Moduel avec qq fonctions pour traiter les resultats : import / exports en json par exemple
+Moduel avec des fonctions pour traiter les resultats : import / exports en json, pourcentage PL par acm, passage fictif rocade...
 '''
 import pandas as pd
 
@@ -38,14 +39,14 @@ def pourcentage_pl_camera(df_pl,dico_passag):
 
 def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     """
-    Créer des passages pour les trajets de transit non vus sur la Rocade mais qui y sont passé
+    Crï¿½er des passages pour les trajets de transit non vus sur la Rocade mais qui y sont passï¿½
     en entree : 
         liste_trajet : df des trajets concernes, issu de liste_trajet_rocade
-        df_od : df des trajetsde transit validé selon le temps de parcours
-        df_passages_transit : df des passages concernés par un trajet de transit (issu du traitement o_d)
+        df_od : df des trajetsde transit validï¿½ selon le temps de parcours
+        df_passages_transit : df des passages concernï¿½s par un trajet de transit (issu du traitement o_d)
         df_pl : df de tout passages pl (issu simplement de l'import mise en forme)
     en sortie : 
-        df_passage_transit_redresse : df des passages concernés par un trajet de transit (issu du traitement o_d) + passages fictifs
+        df_passage_transit_redresse : df des passages concernï¿½s par un trajet de transit (issu du traitement o_d) + passages fictifs
         df_pl_redresse : df de tout passages pl + passages fictifs
         trajets_rocade_non_vu : df des passgaes fictifs
     """
@@ -61,9 +62,9 @@ def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
             return -1
     #rechercher les trajets dans le dico des o_d
     trajets_rocade=df_od.loc[df_od.o_d.isin(liste_trajet.trajets.tolist())]
-    #trouver ceux qui ne contiennent aucune référence uax camera de la Rocade
+    #trouver ceux qui ne contiennent aucune rï¿½fï¿½rence uax camera de la Rocade
     trajets_rocade_non_vu=trajets_rocade.loc[trajets_rocade.apply(lambda x : all(e not in x['cameras'] for e in [1,2,3,4]),axis=1)].copy()
-    #créer des passage fictif au niveau de la Rocade avec comme created la moyenne entre date_cam_1 et date_cam_2
+    #crï¿½er des passage fictif au niveau de la Rocade avec comme created la moyenne entre date_cam_1 et date_cam_2
     trajets_rocade_non_vu['created_fictif']=trajets_rocade_non_vu.apply(lambda x : x['date_cam_1']+((x['date_cam_2']-x['date_cam_1'])/2),axis=1)
     trajets_rocade_non_vu['camera_fictif']=trajets_rocade_non_vu.apply(lambda x : camera_fictive(x['cameras'][0],x['cameras'][1]),axis=1)
     #virere clolonne inutiles
@@ -80,3 +81,52 @@ def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     df_passage_transit_redresse['fictif']=df_passage_transit_redresse.apply(lambda x : 'Rocade' if not x['fiability']>0 else 'Non' ,axis=1)
     df_passage_transit_redresse['fiability']=df_passage_transit_redresse.apply(lambda x : 999 if not x['fiability']>0 else x['fiability'],axis=1)
     return df_passage_transit_redresse, df_pl_redresse, trajets_rocade_non_vu
+
+def save_donnees(df, fichier):
+    """
+    sauvegarder les df dans des fichiers.
+    en entree : 
+        df : la dtatfarme ï¿½ sauvegarder
+        fichier : raw string du nom de fichier
+    """
+    "reset index si c'est un datetime[ns]"
+    if df.index.dtype=='<M8[ns]' : 
+        fichier_export=df.reset_index().copy()
+    else : 
+        fichier_export=df.copy()
+    #suppr les colonnes qui servent   rine si elles existent
+    if 'index' in fichier_export.columns :
+        fichier_export.drop('index',axis=1, inplace=True)
+    if 'level_0' in fichier_export.columns :
+        fichier_export.drop('level_0',axis=1, inplace=True)
+    #passer les datetime et texte lisible par pd.to_datetime
+    list_attr_datetime=[attr for attr in fichier_export.columns if fichier_export[attr].dtypes in ['<m8[ns]','<M8[ns]']]
+    for attr in list_attr_datetime : 
+        fichier_export[attr]=fichier_export[attr].apply(lambda x : str(x))
+    
+    fichier_export.to_json(fichier, orient='index')
+        
+def ouvrir_donnees(fichier):
+    """
+    ouvrir les donÃ©es suvegradees avec  save_donnees 
+    en entree : 
+        fichier : raw string du fichier Ã  ouvrir
+    en sortie : 
+        df : dataframe avec les attributs aux formats datetime et timedelta
+    """
+    df=pd.read_json(fichier,orient='index')
+    for attr in ['date_cam_1','date_cam_2','tps_parcours','date','temps','tps_parcours_theoriq','temps_filtre','created'] : 
+        if attr in df.columns : 
+            if attr in ['date_cam_1','date_cam_2','date','created'] : 
+                df[attr]=df[attr].apply(lambda x : pd.to_datetime(x))
+            else :
+                df[attr]=df[attr].apply(lambda x : pd.Timedelta(x))
+    
+    return df   
+        
+        
+        
+        
+        
+        
+        
