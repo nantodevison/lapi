@@ -16,6 +16,7 @@ import os,math, datetime as dt
 
 
 
+
 def graph_passages_proches(jointure, groupe_pl_rappro):
     """
     Visualiser les stats sur les pasages trop proches
@@ -95,7 +96,7 @@ def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, *cam) :
     """
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
-        synt_nb_veh_cam : df agregeant les donnees de VL, PL, PL en transit et %PL transit. issu de donnees_postraitees.pourcentage_pl_camera
+        synt_nb_veh_cam : df agregeant les donnees de VL, PL, PL en transit et %PL transit. issu de Resultats.pourcentage_pl_camera
         date : string : date de debut, forme YYYY-MM-DD, ou 'JO' pour jour ouvrés, ou 'Ma/Je' pour 
         camera : integer : nume de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %PL
     en sortie : 
@@ -176,7 +177,6 @@ def graph_transit_vl_pl_camera_multi_j(synt_nb_veh_cam, date,cam,nb_jour):
     en sortie : 
         une chart altair concatenee verticalement avec un pour chaque jour
     """
-    df_index_ok=df.reset_index()
     dico_graph={'graph'+str(indice):graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, cam) 
                for indice,date in enumerate(zip([str(x) for x in pd.date_range(date, periods=nb_jour, freq='D')]))}
     liste_graph=[dico_graph[key] for key in dico_graph.keys()]
@@ -257,3 +257,4 @@ def comp_lapi_gest_multicam(df_passages_immat_ok,donnees_gest, date_d='2019-01-2
     return alt.VConcatChart(vconcat=[comp_lapi_gest(df_passages_immat_ok,donnees_gest, camera)
                               for camera in liste_num_cam])
     
+def graph_pct_pl_transit():
