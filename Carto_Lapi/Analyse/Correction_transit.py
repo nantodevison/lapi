@@ -249,7 +249,7 @@ def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsm
     #selectionner les trajets realtif à A63, qui ne sont pas identifies comme transit
     df_transit_A63_redresse=df_transit_extrapole.loc[(df_transit_extrapole['filtre_tps']==0)&(
         df_transit_extrapole.apply(lambda x : 'A63' in x['o_d'],axis=1))&(
-        df_transit_extrapole.apply(lambda x : (18 in x['cameras'] or 19 in x['cameras']),axis=1))]
+        df_transit_extrapole.apply(lambda x : (18 in x['cameras'] or 19 in x['cameras']),axis=1))].copy()
     #trouver les passages correspondants
     passage_transit_A63_redresse=trajet2passage(df_transit_A63_redresse,df_passages_immat_ok)
     #retrouver le passage correspondants à camera 18 ou 19

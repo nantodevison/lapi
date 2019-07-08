@@ -52,17 +52,18 @@ def appliquer_marge(liste_marges,df_transit_A63_redresse, df_transit_extrapole):
     #appliquer la martge sur les donnees issu de l'extrapolation et sur celle issues de la prise ene compte des aires
     dico_df_transit={}
     for i in liste_marges :
-        dico_df_transit['df_transit_extrapole_marge'+str(i)]=identifier_transit(df_transit_extrapole, i)
-        dico_df_transit['df_transit_airesA63_marge'+str(i)]=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')
+        dico_df_transit['df_transit_extrapole_marge'+str(i)]=identifier_transit(df_transit_extrapole, i)#identifier le transit pour tous les PL
+        dico_df_transit['df_transit_airesA63_marge'+str(i)]=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')#identifier le transit pour PL passé par Cestas
         dico_df_transit['df_transit_airesA63_marge'+str(i)]=forme_df_cestas(dico_df_transit['df_transit_airesA63_marge'+str(i)])
         dico_df_transit['df_transit_marge'+str(i)]=pd.concat([dico_df_transit['df_transit_airesA63_marge'+str(i)],
-              dico_df_transit['df_transit_extrapole_marge'+str(i)]],sort=False)
+              dico_df_transit['df_transit_extrapole_marge'+str(i)]],sort=False)#attention cela crée des doublons car ceux present dans A63_redresse sont aussi dans extrapole
         dico_df_transit['df_transit_marge'+str(i)].correction_o_d=(dico_df_transit['df_transit_marge'+str(i)].
                                                                correction_o_d.fillna(False).copy()) 
+        dico_df_transit['df_transit_marge'+str(i)]=dico_df_transit['df_transit_marge'+str(i)].sort_values(['date_cam_1', 'immat','filtre_tps']).copy() #tri
+        dico_df_transit['df_transit_marge'+str(i)].drop_duplicates(['date_cam_1','immat'],keep='last', inplace=True)#puis suppression des doublons
     dico_df_od_ok={'df_od_ok_marge'+str(i):dico_df_transit['df_transit_marge'+str(i)].loc[dico_df_transit['df_transit_marge'+str(i)]['filtre_tps']==1].copy()
-         for i in liste_marges}
-    for i in liste_marges :
-        dico_df_od_ok['df_od_ok_marge'+str(i)].drop_duplicates(['date_cam_1','immat'], inplace=True)
+         for i in liste_marges}# on ne conserve que les PL en transit
+
     return dico_df_transit, dico_df_od_ok
 
 def correction_A660(dico_df_od_ok,df_passages_immat_ok,liste_marges):
