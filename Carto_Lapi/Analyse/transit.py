@@ -102,8 +102,7 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,liste_trajet_loc=li
                                           liste_trajet=liste_trajet_loc)
                 else : 
                     donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',liste_trajet=liste_trajet_loc)
-                df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max
-                
+                df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max   
             except PasDePlError :
                 continue
             

@@ -45,7 +45,28 @@ def graph_nb_veh_ttjours_ttcam(df) :
                                     y='immat').properties(width=800).facet(row='camera_id')
     return graph_filtre_tps
 
-       
+def graph_trajet (dico_od, date, o_d): 
+    """
+    visualiser les trajets, sans affectation en transit ou non
+    """
+    titre=pd.to_datetime(date).day_name(locale ='French')+' '+pd.to_datetime(date).strftime('%Y-%m-%d')+' : '+o_d
+    dico_od_graph=dico_od.loc[(dico_od.date_cam_1.between(pd.to_datetime(date+' 00:00:00'),pd.to_datetime(date+' 23:59:59'))) & (
+        dico_od.apply(lambda x : x['o_d']==o_d,axis=1))].copy()
+    dico_od_graph.tps_parcours=pd.to_datetime('2019-01-01')+dico_od_graph.tps_parcours
+    return alt.Chart(dico_od_graph, title=titre).mark_point().encode(
+                            x=alt.X('date_cam_1:T',title='Heure'),
+                            y=alt.Y('tps_parcours',axis=alt.Axis(title='temps de parcours', format='%H:%M'))).properties(width=700, height=500).interactive()
+    
+
+def graph_trajet_multiple(dico_od, date, o_d, nb_jours):
+    """
+    Regroupement de charts altair issues de graph_trajet sur un plusieurs jours
+    """
+    dico_od_graph=dico_od.loc[(dico_od.date_cam_1.between(pd.to_datetime(date+' 00:00:00'),pd.to_datetime(date+' 23:59:59')+pd.Timedelta(str(nb_jours)+'D'))) & (
+        dico_od.apply(lambda x : x['o_d']==o_d,axis=1))].copy()
+    return alt.VConcatChart(vconcat=([graph_trajet(dico_od_graph,date_g.strftime('%Y-%m-%d'), o_d) 
+                                      for date_g in pd.date_range(date, periods=nb_jours, freq='D')]))
+     
 def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     """
     pour visualiser les graph de seprataion des trajets de transit et des autres
@@ -257,4 +278,4 @@ def comp_lapi_gest_multicam(df_passages_immat_ok,donnees_gest, date_d='2019-01-2
     return alt.VConcatChart(vconcat=[comp_lapi_gest(df_passages_immat_ok,donnees_gest, camera)
                               for camera in liste_num_cam])
     
-def graph_pct_pl_transit():
+#def graph_pct_pl_transit():

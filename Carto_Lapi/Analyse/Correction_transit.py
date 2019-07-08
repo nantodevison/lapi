@@ -14,11 +14,11 @@ import numpy as np
 from sklearn import svm
 
 #liste des o_d ok pour predire_ts_trajets
-liste_od_ok=['A660-A62','A62-A63','A63-A62','A62-A10','A660-N10', 'A660-A10','N10-A63','A62-N10']
+liste_od_ok=['A660-A62','A62-A63','A63-A62','A660-N10', 'A660-A10','N10-A63','A63-N10']
 
 def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_ref_2=15, cam_ref_3=19) : 
     """
-    Fonction qui va r�-assigner les origines-destinations � A63 si certanes conditions sont remplie : 
+    Fonction qui va re-assigner les origines-destinations � A63 si certanes conditions sont remplie : 
     cas 1 : vue a A660 puis dans l'autre sens sur A63, ou inversement
     cas 2 : vue sur A660 Nord-Sud, puis A660 Sud-Nord, avec plus de 1jd'�cart entre les deux
     en entree : 

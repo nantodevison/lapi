@@ -260,6 +260,9 @@ def import_et_mise_en_forme(type_veh=1):
     """
     #importer les données
     df_passages_source, df_plaques, df_immat=ouvrir_fichier_lapi_final('2019-01-22 23:00:00','2019-02-13 22:59:59')
+    #recaler les passages d'1h
+    df_passages_source=recalage_passage_1h(df_passages_source
+                                           )
     #affecter le type de vehicule
     df_passages_source=affecter_type(df_passages_source,df_immat)
     df_passages_source=affecter_type_nuit(df_passages_source)
@@ -271,8 +274,7 @@ def import_et_mise_en_forme(type_veh=1):
     df_passages_pl=recalage_cam10(df_passages_pl)
     #filtre des immatriculations
     df_passages_immat_ok, df_immat_suppr=filtre_plaque_non_valable(df_passages_pl, df_plaques)
-    #recaler les passages d'1h
-    df_passages_immat_ok=recalage_passage_1h(df_passages_immat_ok)
+
     
     return df_passages_immat_ok, df_immat_suppr
     

@@ -59,8 +59,10 @@ def appliquer_marge(liste_marges,df_transit_A63_redresse, df_transit_extrapole):
               dico_df_transit['df_transit_extrapole_marge'+str(i)]],sort=False)
         dico_df_transit['df_transit_marge'+str(i)].correction_o_d=(dico_df_transit['df_transit_marge'+str(i)].
                                                                correction_o_d.fillna(False).copy()) 
-    dico_df_od_ok={'df_od_ok_marge'+str(i):dico_df_transit['df_transit_marge'+str(i)].loc[dico_df_transit['df_transit_marge'+str(i)]['filtre_tps']==1]
+    dico_df_od_ok={'df_od_ok_marge'+str(i):dico_df_transit['df_transit_marge'+str(i)].loc[dico_df_transit['df_transit_marge'+str(i)]['filtre_tps']==1].copy()
          for i in liste_marges}
+    for i in liste_marges :
+        dico_df_od_ok['df_od_ok_marge'+str(i)].drop_duplicates(['date_cam_1','immat'], inplace=True)
     return dico_df_transit, dico_df_od_ok
 
 def correction_A660(dico_df_od_ok,df_passages_immat_ok,liste_marges):

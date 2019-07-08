@@ -94,6 +94,8 @@ def save_donnees(df, fichier):
         fichier_export=df.reset_index().copy()
     else : 
         fichier_export=df.copy()
+    if not fichier_export.index.is_unique :
+        fichier_export.reset_index(inplace=True)
     #suppr les colonnes qui servent   rine si elles existent
     if 'index' in fichier_export.columns :
         fichier_export.drop('index',axis=1, inplace=True)
