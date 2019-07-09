@@ -34,21 +34,24 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\liste_trajet_incomplet.json','incomplet')
-liste_trajet_rocade=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\liste_trajet_rocade.json', orient='index')
-param_cluster=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
+liste_trajet_rocade=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_rocade.json', orient='index')
+param_cluster=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
 #fichier des plaques, en df
-plaques_europ=pd.read_csv(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
+plaques_europ=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
 #matrices des nb de jours
-matrice_nb_jo=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo').replace('NC',np.NaN)
-matrice_nb_jo_samedi=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo_samedi=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo_samedi').replace('NC',np.NaN)
-matrice_nb_j_tot=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_j_tot=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_j_tot').replace('NC',np.NaN)
+matrice_nb_jo_13_31=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+    index='origine', columns='destination',values='nb_jo_31_13').replace('NC',np.NaN)
+    
 #donnees de comptage gestionnaire
-donnees_gest=pd.read_csv(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\Synthese_trafic_LAPI.csv')
+donnees_gest=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\Synthese_trafic_LAPI.csv')
 donnees_gest['created']=pd.to_datetime(donnees_gest.created)
 
 

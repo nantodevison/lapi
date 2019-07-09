@@ -109,13 +109,13 @@ def grouper_pl(df,date_debut,date_fin,camera,df_filtre):
     #on limite le nb d'objet entre les 2 heures de depart
     df_duree=df.loc[date_debut:date_fin]
     if df_duree.empty : 
-       raise PasDePlError() 
+        raise PasDePlError() 
     if isinstance(df_filtre,pd.DataFrame) : 
         df_duree=filtrer_df(df_duree,df_filtre)
     #on trouve les veh passés cameras 1
     df_duree_cam1=df_duree.loc[df_duree.loc[:,'camera_id']==camera]
     if df_duree_cam1.empty : 
-       raise PasDePlError() 
+        raise PasDePlError() 
     #on recupere ces immat aux autres cameras
     df_duree_autres_cam=df.loc[(df.loc[:,'immat'].isin(df_duree_cam1.loc[:,'immat']))]
     groupe=(df_duree_autres_cam.sort_index().reset_index().groupby('immat').agg({'camera_id':lambda x : tuple(x), 
