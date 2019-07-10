@@ -40,11 +40,10 @@ def graph_nb_veh_ttjours_ttcam(df) :
         graph_filtre_tps : une chart altair concatenee vertical. en x les jours, en y le nb de veh 
     """
     nb_passage_j_cam=df.reset_index().set_index('created').groupby('camera_id').resample('D').count().drop('camera_id',axis=1).reset_index()
-    graph_filtre_tps = alt.Chart(nb_passage_j_cam).mark_bar(size=20).encode(
-                                    x='created',
-                                    y='immat').properties(width=800).facet(row='camera_id')
-    return graph_filtre_tps
-
+    return alt.VConcatChart(vconcat=([alt.Chart(nb_passage_j_cam.loc[nb_passage_j_cam['camera_id']==camera], title=f'camera {camera}').mark_bar(size=20).encode(
+                                    x=alt.X('created',axis=alt.Axis(title='Jour', format='%A %d-%m-%y',labelAngle=45)),
+                                    y=alt.Y('immat',axis=alt.Axis(title='Nombre de véhicules'))).properties(width=1000)  for camera in 
+        [1,2,3,4,5,6,7,8,9,10,11,12,13,15,18,19]]))
 def graph_trajet (dico_od, date, o_d): 
     """
     visualiser les trajets, sans affectation en transit ou non
@@ -168,9 +167,10 @@ def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type='TV') :
                  (df['camera_id']==camera)]
     if type=='PL' : 
         test2=test2.loc[test2['l']==1]
-    graph=alt.Chart(test2.set_index('created').resample('H').count().reset_index(),title=date_d+' cam '+ str(camera)).mark_bar().encode(
-                   x='created',
-                    y='immat' )
+    graph=alt.Chart(test2.set_index('created').resample('H').count().reset_index(),title=
+                    pd.to_datetime(date_d).day_name(locale ='French')+' '+pd.to_datetime(date_d).strftime('%d-%m-%y')+' ; camera '+ str(camera)).mark_bar().encode(
+                   x=alt.X('created', axis=alt.Axis(title='Heure', format='%Hh%M')),
+                    y=alt.Y('immat', axis=alt.Axis(title='Nombre de vehicule')) )
     return graph  
 
 def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour, type='TV'): 
@@ -183,11 +183,11 @@ def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour, type='T
         une chart altair concatenee verticalement avec un pour chaque jour
     """
     df_index_ok=df.reset_index()
-    dico_graph={'graph'+str(indice):graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam, type) 
+    dico_graph={indice:graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam, type) 
                for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jour, freq='D')],
                                 [str(x) for x in pd.date_range(date_fin, periods=nb_jour, freq='D')]))}
-    liste_graph=[dico_graph[key] for key in dico_graph.keys()]
-    return alt.VConcatChart(vconcat=(liste_graph))  
+    liste_graph=[graph for graph in {'liste_graph'+str(i):alt.HConcatChart(hconcat=([dico_graph[key] for key in dico_graph.keys() if key in range(i-7,i)])) for i in [8,15,22]}.values()]
+    return alt.VConcatChart(vconcat=(liste_graph))
 
 def graph_transit_vl_pl_camera_multi_j(synt_nb_veh_cam, date,cam,nb_jour): 
     """

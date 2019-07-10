@@ -126,7 +126,19 @@ def ouvrir_donnees(fichier):
     
     return df   
         
-        
+def decoupe_df_avant_apres_31(df_transit):
+    """
+    obtrnir2 df à partir de la df_od_final : la df des trajets avant le 31/01, la df des trajets après le 31/01
+    en entree : 
+        df_transit : df finales des PL en transit (o_d, pas passages)
+    en sortie 
+        df_transit
+        df_avant31 : df des PL en transit avant le 31/01
+        df_apres31 : la df des PL en transit à partirdu 31
+    """
+    df_avant31=df_transit.loc[df_transit['date_cam_1']<pd.to_datetime('2019-01-31 00:00:00')]
+    df_apres31=df_transit.loc[df_transit['date_cam_1']<pd.to_datetime('2019-01-30 23:59:59')]
+    return df_transit, df_avant31, df_apres31
         
         
         
