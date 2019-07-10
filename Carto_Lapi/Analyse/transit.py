@@ -149,7 +149,7 @@ def param_trajet_incomplet(df_od_corrige,df_3semaines,dico_passag):
 
 def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jours, df_3semaines,liste_trajet_loc=liste_trajet_incomplet):
     """
-    Extrapoler des trajest à partir des immats en transit,sur des trajets où il manque la camera de fin
+    Extrapoler des trajest à partir des immats en transit,sur des trajets où il manque la camera de fin ou de debut
     en entree : 
         df_filtre_A63 : df des immat de transit qui ne sont pas passées par A63. issu de param_trajet_incomplet()
         df_passage_transit : df des passages d'immatricluation identifiées en transit. issu de param_trajet_incomplet()
@@ -186,10 +186,13 @@ def transit_trajet_incomplet(df_filtre_A63,df_passage_transit,date_debut,nb_jour
             cam_proches.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
             trajets_possible_enrichi=pd.concat([trajets_possibles,cam_proches],axis=1)
             #4.filtrer selon un critère de camera suivante qui est une des entrée du dispositif Lapi
+            #attention, là il y a des doublons si le PL a deja effectue plusieurs trajets
+            # dans ce cas je fais un drop duplicates quiaffece aleatoirement le PL a un trajet, car le nb de PL dans ce casest très faible (<1/10000)
             dico_filtre = {'destination':[15,6,8,10,12]}
             trajet_transit_incomplet=trajets_possible_enrichi.loc[trajets_possible_enrichi.apply(lambda x : (x['cam_suivant'] in dico_filtre['destination']) & (
                                                                         x['o_d_immat']==x['o_d_liste_trajet']),axis=1)].copy()
             trajet_transit_incomplet.rename(columns={'o_d_liste_trajet':'o_d'}, inplace=True)
+            trajet_transit_incomplet=trajet_transit_incomplet.drop_duplicates(['date_cam_1', 'immat'])
             #POUR TEST !!!!!
             #trajet_transit_incomplet=trajets_possible_enrichi
             if trajet_transit_incomplet.empty : 

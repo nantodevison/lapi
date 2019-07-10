@@ -6,6 +6,7 @@ Created on 1 juil. 2019
 Moduel avec des fonctions pour traiter les resultats : import / exports en json, pourcentage PL par acm, passage fictif rocade...
 '''
 import pandas as pd
+from Import_Forme import matrice_nb_jo_sup_31, matrice_nb_jo, matrice_nb_jo_inf_31
 
 def pourcentage_pl_camera(df_pl,dico_passag):
     """
@@ -137,10 +138,45 @@ def decoupe_df_avant_apres_31(df_transit):
         df_apres31 : la df des PL en transit à partirdu 31
     """
     df_avant31=df_transit.loc[df_transit['date_cam_1']<pd.to_datetime('2019-01-31 00:00:00')]
-    df_apres31=df_transit.loc[df_transit['date_cam_1']<pd.to_datetime('2019-01-30 23:59:59')]
+    df_apres31=df_transit.loc[df_transit['date_cam_1']>pd.to_datetime('2019-01-30 23:59:59')]
     return df_transit, df_avant31, df_apres31
+
+def filtrer_jour_non_complet(df_transit):
+    """
+    Enlever les trajets ayant eu lieu lors de jours non complet pour obtenir des resultats cohrents sur le tmjo ou tmja
+    AMELIORABLE si on pouvait passer un dico avec comme cle la camera et comme value une liste avec la date et si la cam est au debuit ou fin
+    en entree : 
+        df_transit : df finales des PL en transit (o_d, pas passages)
+    en sortie : 
+        df_transit_propre : la df_transit sans les trajets sur les dates à enlever
+    """
+    return df_transit.loc[df_transit.apply(lambda x : 
+        not (x['cameras'][0]==6 and x['date_cam_1'].day==pd.to_datetime('2019-01-29').day) and
+        not (x['cameras'][0]==6 and x['date_cam_1'].day==pd.to_datetime('2019-01-30').day) and 
+        not (x['cameras'][-1]==11 and x['date_cam_1'].day==pd.to_datetime('2019-02-01').day) and 
+        not (x['cameras'][-1]==9 and x['date_cam_1'].day==pd.to_datetime('2019-01-24').day) and
+        not (x['cameras'][0]==15 and x['date_cam_1'].day==pd.to_datetime('2019-01-31').day) and 
+        not (x['cameras'][-1]==7 and x['date_cam_1'].day==pd.to_datetime('2019-02-06').day) and 
+        not (x['cameras'][-1]==13 and x['date_cam_1'].day==pd.to_datetime('2019-02-01').day) and
+        not (x['cameras'][0]==8 and x['date_cam_1'].day==pd.to_datetime('2019-02-06').day),axis=1)]
         
-        
-        
-        
+def df_transit_propre_jo(df_transit_propre, type_j='jo'):    
+    """ 
+    filtre de la matrcie cree par  filtrer_jour_non_complet selon les jours ouvresou autre
+    """
+    if type=='jo' :
+        df_transit_filtre=df_transit_propre.loc[df_transit_propre.set_index('date_cam_1').index.dayofweek<5]
+    
+    return df_transit_filtre
+
+def matrice_transit(df_transit_filtre, type_j='jo_sup_31'):
+    """
+    crée les matrice de nb de PL selon le type de jours
+    """
+    if type_j=='jo_sup_31' :
+        return round(pd.pivot_table(df_transit_filtre,values='l', index='origine', columns='destination',aggfunc='count')/matrice_nb_jo_sup_31,0)
+    elif type_j=='jo' : 
+        return round(pd.pivot_table(df_transit_filtre,values='l', index='origine', columns='destination',aggfunc='count')/matrice_nb_jo,0)
+    elif  type_j=='jo_inf_31' :
+        return round(pd.pivot_table(df_transit_filtre,values='l', index='origine', columns='destination',aggfunc='count')/matrice_nb_jo_inf_31,0)
         

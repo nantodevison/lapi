@@ -47,8 +47,10 @@ matrice_nb_jo_samedi=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Trait
     index='origine', columns='destination',values='nb_jo_samedi').replace('NC',np.NaN)
 matrice_nb_j_tot=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_j_tot').replace('NC',np.NaN)
-matrice_nb_jo_13_31=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo_sup_31=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo_31_13').replace('NC',np.NaN)
+matrice_nb_jo_inf_31=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+    index='origine', columns='destination',values='nb_jo_23_31').replace('NC',np.NaN)
 #donnees de comptage gestionnaire
 donnees_gest=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\Synthese_trafic_LAPI.csv')
 donnees_gest['created']=pd.to_datetime(donnees_gest.created)
