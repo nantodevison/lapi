@@ -7,14 +7,14 @@ Created on 21 juin 2019
 Module d'affinage des donn�es calcul�e dans le module transit
 '''
 
-from transit import cam_voisines, trajet2passage, creer_liste_date
+from transit import cam_voisines, trajet2passage
 from Import_Forme import liste_complete_trajet
 import pandas as pd
 import numpy as np
 from sklearn import svm
 
 #liste des o_d ok pour predire_ts_trajets
-liste_od_ok=['A660-A62','A62-A63','A63-A62','A660-N10', 'A660-A10','N10-A63','A63-N10']
+liste_od_ok=['A660-A62','A62-A63','A63-A62','A660-N10', 'A660-A10','N10-A63']
 
 def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_ref_2=15, cam_ref_3=19) : 
     """
@@ -141,16 +141,21 @@ def corriger_tps_parcours_extrapole(dixco_tpsmax_corrige,df_transit_extrapole):
         df_transit_extrapole df des trajets de transit extrapole predire_type_trajet
     en sortie : 
         correction_temps : df des temps max avec mise a jour des temps et type pour les periodes et o_d extrapolees
-    """
+        df_transit_extra_filtr_tps_modif : df issue de corriger_df_tps_parcour ave le filtre temps selon les temps de de parcours max issu de la prediction
+    """    
     period_od_a_modif=df_transit_extrapole.loc[(df_transit_extrapole['type']=='predit')&(df_transit_extrapole['filtre_tps']==1)].sort_values('date_cam_1').copy()
-    liste_pour_modif=period_od_a_modif[['period','o_d','temps']].drop_duplicates()#.merge(dixco_tpsmax_corrige, on=['period','o_d'], how='right')
+    liste_pour_modif=period_od_a_modif[['date','o_d','temps']].drop_duplicates()#.merge(dixco_tpsmax_corrige, on=['period','o_d'], how='right')
     liste_pour_modif['type']='predit'
-    correction_temps=dixco_tpsmax_corrige.merge(liste_pour_modif, on=['period','o_d'], how='left')
+    correction_temps=dixco_tpsmax_corrige.merge(liste_pour_modif, on=['o_d','date'], how='left')
     correction_temps['temps_x']=np.where(pd.notnull(correction_temps['temps_y']),correction_temps['temps_y'],correction_temps['temps_x'])
     correction_temps['type_x']=np.where(pd.notnull(correction_temps['type_y']),correction_temps['type_y'],correction_temps['type_x'])
     correction_temps=correction_temps.rename(columns={'temps_x':'temps','type_x':'type'}).drop(['temps_y','type_y'],axis=1)
+    jointure_temps=df_transit_extrapole.merge(correction_temps, on=['date','o_d'], how='left')
+    jointure_temps['temps_filtre']=np.where(jointure_temps['type_y']=='85eme_percentile',jointure_temps['temps_filtre'],jointure_temps['temps_y'] )
+    jointure_temps['type_x']=jointure_temps['type_y']
+    jointure_temps=jointure_temps.drop(['temps_y','type_y'],axis=1).rename(columns={'temps_x':'temps', 'type_x':'type'})
     
-    return correction_temps
+    return jointure_temps, correction_temps
 
 def predire_type_trajet(df_trajet,o_d, date, gamma, C):
     """
@@ -169,7 +174,8 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
                            (df_trajet.set_index('date_cam_1').index.dayofyear==pd.to_datetime(date).dayofyear)].copy()
     #ajouter des champsde ocnversion des dates en integer, limiter les valeusr sinon pb de mémoire avec sklearn
     test_predict['date_int']=((test_predict.date_cam_1 - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))/1000000
-    test_predict['temps_int']=(((pd.to_datetime('2018-01-01')+test_predict.tps_parcours) - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))/1000000
+    test_predict['temps_int']=(((pd.to_datetime('2018-01-01')+test_predict.tps_parcours) - pd.Timestamp("1970-01-01")) //
+                                pd.Timedelta('1s'))/1000000
     #créer les données d'entrée du modele
     X=np.array([[a,b] for a,b in zip(test_predict.date_int.tolist(),test_predict.temps_int.tolist())])
     y=np.array(test_predict.filtre_tps.tolist())
@@ -191,9 +197,10 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
     df_trajet.loc[df_trajet.index.isin(df_type_predit.loc[df_type_predit['type_predit']==1].index_source.tolist()),'filtre_tps']=1
     
     #MODIFIER L VALEUR DU TEMPS DE PARCOURS DE REFERENCE SUR L'INTERVAL CONSIDERE
-    df_trajet_extra=df_trajet.loc[(df_trajet['filtre_tps']==1)&(df_trajet['type']=='predit')].copy()
-    nw_tps_parcours=df_trajet_extra.groupby('period')['tps_parcours'].max()
-    df_trajet=df_trajet.merge(nw_tps_parcours.reset_index(), on='period', suffixes=('_1','_2'), how='left')
+    df_trajet_extra=df_trajet.loc[(df_trajet['filtre_tps']==1)&(df_trajet['type']=='predit')
+                                  &(df_trajet['o_d']==o_d)].copy()
+    nw_tps_parcours=df_trajet_extra.groupby(['date','o_d'])['tps_parcours'].max()
+    df_trajet=df_trajet.merge(nw_tps_parcours.reset_index(), on=['date','o_d'], suffixes=('_1','_2'), how='left')
     df_trajet['temps']=np.where(pd.notnull(df_trajet['tps_parcours_2']),df_trajet['tps_parcours_2'],df_trajet['temps'])
     df_trajet.drop('tps_parcours_2',axis=1,inplace=True)
     df_trajet.rename(columns={'tps_parcours_1':'tps_parcours'},inplace=True)
@@ -203,7 +210,8 @@ def predire_type_trajet(df_trajet,o_d, date, gamma, C):
 def predire_ts_trajets(df_transit_marge0_ss_extrapolation):
     df_transit_extrapole=df_transit_marge0_ss_extrapolation.copy()
     for od in [x for x in  df_transit_marge0_ss_extrapolation.o_d.unique().tolist() if x not in liste_od_ok ] : 
-        for date in set([a[0].strftime('%Y-%m-%d') for a in creer_liste_date('2019-01-23',22)]):
+        print(f'o_d en cours : {od}')
+        for date in [a.strftime('%Y-%m-%d') for a in pd.date_range(start='2019-01-23',end='2019-02-13')]:
                 try : 
                     df_transit_extrapole=predire_type_trajet(df_transit_extrapole, od,date,600,35)
                 except ValueError : 
@@ -273,10 +281,10 @@ def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsm
         ,left_on=['cameras_cestas'],right_on=['cameras']).drop('cameras_y',axis=1).rename(
         columns={'tps_parcours_theoriq_y':'tps_parcours_theoriq_cestas'})
     #jointure avec temps reel
-    df_transit_A63_redresse_tstps=(df_transit_A63_redresse_tpq_theoriq.merge(dixco_tpsmax_corrige, left_on=['o_d_cestas','period'],right_on=['o_d','period'],
-        how='left').rename(columns={'cameras_x':'cameras','o_d_x':'o_d','date_x':'date','type_x':'type',
+    df_transit_A63_redresse_tstps=(df_transit_A63_redresse_tpq_theoriq.merge(dixco_tpsmax_corrige, left_on=['o_d_cestas','date'],right_on=['o_d','date'],
+        how='left').rename(columns={'cameras_x':'cameras','o_d_x':'o_d','type_x':'type',
                                     'temps_x':'temps','tps_parcours_theoriq_x':'tps_parcours_theoriq',
-                                    'temps_y':'temps_cestas','type_y':'type_cestas'}).drop(['date_y','o_d_y'],axis=1))
+                                    'temps_y':'temps_cestas','type_y':'type_cestas'}).drop('o_d_y',axis=1))
     #Maj de l'attribut temps_filtre_cestas
     df_transit_A63_redresse_tstps['temps_filtre_cestas']=df_transit_A63_redresse_tstps.apply(lambda x : temps_pour_filtre(x['date_cam_1'],
         x['type_cestas'], x['temps_cestas'], x['tps_parcours_theoriq_cestas']), axis=1)

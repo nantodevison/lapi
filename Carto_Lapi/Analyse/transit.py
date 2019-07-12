@@ -9,9 +9,9 @@ Module de d�termination du trafic de transit � partir de la classe des traje
 from trajets import trajet2passage
 from Import_Forme import liste_complete_trajet, liste_trajet_incomplet
 from trajets import trajet, PasDePlError, grouper_pl,filtre_et_forme_passage
+from Correction_transit import forme_df_cestas
 import pandas as pd
 import datetime as dt
-
 
 def creer_liste_date(date_debut, nb_jours):
     """
@@ -49,6 +49,26 @@ def trajet_non_transit(df_transit, df_passage):
     return passages_non_transit.reset_index().sort_values('created').groupby('plaque_ouverte').agg(
         {'camera_id':lambda x : tuple(x),
          'created':lambda x: tuple(x)})
+
+def transit_marge0(df_transit_extrapole,df_transit_A63_redresse):
+    """
+    creer la df de base de transit, sans marge
+    en entree : 
+        df_transit_extrapole : df issue de Correction_transit.predire_ts_trajets
+        df_transit_A63_redresse : df issue de Correction_transit.correction_temps_cestas
+    """
+    dico_df_transit={}
+    dico_df_transit['df_transit_airesA63']=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')#identifier le transit pour PL passé par Cestas
+    dico_df_transit['df_transit_airesA63']=forme_df_cestas(dico_df_transit['df_transit_airesA63'])
+    dico_df_transit['df_transit_pas_airesA63']=df_transit_extrapole.loc[~df_transit_extrapole.set_index(['date_cam_1','immat']).index.isin(
+                df_transit_A63_redresse.set_index(['date_cam_1','immat']).index.tolist())]
+    
+    dico_df_transit['df_transit_marge0_ss_filtre']=pd.concat([dico_df_transit['df_transit_airesA63'],
+                  dico_df_transit['df_transit_pas_airesA63']],sort=False)
+    dico_df_transit['df_transit_marge0_ss_filtre'].correction_o_d=dico_df_transit['df_transit_marge0_ss_filtre'].correction_o_d.fillna(False)
+    dico_df_transit['df_transit_marge0_avec_filtre']=dico_df_transit['df_transit_marge0_ss_filtre'].loc[
+        dico_df_transit['df_transit_marge0_ss_filtre']['filtre_tps']==1].copy()
+    return dico_df_transit
 
 def cam_voisines(immat, date, camera, df) :
     """
@@ -275,7 +295,7 @@ def identifier_transit(df_transit_temps, marge,nom_attribut_temps_filtre='temps_
     """
     affecter un attribut drapeau d'identification du trafic de trabsit, selon une marge (marge variable selon o_d)
     en entree : 
-        df_transit_temps : df issue de jointure_temps_reel_theorique
+        df_transit_temps : df des transit
         marge : integer: marge possible entre le temps theorique ou lapi et le temsp de passage. comme les camions doivent faire une pause de 45min toute les 4h30...
     en sortie : 
         df_transit_temps : df avec la'ttribut filtre_tps identifiant le trafic de trabsit (1) ou non (0)
@@ -284,6 +304,12 @@ def identifier_transit(df_transit_temps, marge,nom_attribut_temps_filtre='temps_
         """pour ajouter un attribut drapeau sur le tempsde parcours, et ne conserver que les trajets de transit"""
         if o_d in ['A10-A63', 'A63-A10', 'N10-A63', 'A63-N10'] and marge>15 : 
             if tps_parcours <= temps_filtre+pd.Timedelta(str(marge-15)+'min') :
+                return 1
+            else: 
+                return 0
+        elif 'A63' not in o_d : 
+            marge=marge-30 if marge > 30 else 0
+            if tps_parcours <= temps_filtre+pd.Timedelta(str(marge)+'min') :
                 return 1
             else: 
                 return 0
