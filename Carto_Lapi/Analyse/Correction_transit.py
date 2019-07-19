@@ -150,10 +150,15 @@ def corriger_tps_parcours_extrapole(dixco_tpsmax_corrige,df_transit_extrapole):
     correction_temps['temps_x']=np.where(pd.notnull(correction_temps['temps_y']),correction_temps['temps_y'],correction_temps['temps_x'])
     correction_temps['type_x']=np.where(pd.notnull(correction_temps['type_y']),correction_temps['type_y'],correction_temps['type_x'])
     correction_temps=correction_temps.rename(columns={'temps_x':'temps','type_x':'type'}).drop(['temps_y','type_y'],axis=1)
+    oubli=liste_pour_modif.loc[~liste_pour_modif.set_index(['date', 'o_d']).index.isin(correction_temps.set_index(['date', 'o_d']).index.tolist())]
+    correction_temps=pd.concat([oubli,correction_temps], sort=False)
     jointure_temps=df_transit_extrapole.merge(correction_temps, on=['date','o_d'], how='left')
-    jointure_temps['temps_filtre']=np.where(jointure_temps['type_y']=='85eme_percentile',jointure_temps['temps_filtre'],jointure_temps['temps_y'] )
+    jointure_temps['temps_filtre']=jointure_temps.apply(lambda x : 
+                                                    x['temps_filtre'] if x['type_y'] in ['85eme_percentile', 'Cluster','moyenne Cluster'] else x['temps_y'],axis=1 )
     jointure_temps['type_x']=jointure_temps['type_y']
-    jointure_temps=jointure_temps.drop(['temps_y','type_y'],axis=1).rename(columns={'temps_x':'temps', 'type_x':'type'})
+    jointure_temps=jointure_temps.drop(['temps_y','type_y'],axis=1).rename(columns={'temps_x':'temps', 'type_x':'type','period_x':'period'})
+    jointure_temps['type']=jointure_temps.type.fillna('85eme_percentile')
+    jointure_temps.temps_filtre=jointure_temps.temps_filtre.fillna(jointure_temps.tps_parcours_theoriq)
     
     return jointure_temps, correction_temps
 

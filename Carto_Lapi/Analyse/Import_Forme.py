@@ -33,7 +33,13 @@ def mise_en_forme_dfs_trajets (fichier, type):
         df_liste_trajets['tps_parcours_theoriq']=df_liste_trajets.apply(lambda x : pd.Timedelta(x['tps_parcours_theoriq']),axis=1)
     df_liste_trajets.sort_values('nb_cams', ascending=False, inplace=True)
     return df_liste_trajets
-
+#correspondance camera_site
+dico_corrsp_camera_site={
+    'Rocade Est':[3,4], 'Rocade Ouest':[1,2], 'A10':[11,12], 'N10':[5,6], 'A89':[7,8], 'A62':[9,10], 'A660':[18,19], 'A63':[13,15], 
+'Total':[3,4,5,6,7,8,9,10,11,12,13,15,18,19],'Rocade Est sens exterieur':[4], 'Rocade Est sens interieur':[3], 'A10 vers Paris':[11], 'A10 vers Bordeaux':[12],
+   'N10 vers Paris':[5], 'N10 vers Bordeaux':[6], 'A89 vers Lyon':[11], 'A89 vers Bordeaux':[8], 'A62 vers Toulouse':[11], 'A62 vers Bordeaux':[10],
+    'A660 vers Arcachon':[18], 'A660 vers Bordeaux':[19], 'A63 vers Bayonne':[13], 'A63 vers Bordeaux':[15]
+}
 #attributs de liste des trajets
 liste_complete_trajet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\trajets_possibles.json','complet')
 liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\liste_trajet_incomplet.json','incomplet')
@@ -55,7 +61,10 @@ matrice_nb_jo_inf_31=pd.read_json(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL
 #donnees de comptage gestionnaire
 donnees_gest=pd.read_csv(r'C:\Users\martin.schoreisz\Desktop\LAPI_LOCAL\Traitements\python\Synthese_trafic_LAPI.csv')
 donnees_gest['created']=pd.to_datetime(donnees_gest.created)
-
+donnees_horaire=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trafics_horaire_mjo.csv')
+#dico de correspondance pour fonction resultats.passage_fictif_od
+dico_correspondance=[['origine','A63',15],['destination','A63', 13],['origine','A62',10],['destination','A62', 9],['origine','A89', 8],['destination','A89', 7],
+                    ['origine','N10', 6],['destination','N10', 5],['origine','A10', 12],['destination','A10', 11]]
     
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI

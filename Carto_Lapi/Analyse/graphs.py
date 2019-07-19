@@ -11,7 +11,7 @@ import matplotlib #pour éviter le message d'erreurrelatif a rcParams
 import pandas as pd
 import numpy as np
 import altair as alt
-import os,math, datetime as dt
+from Import_Forme import dico_corrsp_camera_site
 
 
 
@@ -112,46 +112,93 @@ def graph_transit_filtre_multiple(df_transit_avec_filtre, date_debut, date_fin, 
     
     return alt.VConcatChart(vconcat=(liste_graph))
 
-def graph_VL_PL_transit_j_cam(synt_nb_veh_cam, date, *cam) : 
+def graph_VL_PL_transit_j_cam(df_concat_pl_jo,df_pct_pl_transit, *cam) : 
     """
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
-        synt_nb_veh_cam : df agregeant les donnees de VL, PL, PL en transit et %PL transit. issu de Resultats.pourcentage_pl_camera
-        date : string : date de debut, forme YYYY-MM-DD, ou 'JO' pour jour ouvrés, ou 'Ma/Je' pour 
-        camera : integer : nume de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %PL
+        df_pct_pl_transit : df du pct de pl en transit, issus de resultat.pourcentage_pl_camera
+        df_concat_pl_jo : df du nb de pl par jo classe en transit ou tital, issu de resultat.pourcentage_pl_camera
+        cam : integer : numeros de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %PL
     en sortie : 
         graph : chart altair avec en x l'heure et en y le nb de veh
     """
-    #selection df pour graphique, on peurt demander 'Jours Ouvré' 
-    if date=='JO' : 
-        synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
-        groupe_jo=synt_nb_veh_cam.loc[synt_nb_veh_cam.set_index('created').index.dayofweek < 5].groupby(['camera_id','heure','type']).mean().reset_index()
-        groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
-        pour_graph=groupe_jo.loc[groupe_jo['camera_id'].isin(cam)]
-    elif date=='MJA' :
-        synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
-        groupe_jo=synt_nb_veh_cam.groupby(['camera_id','heure','type']).mean().reset_index()
-        groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
-        pour_graph=groupe_jo.loc[groupe_jo['camera_id'].isin(cam)]
-    elif date == 'Ma/Je' : 
-        synt_nb_veh_cam['heure']=synt_nb_veh_cam.created.dt.hour
-        groupe_jo=synt_nb_veh_cam.loc[synt_nb_veh_cam.set_index('created').index.dayofweek.isin([1,3])].groupby(['camera_id','heure','type']).mean().reset_index()
-        groupe_jo['created']=groupe_jo.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'),axis=1)
-        pour_graph=groupe_jo.loc[groupe_jo['camera_id'].isin(cam)]
-    else : 
-        pour_graph=synt_nb_veh_cam.loc[(synt_nb_veh_cam.apply(lambda x : x['created'].dayofyear==pd.to_datetime(date).dayofyear,axis=1))
-                                  &(synt_nb_veh_cam['camera_id'].isin(cam))]
+    #selection df pour graphique, on peurt demander 'Jours Ouvré'
+    if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
+        titre=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+    else :
+        if len(cam)>1 :
+            titre=f'Nombre de PL et % de PL en transit au droit des caméras {cam}'
+        else : 
+            titre=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
     if len(cam)>1 : 
-        pour_graph=pour_graph.groupby(['heure','type']).agg({'nb_veh':'sum','pct_pl_transit':'mean','created':'min'}).reset_index()
-    #graphique
-    base=alt.Chart(pour_graph).encode(x=alt.X('created', axis=alt.Axis(title='Heure', format='%Hh%M')))
-    bar = base.mark_bar(opacity=0.7, size=20).encode(
-        y=alt.Y('nb_veh:Q',stack=None, axis=alt.Axis(title='Nb de vehicules')),
+        df_concat_pl_jo_multi_cam=df_concat_pl_jo.loc[df_concat_pl_jo['camera_id'].isin(cam)].groupby(['heure','type']).agg({'nb_veh':'sum'}).reset_index()
+        df_concat_pl_jo_multi_cam['nb_veh']=df_concat_pl_jo_multi_cam['nb_veh']/len(cam)
+        df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].groupby(['heure']).agg({'nb_veh_x':'sum','nb_veh_y':'sum'}).reset_index()
+        df_pct_pl_transit_multi_cam['pct_pl_transit']=df_pct_pl_transit_multi_cam['nb_veh_y']/df_pct_pl_transit_multi_cam['nb_veh_x']*100
+    else : 
+        df_concat_pl_jo_multi_cam=df_concat_pl_jo.loc[df_concat_pl_jo['camera_id'].isin(cam)]
+        df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)]
+        
+    bar=alt.Chart(df_concat_pl_jo_multi_cam,title=titre).mark_bar(opacity=0.7, size=20).encode(
+        x='heure:O',
+        y=alt.Y('nb_veh:Q',stack=None, axis=alt.Axis(title='Nb de vehicules',grid=False)),
         color='type')
-    line=base.mark_line(color='green').encode(y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% de PL en transit')))
+    line=alt.Chart(df_pct_pl_transit_multi_cam).mark_line(color='green').encode(
+        x='heure:O',
+        y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% de PL en transit')))
+    (bar+line).resolve_scale(y='independent').properties(width=800)
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
-def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type='TV') : 
+def intervalle_confiance_cam(pour_graph_synth,lien_traf_gest_traf_lapi, *cam):  
+    if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
+        titre=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+    else :
+        if len(cam)>1 :
+            titre=f'Nombre de PL et % de PL en transit au droit des caméras {cam}'
+        else : 
+            titre=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
+    
+    line_trafic=alt.Chart(pour_graph_synth, title=titre).mark_line().encode(
+        x='heure',
+        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO')), 
+        color=alt.Color('type',title='source du nombre de PL'))
+    area_pct_max=alt.Chart(lien_traf_gest_traf_lapi).mark_area(opacity=0.7, color='gray').encode(
+        x='heure',
+        y=alt.Y('pct_pl_transit_max:Q',title='Pourcentage de PL en transit',scale=alt.Scale(domain=(0,100))), y2='pct_pl_transit_min:Q')
+    line_pct=alt.Chart(lien_traf_gest_traf_lapi).mark_line(color='gray').encode(
+        x='heure',
+        y='pct_pl_transit')
+    pct=(area_pct_max+line_pct)
+    return (line_trafic+pct).resolve_scale(y='independent').properties(width=800, height=400)
+
+
+def graph_PL_transit_dir_jo_cam(concat_dir_trafic, df_pct_pl_transit_multi_cam, *cam):
+    """
+    graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
+    en entree : 
+        concat_dir_trafic : df du nb pl total et en transit, issus de resultat.PL_transit_dir_jo_cam
+        df_pct_pl_transit_multi_cam : df du pct de pl en transit, issu de resultat.PL_transit_dir_jo_cam
+    en sortie : 
+        graph : chart altair avec le nb pl, nb pl transit, %PL transit
+    """
+    if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
+        titre=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+    else :
+        if len(cam)>1 :
+            titre=f'Nombre de PL et % de PL en transit au droit des caméras {cam}'
+        else : 
+            titre=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
+    line_nb_p_dir=alt.Chart(concat_dir_trafic, title=titre).mark_line().encode(
+        x='heure:O',
+        y=alt.Y('nb_pl:Q', axis=alt.Axis(title='Nombre de PL')),
+        color=alt.Color('type',legend=alt.Legend(title='Type de PL')))
+    line_pct_pl_lapi=alt.Chart(df_pct_pl_transit_multi_cam).mark_line(color='green').encode(
+        x='heure:O',
+        y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% PL en transit', grid=False)))
+    return (line_nb_p_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400)
+    
+
+def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type_v='TV') : 
     """
     pour creer des graph du nb de veh  par heue sur une journee à 1 camera
     en entree : 
@@ -165,7 +212,7 @@ def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type='TV') :
     """
     test2=df.loc[(df['created'].between(date_d,date_f)) & 
                  (df['camera_id']==camera)]
-    if type=='PL' : 
+    if type_v=='PL' : 
         test2=test2.loc[test2['l']==1]
     graph=alt.Chart(test2.set_index('created').resample('H').count().reset_index(),title=
                     pd.to_datetime(date_d).day_name(locale ='French')+' '+pd.to_datetime(date_d).strftime('%d-%m-%y')+' ; camera '+ str(camera)).mark_bar().encode(
@@ -173,7 +220,7 @@ def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type='TV') :
                     y=alt.Y('immat', axis=alt.Axis(title='Nombre de vehicule')) )
     return graph  
 
-def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour, type='TV'): 
+def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour, type_v='TV'): 
     """
     Regroupement de charts altair issues de graph_nb_veh_jour_camera sur plusieurs jours
     en entre :
@@ -183,7 +230,7 @@ def graph_nb_veh_jour_camera_multi_j(df,date_debut,date_fin,cam,nb_jour, type='T
         une chart altair concatenee verticalement avec un pour chaque jour
     """
     df_index_ok=df.reset_index()
-    dico_graph={indice:graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam, type) 
+    dico_graph={indice:graph_nb_veh_jour_camera(df_index_ok, dates[0], dates[1], cam, type_v) 
                for indice,dates in enumerate(zip([str(x) for x in pd.date_range(date_debut, periods=nb_jour, freq='D')],
                                 [str(x) for x in pd.date_range(date_fin, periods=nb_jour, freq='D')]))}
     liste_graph=[graph for graph in {'liste_graph'+str(i):alt.HConcatChart(hconcat=([dico_graph[key] for key in dico_graph.keys() if key in range(i-7,i)])) for i in [8,15,22]}.values()]

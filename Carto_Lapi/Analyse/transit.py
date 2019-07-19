@@ -58,13 +58,15 @@ def transit_marge0(df_transit_extrapole,df_transit_A63_redresse):
         df_transit_A63_redresse : df issue de Correction_transit.correction_temps_cestas
     """
     dico_df_transit={}
-    dico_df_transit['df_transit_airesA63']=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')#identifier le transit pour PL passé par Cestas
-    dico_df_transit['df_transit_airesA63']=forme_df_cestas(dico_df_transit['df_transit_airesA63'])
-    dico_df_transit['df_transit_pas_airesA63']=df_transit_extrapole.loc[~df_transit_extrapole.set_index(['date_cam_1','immat']).index.isin(
+    dico_df_transit['df_transit_airesA63_ss_filtre']=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')#identifier le transit pour PL passé par Cestas
+    dico_df_transit['df_transit_airesA63_ss_filtre']=forme_df_cestas(dico_df_transit['df_transit_airesA63_ss_filtre'])
+    dico_df_transit['df_transit_airesA63_avec_filtre']= dico_df_transit['df_transit_airesA63_ss_filtre'].loc[
+         dico_df_transit['df_transit_airesA63_ss_filtre']['filtre_tps']==1].copy()
+    dico_df_transit['df_transit_pas_airesA63_ss_filtre']=df_transit_extrapole.loc[~df_transit_extrapole.set_index(['date_cam_1','immat']).index.isin(
                 df_transit_A63_redresse.set_index(['date_cam_1','immat']).index.tolist())]
     
-    dico_df_transit['df_transit_marge0_ss_filtre']=pd.concat([dico_df_transit['df_transit_airesA63'],
-                  dico_df_transit['df_transit_pas_airesA63']],sort=False)
+    dico_df_transit['df_transit_marge0_ss_filtre']=pd.concat([dico_df_transit['df_transit_airesA63_ss_filtre'],
+                  dico_df_transit['df_transit_pas_airesA63_ss_filtre']],sort=False)
     dico_df_transit['df_transit_marge0_ss_filtre'].correction_o_d=dico_df_transit['df_transit_marge0_ss_filtre'].correction_o_d.fillna(False)
     dico_df_transit['df_transit_marge0_avec_filtre']=dico_df_transit['df_transit_marge0_ss_filtre'].loc[
         dico_df_transit['df_transit_marge0_ss_filtre']['filtre_tps']==1].copy()
@@ -153,9 +155,9 @@ def param_trajet_incomplet(df_od_corrige,df_3semaines,dico_passag):
     df_non_transit=df_3semaines.loc[(~df_3semaines.reset_index().set_index(['created','camera_id','immat']).index.isin(
                                 dico_passag.set_index(['created','camera_id','immat']).index.tolist()))]
     
-    #grouper les passage transit, associer le nombre de fois où ils ont passés puis ne conserver que ceux qui sont passé au moins 2 fois
+    #grouper les passage transit, associer le nombre de fois où ils ont passés puis ne conserver que ceux qui sont passé au moins 1 fois
     df_transit_nb_passage=df_od_corrige.groupby(['immat','o_d'])['l'].count().reset_index().rename(columns={'l':'Nb_occ'})
-    df_immat_transit_nb_passage_sup2=df_transit_nb_passage.loc[df_transit_nb_passage['Nb_occ']>=2]
+    df_immat_transit_nb_passage_sup2=df_transit_nb_passage.loc[df_transit_nb_passage['Nb_occ']>=1]
     
     #df des passages qui n'ont pas été identiiés comme transit, mais qui ont une immat qui a déjà fait du transit
     df_passage_transit=df_non_transit.loc[(df_non_transit.immat.isin(dico_passag.immat.unique()))]
@@ -283,9 +285,9 @@ def jointure_temps_reel_theorique(df_transit, df_tps_parcours, df_theorique,type
     else : #dans ce cas la jointure avec les temps theorique ne se sur les cameras et l'od, car doublons de cameras pour certains trajet (possibilité d'aller vers A89 ou N10 apres Rocade)
         df_transit_tps_parcours=df_transit.merge(df_tps_parcours, on=['o_d','period'],how='left').merge(df_theorique[['cameras','tps_parcours_theoriq','o_d']], 
                                                                                                     on=['cameras','o_d'])
-        df_transit_tps_parcours['type']=df_transit_tps_parcours.type.fillna('85eme_percentile')
-        df_transit_tps_parcours['temps']=df_transit_tps_parcours.temps.fillna(df_transit_tps_parcours['tps_parcours_theoriq'])
-        df_transit_tps_parcours['date']=df_transit_tps_parcours.apply(lambda x : x['period'].to_timestamp(), axis=1)
+    df_transit_tps_parcours['type']=df_transit_tps_parcours.type.fillna('85eme_percentile')
+    df_transit_tps_parcours['temps']=df_transit_tps_parcours.temps.fillna(df_transit_tps_parcours['tps_parcours_theoriq'])
+    df_transit_tps_parcours['date']=df_transit_tps_parcours.apply(lambda x : x['period'].to_timestamp(), axis=1)
     df_transit_tps_parcours['temps_filtre']=df_transit_tps_parcours.apply(lambda x : temps_pour_filtre(x['date_cam_1'],
                                                                     x['tps_parcours'], x['type'], x['temps'], x['tps_parcours_theoriq']), axis=1)
     
@@ -308,7 +310,7 @@ def identifier_transit(df_transit_temps, marge,nom_attribut_temps_filtre='temps_
             else: 
                 return 0
         elif 'A63' not in o_d : 
-            marge=marge-30 if marge > 30 else 0
+            marge=15
             if tps_parcours <= temps_filtre+pd.Timedelta(str(marge)+'min') :
                 return 1
             else: 

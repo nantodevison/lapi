@@ -37,57 +37,52 @@ def definir_transit():
     df_transit_A63_redresse=correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsmax_corrige)
     return df_transit_A63_redresse, df_transit_extrapole, df_passages_immat_ok, dixco_tpsmax_corrige
 
-def appliquer_marge(liste_marges,df_transit_A63_redresse, df_transit_extrapole):
+def appliquer_marge(liste_marges,df_transit_airesA63, df_transit_pas_airesA63):
     """
     retourner un dico des trajets de transit en prenant en compte une marge.
     chaque entree du dico correspond à une valeur de marge
     en entree : 
         liste_marges : list ed'entier >0 correspondant aux marge en minute
-        df_transit_extrapole : df des trajets de susceptible d'etre en transit, apres extrapoation par machine learning
-        df_transit_A63_redresse : df des trajets suscetible d'etre en transit apres prise en compte aires A63
+        df_transit_pas_airesA63 : df des trajets non concernes par les aires A63
+        df_transit_airesA63 : df concernes par aires A63 (pas de marge sur ceux là)
     en sortie :
         dico_df_transit : df de tout les trajets suceotible d'etre en etransit (filtre_tps = 1 ou 0)
         dico_df_od_ok : df des trajets en transit (filtre_tps = 1)
     """
     #appliquer la martge sur les donnees issu de l'extrapolation et sur celle issues de la prise ene compte des aires
-    dico_df_transit={}
+    dico_transit_avec_marge={}
     for i in liste_marges :
-        dico_df_transit['df_transit_extrapole_marge'+str(i)]=identifier_transit(df_transit_extrapole, i)#identifier le transit pour tous les PL
-        dico_df_transit['df_transit_airesA63_marge'+str(i)]=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')#identifier le transit pour PL passé par Cestas
-        dico_df_transit['df_transit_airesA63_marge'+str(i)]=forme_df_cestas(dico_df_transit['df_transit_airesA63_marge'+str(i)])
-        dico_df_transit['df_transit_marge'+str(i)]=pd.concat([dico_df_transit['df_transit_airesA63_marge'+str(i)],
-              dico_df_transit['df_transit_extrapole_marge'+str(i)]],sort=False)#attention cela crée des doublons car ceux present dans A63_redresse sont aussi dans extrapole
-        dico_df_transit['df_transit_marge'+str(i)].correction_o_d=(dico_df_transit['df_transit_marge'+str(i)].
-                                                               correction_o_d.fillna(False).copy()) 
-        dico_df_transit['df_transit_marge'+str(i)]=dico_df_transit['df_transit_marge'+str(i)].sort_values(['date_cam_1', 'immat','filtre_tps']).copy() #tri
-        dico_df_transit['df_transit_marge'+str(i)].drop_duplicates(['date_cam_1','immat'],keep='last', inplace=True)#puis suppression des doublons
-    dico_df_od_ok={'df_od_ok_marge'+str(i):dico_df_transit['df_transit_marge'+str(i)].loc[dico_df_transit['df_transit_marge'+str(i)]['filtre_tps']==1].copy()
-         for i in liste_marges}# on ne conserve que les PL en transit
-    return dico_df_transit, dico_df_od_ok
+        dico_transit_avec_marge['df_transit_pas_airesA63_marge'+str(i)]=(identifier_transit(df_transit_pas_airesA63, i))
+        dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre']=pd.concat([df_transit_airesA63,
+                                            dico_transit_avec_marge['df_transit_pas_airesA63_marge'+str(i)]],sort=False)
+        dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre'].correction_o_d=dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre'].correction_o_d.fillna(False)
+        dico_transit_avec_marge['df_transit_marge'+str(i)+'_avec_filtre']=(dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre'].loc[
+            dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre']['filtre_tps']==1])
+    return dico_transit_avec_marge
 
-def correction_A660(dico_df_od_ok,df_passages_immat_ok,liste_marges):
+def correction_A660(dico_transit_avec_marge,df_passages_immat_ok,liste_marges):
     """
     appliquer la corrction A660 pour un ensemble de marge
     en entree : 
-        dico_df_od_ok : df des trajets en transit (filtre_tps = 1) cf appliquer_marge
+        dico_transit_avec_marge : df des trajets en transit (filtre_tps = 1) cf appliquer_marge
         df_passages_immat_ok :df des passages, cf definir_transit
         liste_marges : list ed'entier >0 correspondant aux marge en minute
     en sortie : 
         dico_corr_A63_A660 : df des trajets de transit, avec certaines o_d odifiees
     """
-    dico_corr_A63_A660={'corr_A63_A660'+str(i):correction_trajet(df_passages_immat_ok, dico_df_od_ok ['df_od_ok_marge'+str(i)])
+    dico_corr_A63_A660={'corr_A63_A660'+str(i):correction_trajet(df_passages_immat_ok, dico_transit_avec_marge ['df_transit_marge'+str(i)+'_avec_filtre'])
                     for i  in liste_marges}
     return dico_corr_A63_A660
 
-def extrapol_trajets_incomplets(dico_df_od_ok,df_passages_immat_ok,dico_corr_A63_A660,liste_marges, dixco_tpsmax_corrige):
+def extrapol_trajets_incomplets(dico_transit_avec_marge,df_passages_immat_ok,dico_corr_A63_A660,liste_marges, dixco_tpsmax_corrige):
     """
     extrapolation des trajets de trasit pour des véhicules deja vues sur des trajets complets, pour un ensemble de marge
     """
     dico_df_od_final={}
     # dico des df des passages avant correction A660
     dico_passag_avantcorr={'passag_avantcorr'+str(i):
-                   trajet2passage(dico_df_od_ok ['df_od_ok_marge'+str(i)],df_passages_immat_ok) 
-                   for i in liste_marges}
+               trajet2passage(dico_transit_avec_marge ['df_transit_marge'+str(i)+'_avec_filtre'],df_passages_immat_ok) 
+               for i in liste_marges}
     #extrapolation trajets icomplets
     for i  in liste_marges:
         df_filtre_A63,df_passage_transit,df_non_transit=(param_trajet_incomplet(dico_corr_A63_A660['corr_A63_A660'+str(i)],df_passages_immat_ok,
