@@ -25,6 +25,7 @@ def pourcentage_pl_camera(df_pl,dico_passag):
                 return round(a*100/b)
             except ZeroDivisionError : 
                 return 0
+    
         
     df_synthese_pl_tot=df_pl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
     df_synthese_pl_transit=dico_passag.set_index('created').groupby('camera_id').resample('H').count()['immat'].reset_index().rename(
@@ -40,12 +41,109 @@ def pourcentage_pl_camera(df_pl,dico_passag):
     df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_veh_y'],x['nb_veh_x']) ,axis=1)
     return df_concat_pl_jo,df_pct_pl_transit
 
-def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,*cam):
+def ajout_cam_n10(df_concat_pl,df_pct_pl_transit ) : 
+    """
+    ajouter les camera 20 et 21 pour représenter les variations horaires sur N10 seules
+    """
+    jointure_cross=df_pct_pl_transit.merge(df_pct_pl_transit, on='heure')
+    jointure_cross_5_11=jointure_cross.loc[(jointure_cross['camera_id_x']==5)&(jointure_cross['camera_id_y']==11)]
+    cam20=pd.DataFrame({'camera_id':[20]*24,'type_x':['PL total']*24,'heure':[a for a in range(24)], 
+                  'nb_veh_x':(jointure_cross_5_11.nb_veh_x_x-jointure_cross_5_11.nb_veh_x_y).tolist(),
+                    'type_y':['PL transit']*24,
+                  'nb_veh_y':(jointure_cross_5_11.nb_veh_y_x-jointure_cross_5_11.nb_veh_y_y).tolist()})
+    cam20['pct_pl_transit']=cam20.nb_veh_y/cam20.nb_veh_x*100
+    jointure_cross_6_12=jointure_cross.loc[(jointure_cross['camera_id_x']==6)&(jointure_cross['camera_id_y']==12)]
+    cam21=pd.DataFrame({'camera_id':[21]*24,'type_x':['PL total']*24,'heure':[a for a in range(24)], 
+                  'nb_veh_x':(jointure_cross_6_12.nb_veh_x_x-jointure_cross_6_12.nb_veh_x_y).tolist(),
+                    'type_y':['PL transit']*24,
+                  'nb_veh_y':(jointure_cross_6_12.nb_veh_y_x-jointure_cross_6_12.nb_veh_y_y).tolist()})
+    cam21['pct_pl_transit']=cam21.nb_veh_y/cam21.nb_veh_x*100
+    df_pct_pl_transit_f=pd.concat([df_pct_pl_transit,cam20,cam21], axis=0, sort=False)
+    df_concat_pl_f=pd.concat([df_concat_pl,
+                    pd.concat([pd.concat([cam20[['camera_id','type_x', 'heure','nb_veh_x']].rename(columns={'type_x':'type','nb_veh_x':'nb_veh'}),
+                    cam20[['camera_id','type_y', 'heure','nb_veh_y']].rename(columns={'type_y':'type','nb_veh_y':'nb_veh'})],axis=0, sort=False),
+                    pd.concat([cam21[['camera_id','type_x', 'heure','nb_veh_x']].rename(columns={'type_x':'type','nb_veh_x':'nb_veh'}),
+                    cam21[['camera_id','type_y', 'heure','nb_veh_y']].rename(columns={'type_y':'type','nb_veh_y':'nb_veh'})],axis=0, sort=False)], axis=0, 
+                              sort=False)],axis=0, sort=False)
+    return df_concat_pl_f, df_pct_pl_transit_f
+
+
+def repartition_rocade_od(df_od_final):
+    """
+    repartition du pourcentage de PL par Rocade Est ou Ouest selon l'OD
+    en entree : 
+        df_od_final : df des trajets de transit
+    en sortie : 
+        repartition_pl_rocade_mjo : df des pourcentage par o_d
+    """
+    #Composer les données
+    #répartitionRocade Est / Rocade Ouest
+    #trouver les passages concernés
+    passages_rocades=df_transit_propre_jo(df_od_final).loc[
+        df_transit_propre_jo(df_od_final).apply(lambda x : any([a in x['cameras'] for a in [1,2,3,4]]),axis=1)]
+    #affectation du site de Rocade
+    passages_rocades['rocade_site']=passages_rocades.apply(lambda x : 'Ouest' if any([a in x['cameras'] for a in [1,2]]) else 'Est',axis=1 )
+    #regroupement, moyenne par jour ouvre et jointure avec pct_pl
+    passg_rocade_grp_tot_jo=(passages_rocades.groupby('o_d')['immat'].count()/10).reset_index().rename(columns={'immat':'nb_pl_tot'})
+    repartition_pl_rocade_mjo=(passages_rocades.groupby(['o_d','rocade_site'])['immat'].count()/10).reset_index().rename(columns={'immat':'nb_pl_rocade'}).merge(
+    passg_rocade_grp_tot_jo)
+    repartition_pl_rocade_mjo['pct_pl']=round(repartition_pl_rocade_mjo.nb_pl_rocade*100/repartition_pl_rocade_mjo.nb_pl_tot)
+    return repartition_pl_rocade_mjo
+
+def donnees_sankey(df_apres31):
+    """
+    donnees pour les graphs de Sankey
+    en entree : 
+        df_apres31 : df des trajets de transit apres le 31/01
+    en sortie : 
+        sankey_rocade_f_s_n : df pour sankey, uniquement les trajets concernes par la separation en Rocade, sens S->N
+        sankey_rocade_f_n_s : df pour sankey, uniquement les trajets concernes par la separation en Rocade, sens n->S
+        sankey_direct_tot : df pour sankey, uniquement les trajets non concernes par Rocade
+        df_sankey : df pour sankey, sans prise en compte Rocade
+    """
+    #sankey avec plotly, nécessite de rédémarrer jupyter notebook
+    mat_jo_apre_31=matrice_transit(df_transit_propre_jo(df_apres31),type_j='jo_sup_31')
+    df_sankey=mat_jo_apre_31.unstack().reset_index().sort_values(['origine','destination']).dropna().reset_index().drop('index',axis=1)
+    df_sankey.columns=['destination', 'origine', 'nb_pl']
+    df_sankey['o_d']=df_sankey.origine+'-'+df_sankey.destination
+    
+    repartition_pl_rocade_mjo=repartition_rocade_od(df_apres31)
+    
+    #on rappatrie sur la base du graph de sankey
+    sankey_rocade=df_sankey.merge(repartition_pl_rocade_mjo[['o_d','pct_pl','rocade_site']],on='o_d').sort_values('o_d')
+    #on isole les trajets qui ne se séparent pas à la rocade des autres
+    sankey_direct=df_sankey.loc[~df_sankey.o_d.isin(sankey_rocade.o_d.tolist())]
+    sankey_direct_tot=pd.concat([sankey_direct,sankey_rocade.loc[sankey_rocade['pct_pl']==100][['destination', 'origine', 'nb_pl','o_d']]],sort=False)
+    sankey_rocade=sankey_rocade.loc[sankey_rocade['pct_pl']!=100].copy()
+    
+    #traitement de a partie entre origine et rocade
+    sankey_rocade_org=sankey_rocade.copy()
+    sankey_rocade_org['nb_pl']=sankey_rocade_org.apply(lambda x : x['nb_pl']*x['pct_pl']*0.01 if x['pct_pl']!=100 else x['nb_pl'],axis=1)
+    sankey_rocade_org['destination']='Rocade '+sankey_rocade_org.rocade_site
+    #traitement de la partie entre Rocade et destination
+    sankey_rocade_dest=sankey_rocade_org.copy()
+    sankey_rocade_dest['origine']=sankey_rocade_dest.destination
+    sankey_rocade_dest['destination']=sankey_rocade_dest.apply(lambda x : x['o_d'].split('-')[1],axis=1)
+    
+    #fusion des résultats
+    sankey_rocade_f=pd.concat([sankey_rocade_org,sankey_rocade_dest], axis=0, sort=False)[['destination', 'origine', 'nb_pl','o_d']]
+    sankey_rocade_f=sankey_rocade_f.loc[sankey_rocade_f.apply(lambda x : 'A660' not in x['o_d'],axis=1)]
+    
+    
+    #resultats (direct ou par sens si Rocade)
+    sankey_rocade_f_s_n=sankey_rocade_f.loc[(~sankey_rocade_f['origine'].isin(['A10','N10']))&(sankey_rocade_f['destination']!='A63')].copy()
+    sankey_rocade_f_n_s=sankey_rocade_f.loc[(~sankey_rocade_f['origine'].isin(['A63']))&(~sankey_rocade_f['destination'].isin(['A10','N10']))].copy()
+    sankey_direct_tot=sankey_direct_tot.loc[sankey_direct_tot.apply(lambda x : 'A660' not in x['o_d'],axis=1)]
+    df_sankey=df_sankey.loc[df_sankey.apply(lambda x : 'A660' not in x['o_d'],axis=1)]  
+    return sankey_rocade_f_s_n, sankey_rocade_f_n_s, sankey_direct_tot, df_sankey
+
+def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam):
     """
     df pour créer le graph des intervalles de confiance
     """
     if len(cam)>1 :
-        traf_dira_rocade_cam=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].groupby('heure')['nb_pl'].sum().reset_index()
+        traf_dira_rocade_cam=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].groupby('heure').agg(
+            {'nb_pl':'sum','nb_pl_total':'sum','nb_tv':'sum'}).reset_index()
         df_pct_pl_transit_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].groupby(['heure']).agg({'nb_veh_x':'sum','nb_veh_y':'sum'}).reset_index()
         df_pct_pl_transit_cam['pct_pl_transit']=df_pct_pl_transit_cam['nb_veh_y']/df_pct_pl_transit_cam['nb_veh_x']*100
         df_concat_pl_jo_cam=df_concat_pl_jo.loc[df_concat_pl_jo['camera_id'].isin(cam)&(df_concat_pl_jo['type']=='PL total')].groupby('heure')['nb_veh'].sum().reset_index()
@@ -60,50 +158,57 @@ def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,*cam):
     lien_traf_gest_traf_lapi=lien_traf_gest_traf_lapi.merge(df_pct_pl_transit_cam[['heure','pct_pl_transit']], on='heure')
     
     #création des attributs
-    lien_traf_gest_traf_lapi.rename(columns={'nb_pl':'nb_veh_siredo','nb_veh':'nb_veh_lapi'},inplace=True)
-    lien_traf_gest_traf_lapi['nb_veh_transit_lapi']=lien_traf_gest_traf_lapi['nb_veh_lapi']*lien_traf_gest_traf_lapi['pct_pl_transit']*0.01
-    lien_traf_gest_traf_lapi['pct_detec_lapi']=lien_traf_gest_traf_lapi['nb_veh_lapi']/lien_traf_gest_traf_lapi['nb_veh_siredo']
-    lien_traf_gest_traf_lapi['nb_veh_lapi_recale']=lien_traf_gest_traf_lapi['nb_veh_siredo']*(1-lien_traf_gest_traf_lapi['pct_detec_lapi'])
-    lien_traf_gest_traf_lapi['pct_pl_transit_max']=((lien_traf_gest_traf_lapi['nb_veh_transit_lapi']+lien_traf_gest_traf_lapi['nb_veh_lapi_recale']) / 
-                                                    (lien_traf_gest_traf_lapi['nb_veh_lapi']+lien_traf_gest_traf_lapi['nb_veh_lapi_recale']))*100
-    lien_traf_gest_traf_lapi['pct_pl_transit_min']=(lien_traf_gest_traf_lapi['nb_veh_transit_lapi']/ 
-                                                    (lien_traf_gest_traf_lapi['nb_veh_lapi']+lien_traf_gest_traf_lapi['nb_veh_lapi_recale']))*100
-    
+    lien_traf_gest_traf_lapi.rename(columns={'nb_pl':'nb_pl_siredo','nb_veh':'nb_pl_lapi','nb_pl_total':'nb_pl_siredo_total','nb_tv':'nb_tv_siredo'},inplace=True)
+    lien_traf_gest_traf_lapi['nb_pl_transit_lapi']=lien_traf_gest_traf_lapi['nb_pl_lapi']*lien_traf_gest_traf_lapi['pct_pl_transit']*0.01
+    lien_traf_gest_traf_lapi['pct_detec_lapi']=lien_traf_gest_traf_lapi['nb_pl_lapi']/lien_traf_gest_traf_lapi['nb_pl_siredo']
+    lien_traf_gest_traf_lapi['nb_pl_lapi_recale']=lien_traf_gest_traf_lapi['nb_pl_siredo']*(1-lien_traf_gest_traf_lapi['pct_detec_lapi'])
+    lien_traf_gest_traf_lapi['pct_pl_transit_max']=((lien_traf_gest_traf_lapi['nb_pl_transit_lapi']+lien_traf_gest_traf_lapi['nb_pl_lapi_recale']) / 
+                                                    (lien_traf_gest_traf_lapi['nb_pl_lapi']+lien_traf_gest_traf_lapi['nb_pl_lapi_recale']))*100
+    lien_traf_gest_traf_lapi['pct_pl_transit_min']=(lien_traf_gest_traf_lapi['nb_pl_transit_lapi']/ 
+                                                    (lien_traf_gest_traf_lapi['nb_pl_lapi']+lien_traf_gest_traf_lapi['nb_pl_lapi_recale']))*100
+                                                    
     #graphique
     pour_graph_synth_pl_lapi=df_concat_pl_jo_cam[['heure','nb_veh','type']].copy()
     pour_graph_synth_pl_lapi=pour_graph_synth_pl_lapi.loc[pour_graph_synth_pl_lapi['type']=='PL total'].copy()
     pour_graph_synth_pl_lapi['type']='LAPI'
-    pour_graph_synth_pl_siredo=traf_dira_rocade_cam[['heure', 'nb_pl']].rename(columns={'nb_pl':'nb_veh'}).copy()
-    pour_graph_synth_pl_siredo['type']='SIREDO'
-    pour_graph_synth=pd.concat([pour_graph_synth_pl_lapi,pour_graph_synth_pl_siredo],sort=False)
+    pour_graph_synth_pl_siredo_recale=traf_dira_rocade_cam[['heure', 'nb_pl']].rename(columns={'nb_pl':'nb_veh'}).copy()
+    pour_graph_synth_pl_siredo_recale['type']='SIREDO recale'
+    pour_graph_synth_pl_siredo_brut=traf_dira_rocade_cam[['heure', 'nb_pl_total']].rename(columns={'nb_pl_total':'nb_veh'}).copy()
+    pour_graph_synth_pl_siredo_brut['type']='SIREDO brut'
+    pour_graph_synth=pd.concat([pour_graph_synth_pl_lapi,pour_graph_synth_pl_siredo_recale,pour_graph_synth_pl_siredo_brut],sort=False)
     return  pour_graph_synth, lien_traf_gest_traf_lapi                      
                                
     
-    
-def PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
+def PL_transit_dir_jo_cam(df_pct_pl_transit, cam):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du pct de pl en transit, issus de resultat.pourcentage_pl_camera
-        cam : integer : numeros de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %P
+        cam : list integer : numeros de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %P
     en sortie : 
         concat_dir_trafic : df avec heure, nb_pl et type_pl, par jour ouvre sur le(s) cameras desirees
     """
     if len(cam)>1 :
-        #si le nombre de camera est sup à 1, il faut recalculer le %pl_transit pour l'ensemble des deux cameras, avant de l'appliquer à la somme des deux de la dir
-        df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].groupby(['heure']).agg({'nb_veh_x':'sum','nb_veh_y':'sum'}).reset_index()
+    #si le nombre de camera est sup à 1, il faut recalculer le %pl_transit pour l'ensemble des deux cameras, avant de l'appliquer à la somme des deux de la dir
+        df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].groupby(['heure']).agg(
+            {'nb_veh_x':'sum','nb_veh_y':'sum'}).reset_index()
         df_pct_pl_transit_multi_cam['pct_pl_transit']=df_pct_pl_transit_multi_cam['nb_veh_y']/df_pct_pl_transit_multi_cam['nb_veh_x']*100
-        traf_dira_rocade_grp=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].groupby('heure')['nb_pl'].sum().reset_index()
+        traf_dira_rocade_grp=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].groupby('heure').agg(
+                {'nb_pl':'sum','nb_pl_total':'sum','nb_tv':'sum'}).reset_index()
         dira_pct_pl_lapi=traf_dira_rocade_grp.merge(df_pct_pl_transit_multi_cam, on=['heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01                             
     else :
         df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)] 
-        dira_pct_pl_lapi=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].merge(df_pct_pl_transit,left_on=['camera','heure'], right_on=['camera_id','heure'])
+        dira_pct_pl_lapi=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].merge(
+            df_pct_pl_transit,left_on=['camera','heure'], right_on=['camera_id','heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01
-    diratotal,diratransit=dira_pct_pl_lapi[['heure','nb_pl']].copy(),dira_pct_pl_lapi[['heure','nb_pl_transit']].rename(columns={'nb_pl_transit':'nb_pl'}).copy()
+    diratotal,diratransit, dira_tv=(dira_pct_pl_lapi[['heure','nb_pl']].copy(),
+                                    dira_pct_pl_lapi[['heure','nb_pl_transit']].rename(columns={'nb_pl_transit':'nb_pl'}).copy(),
+                                    dira_pct_pl_lapi[['heure','nb_tv']].copy().rename(columns={'nb_tv':'nb_pl'}))
     diratotal['type']='Tous PL'
     diratransit['type']='PL en transit'
-    concat_dir_trafic=pd.concat([diratotal,diratransit], axis=0, sort=False)
+    dira_tv['type']='Tous Vehicules'
+    concat_dir_trafic=pd.concat([diratotal,diratransit,dira_tv], axis=0, sort=False)
     return concat_dir_trafic, df_pct_pl_transit_multi_cam
 
 def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):

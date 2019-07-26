@@ -9,9 +9,10 @@ Module pour graphiques des donnees lapi
 
 import matplotlib #pour éviter le message d'erreurrelatif a rcParams
 import pandas as pd
-import numpy as np
 import altair as alt
+import plotly.graph_objects as go
 from Import_Forme import dico_corrsp_camera_site
+from Resultats import indice_confiance_cam, PL_transit_dir_jo_cam
 
 
 
@@ -89,8 +90,8 @@ def graph_transit_filtre(df_transit, date_debut, date_fin, o_d):
     except ValueError : 
         pass
     graph_filtre_tps = alt.Chart(copie_df, title=titre).mark_point().encode(
-                                x=alt.X('date_cam_1',axis=alt.Axis(title='Horaire', format='%Hh%M')),
-                                y=alt.Y('tps_parcours',axis=alt.Axis(title='Temps de parcours', format='%H:%M')),
+                                x=alt.X('date_cam_1:T',axis=alt.Axis(title='Horaire', format='%Hh%M')),
+                                y=alt.Y('tps_parcours:T',axis=alt.Axis(title='Temps de parcours', format='%H:%M')),
                                 tooltip='hoursminutes(tps_parcours)',
                                 color=alt.Color('filtre_tps:N', legend=alt.Legend(title="Type de trajet")),
                                 shape=alt.Shape('type:N',legend=alt.Legend(title="Source temps de reference"))).interactive().properties(width=800,height=400)
@@ -149,38 +150,67 @@ def graph_VL_PL_transit_j_cam(df_concat_pl_jo,df_pct_pl_transit, *cam) :
     (bar+line).resolve_scale(y='independent').properties(width=800)
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
-def intervalle_confiance_cam(pour_graph_synth,lien_traf_gest_traf_lapi, *cam):  
+
+def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo, *cam): 
+    pour_graph_synth,lien_traf_gest_traf_lapi=indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam)
+    #print(pour_graph_synth,lien_traf_gest_traf_lapi)
+    print(dico_corrsp_camera_site.items(),[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)])
     if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
-        titre=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+        titre_interv=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+        titre_nb_pl=f'Nombre de PL selon la source sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
     else :
         if len(cam)>1 :
-            titre=f'Nombre de PL et % de PL en transit au droit des caméras {cam}'
+            titre_interv=f'Nombre de PL et % de PL en transit au droit des caméras {cam}'
+            titre_nb_pl=f'Nombre de PL selon la source au droit des caméras {cam}'
         else : 
-            titre=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
-    
-    line_trafic=alt.Chart(pour_graph_synth, title=titre).mark_line().encode(
-        x='heure',
-        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO')), 
-        color=alt.Color('type',title='source du nombre de PL'))
+            titre_interv=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
+            titre_nb_pl=f'Nombre de PL selon la source au droit de la caméra {cam[0]}'
+              
+    #graph d'intervalle de confiance
+    df_intervalle=pour_graph_synth.loc[pour_graph_synth['type'].isin(['LAPI', 'SIREDO recale'])]
+    #pour legende
+    lien_traf_gest_traf_lapi['legend_pct_transit']='Pourcentage PL transit'
+    lien_traf_gest_traf_lapi['legend_i_conf']='Intervalle de confiance'
+    line_trafic=alt.Chart(df_intervalle, title=titre_interv).mark_line().encode(
+        x=alt.X('heure',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
+        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
+        color=alt.Color('type',legend=alt.Legend(title='source du nombre de PL',titleFontSize=14,labelFontSize=14)))
     area_pct_max=alt.Chart(lien_traf_gest_traf_lapi).mark_area(opacity=0.7, color='gray').encode(
         x='heure',
-        y=alt.Y('pct_pl_transit_max:Q',title='Pourcentage de PL en transit',scale=alt.Scale(domain=(0,100))), y2='pct_pl_transit_min:Q')
+        y=alt.Y('pct_pl_transit_max:Q',
+                axis=alt.Axis(title='Pourcentage de PL en transit',titleFontSize=14,labelFontSize=14),
+                scale=alt.Scale(domain=(0,100))), 
+        y2='pct_pl_transit_min:Q',
+        opacity=alt.Opacity('legend_i_conf'))
     line_pct=alt.Chart(lien_traf_gest_traf_lapi).mark_line(color='gray').encode(
         x='heure',
-        y='pct_pl_transit')
+        y='pct_pl_transit',
+        opacity=alt.Opacity('legend_pct_transit', legend=alt.Legend(title='Analyse du transit',titleFontSize=14,labelFontSize=14)))
     pct=(area_pct_max+line_pct)
-    return (line_trafic+pct).resolve_scale(y='independent').properties(width=800, height=400)
+    graph_interval=(line_trafic+pct).resolve_scale(y='independent').properties(width=800, height=400).properties(width=800, height=400).configure_title(fontSize=18)
+    
+    #graph comparaison nb_pl
+    graph_nb_pl=alt.Chart(pour_graph_synth, title=titre_nb_pl).mark_line(opacity=0.7).encode(
+        x=alt.X('heure',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
+        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
+        color=alt.Color('type',title='source du nombre de PL', legend=alt.Legend(titleFontSize=14,labelFontSize=14))).properties(
+            width=800, height=400).configure_title(fontSize=18)
+        
+    return graph_interval,graph_nb_pl
 
 
-def graph_PL_transit_dir_jo_cam(concat_dir_trafic, df_pct_pl_transit_multi_cam, *cam):
+def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
-        concat_dir_trafic : df du nb pl total et en transit, issus de resultat.PL_transit_dir_jo_cam
-        df_pct_pl_transit_multi_cam : df du pct de pl en transit, issu de resultat.PL_transit_dir_jo_cam
+        df_pct_pl_transit : df du pct de pl en transit, issu de resultat.pourcentage_pl_camera
     en sortie : 
         graph : chart altair avec le nb pl, nb pl transit, %PL transit
     """
+    #import donnees
+    concat_dir_trafic, df_pct_pl_transit_multi_cam=PL_transit_dir_jo_cam(df_pct_pl_transit,cam)
+    
+    #creation du titre
     if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
         titre=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
     else :
@@ -188,14 +218,45 @@ def graph_PL_transit_dir_jo_cam(concat_dir_trafic, df_pct_pl_transit_multi_cam, 
             titre=f'Nombre de PL et % de PL en transit au droit des caméras {cam}'
         else : 
             titre=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
-    line_nb_p_dir=alt.Chart(concat_dir_trafic, title=titre).mark_line().encode(
-        x='heure:O',
-        y=alt.Y('nb_pl:Q', axis=alt.Axis(title='Nombre de PL')),
-        color=alt.Color('type',legend=alt.Legend(title='Type de PL')))
+    #ajout d'un attribut pour legende
+    df_pct_pl_transit_multi_cam['legend']='Pourcentage PL en transit'
+    concat_dir_trafic=concat_dir_trafic.loc[concat_dir_trafic['type'].isin(['Tous PL','PL en transit'])]
+    
+    bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar(opacity=0.7).encode(
+        x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
+        y=alt.Y('nb_pl:Q',stack=None, axis=alt.Axis(title='Nombre de PL',titleFontSize=14,labelFontSize=14)),
+        color=alt.Color('type',legend=alt.Legend(title='Type de PL',titleFontSize=14,labelFontSize=14),sort="descending"))
     line_pct_pl_lapi=alt.Chart(df_pct_pl_transit_multi_cam).mark_line(color='green').encode(
-        x='heure:O',
-        y=alt.Y('pct_pl_transit:Q', axis=alt.Axis(title='% PL en transit', grid=False)))
-    return (line_nb_p_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400)
+        x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
+        y=alt.Y('pct_pl_transit', axis=alt.Axis(title='% PL en transit',labelFontSize=14,labelColor='green',titleFontSize=14,titleColor='green',grid=False)),
+        opacity=alt.Opacity('legend', legend=alt.Legend(title='Données LAPI',titleFontSize=14,labelFontSize=14,labelLimit=300)))
+    return (bar_nb_pl_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
+
+def graph_TV_jo_cam(df_pct_pl_transit, *cam):
+    """
+    graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
+    en entree : 
+        df_pct_pl_transit : df du nb de vehicules, issus de resultat.pourcentage_pl_camera
+    en sortie : 
+        bar_nb_pl_dir : chart altair avec le nb pl, nb pl transit, tv
+    """
+    concat_dir_trafic=PL_transit_dir_jo_cam(df_pct_pl_transit, cam)[0]
+    #creation du titre
+    if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
+        titre=f'Nombre de véhicules sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+    else :
+        if len(cam)>1 :
+            titre=f'Nombre de véhicules au droit des caméras {cam}'
+        else : 
+            titre=f'Nombre de véhicules au droit de la caméra {cam[0]}'
+    #ajout d'un attribut pour legende
+    
+    bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar().encode(
+        x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
+        y=alt.Y('nb_pl:Q',stack=None, axis=alt.Axis(title='Nombre de vehicules',titleFontSize=14,labelFontSize=14)),
+        color=alt.Color('type',legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
+        order=alt.Order('type', sort='descending')).properties(width=800, height=400).configure_title(fontSize=18)
+    return bar_nb_pl_dir 
     
 
 def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type_v='TV') : 
@@ -311,8 +372,8 @@ def comp_lapi_gest(df_passages_immat_ok,donnees_gest, camera, date_d='2019-01-28
     
     return alt.Chart(comp_traf_lapi_gest_graph.loc[comp_traf_lapi_gest_graph['camera_id']==camera],title=
                                    f'Camera {camera}').mark_bar(opacity=0.8).encode(
-                x=alt.X('yearmonthdate(created):O',axis=alt.Axis(title='date',format='%A %x')),
-                y=alt.Y('nb_veh:Q', stack=None,axis=alt.Axis(title='Nombre de véhicule')),
+                x=alt.X('monthdate(created):O',axis=alt.Axis(title='date',labelAngle=80)),
+                y=alt.Y('nb_veh:Q', stack=None,axis=alt.Axis(title='Nombre de PL')),
                 color='type',
                 order=alt.Order("type", sort="ascending")).properties(width=500)
   
@@ -325,4 +386,31 @@ def comp_lapi_gest_multicam(df_passages_immat_ok,donnees_gest, date_d='2019-01-2
     return alt.VConcatChart(vconcat=[comp_lapi_gest(df_passages_immat_ok,donnees_gest, camera)
                               for camera in liste_num_cam])
     
-#def graph_pct_pl_transit():
+def sankey(df, titre) : 
+    label_node_start=list(df.origine.unique())
+    label_node_end=[a for a in filter(lambda x: x[:6]!='Rocade',df.destination.unique())]
+
+    df['pos_label_o']=df.apply(lambda x : label_node_start.index(x['origine']), axis=1)
+    df['pos_label_d']=df.apply(lambda x : label_node_end.index(x['destination'])+len(label_node_start) 
+                                           if x['destination'][:6]!='Rocade' else label_node_start.index(x['destination']), axis=1)
+
+    dico_couleur={'A10':'blue', 'A63':'green', 'A89':'red', 'A62':'yellow', 'A660':'orange', 'N10':'purple', 'Rocade Est':'whitesmoke', 'Rocade Ouest':'darkgray'}
+    liste_couleur=[dico_couleur[a] for a in label_node_start+label_node_end]
+
+    fig = go.Figure(data=[go.Sankey(
+        node = dict(
+          pad = 15,
+          thickness = 20,
+          line = dict(color = "black", width = 0.5),
+          label = label_node_start+label_node_end,
+          color = liste_couleur
+        ),
+        link = dict(
+          source = df.pos_label_o, # indices correspond to labels, eg A1, A2, A2, B1, ...
+          target = df.pos_label_d,
+          value = df.nb_pl
+      ))])
+
+    fig.update_layout({"title": {"text": titre,
+                             "font": {"size": 30},'x':0.5}})
+    return fig

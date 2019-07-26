@@ -57,7 +57,7 @@ def appliquer_marge(liste_marges,df_transit_airesA63, df_transit_pas_airesA63):
                                             dico_transit_avec_marge['df_transit_pas_airesA63_marge'+str(i)]],sort=False)
         dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre'].correction_o_d=dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre'].correction_o_d.fillna(False)
         dico_transit_avec_marge['df_transit_marge'+str(i)+'_avec_filtre']=(dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre'].loc[
-            dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre']['filtre_tps']==1])
+            dico_transit_avec_marge['df_transit_marge'+str(i)+'_ss_filtre']['filtre_tps']==1]).copy()
     return dico_transit_avec_marge
 
 def correction_A660(dico_transit_avec_marge,df_passages_immat_ok,liste_marges):

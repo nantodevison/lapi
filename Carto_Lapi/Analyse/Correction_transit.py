@@ -7,7 +7,7 @@ Created on 21 juin 2019
 Module d'affinage des donn�es calcul�e dans le module transit
 '''
 
-from transit import cam_voisines, trajet2passage
+from trajets import trajet2passage
 from Import_Forme import liste_complete_trajet
 import pandas as pd
 import numpy as np
@@ -32,83 +32,71 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
         dico_od_origine : dataframe des o_d issue de transit_temps_complet compl�t�e et modif�e
     """
     
-    def MaJ_o_d(correctionType, o, d):
-        """
-        Fonction de mise � jour des o_d pour les trajets concernants A660 que l'on rabat sur A63
-        """
-        if correctionType : 
-            if o=='A660' : 
-                new_o, new_d, od='A63',d,'A63-'+d
-            elif o!='A63': 
-                new_o, new_d, od=o,'A63',o+'-A63'
-            else : 
-                new_o, new_d, od=o,d,o+'-'+d
-        else : 
-            new_o, new_d, od=o,d,o+'-'+d 
-        return new_o, new_d, od
-        
-    #cas 1 : passer sur A660 et vu avant ou apres sur A63
     dico_od_origine=dico_od.copy()
     dico_od_copie=dico_od.loc[(dico_od['origine']==voie_ref) | (dico_od['destination']==voie_ref)].reset_index().copy() #isoler les o_d li�es au points en question
-    df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())] #limiter le df_3semaines aux immats concern�e   df_adj=dico_od_copie.apply(lambda x : t.cam_adjacente(x['immat'],x['date_cam_1'],x['date_cam_2'],x['o_d'],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    #on travaille le trajet : date_cam_1 est relatif � l'origine. si l'origine est A660, alors ce qui nous interesse est le passage pr�c�dent
-    df_adj_cam1=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_1'],x['cameras'][0],df_immats),axis=1, result_type='expand')  
-    df_adj_cam1.columns=['cam_suivant','date_suivant','cam_precedent1','date_precedent1']
-    df_adj_cam1.drop(['cam_suivant','date_suivant'], axis=1, inplace=True)
-    #inversement : date_cam_2 est relatif � la destination. si la destination est A660, alors ce qui nous interesse est le passage suivant
-    df_adj_cam2=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_2'],x['cameras'][-1],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj_cam2.columns=['cam_suivant2','date_suivant2','cam_precedent','date_precedent']
-    df_adj_cam2.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
-    dico_od_copie_adj=pd.concat([dico_od_copie,df_adj_cam1,df_adj_cam2],axis=1)
-    #on creer une df de correction 
-    dico_od_a_corrige_s_n=dico_od_copie_adj.loc[(dico_od_copie_adj['origine']==voie_ref) & (dico_od_copie_adj['cam_precedent1']==cam_ref_1)].copy()#recherche des lignes pour lesquelles origine=A660 et camera adjacente = 13 ou destination=A660 et et camera_adjacente = 15
-    dico_od_a_corrige_s_n['temps_passage']=dico_od_a_corrige_s_n['date_cam_1']-dico_od_a_corrige_s_n['date_precedent1']#calcul du timedelta
-    dico_od_a_corrige_n_s=dico_od_copie_adj.loc[(dico_od_copie_adj['destination']==voie_ref) & (dico_od_copie_adj['cam_suivant2']==cam_ref_2)].copy()
-    dico_od_a_corrige_n_s['temps_passage']=dico_od_a_corrige_n_s['date_suivant2']-dico_od_a_corrige_n_s['date_cam_2']
-    dico_temp=pd.concat([dico_od_a_corrige_n_s,dico_od_a_corrige_s_n])
-    dico_correction=dico_temp.loc[~dico_temp.temps_passage.isna()]#on ne conserve que les ligne qui ont un timedelta !=NaT 
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','cameras']).index.isin(dico_correction.set_index(['date_cam_1','immat','cameras']).index),
-                       'correction_o_d']=True #mise � jour de l'attribut drapeau
-    dico_od_origine.loc[(dico_od_origine['correction_o_d']) &
-                                          (dico_od_origine['correction_o_d_type'].isna()),'correction_o_d_type']='correction_A63'
-    #mise � jour des  3 attributs li�es aux o_d
-    dico_od_origine.loc[dico_od_origine['correction_o_d'],'origine']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[0],axis=1)
-    dico_od_origine.loc[dico_od_origine['correction_o_d'],'destination']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[1],axis=1)
-    dico_od_origine.loc[dico_od_origine['correction_o_d'],'o_d']=dico_od_origine.loc[dico_od_origine['correction_o_d']].apply(lambda x : MaJ_o_d(x['correction_o_d'], x['origine'],x['destination'])[2],axis=1) 
+    df_immats=df_3semaines.loc[df_3semaines.immat.isin(dico_od_copie.immat.unique().tolist())]
     
-    #cas 2 : passer sur A660 Nord-Sud puis Sud-Nord avec au moins 1 jour d'�cart
-    dico_od_copie=dico_od_origine.loc[(dico_od_origine['destination']=='A660')].reset_index().copy()
+    #jointure pour avoir tous les passages faces à leur trajets
+    fichier_jointure=dico_od_copie.merge(df_immats.reset_index(), on='immat').sort_values(['immat','date_cam_1','created'])
     
-    df_adj_cam2=dico_od_copie.apply(lambda x : cam_voisines(x['immat'],x['date_cam_2'],x['cameras'][-1],df_immats),axis=1, result_type='expand') #construire les colonnes de camera adjacente et de temps adjacent 
-    df_adj_cam2.columns=['cam_suivant','date_suivant','cam_precedent','date_precedent']
-    df_adj_cam2.drop(['cam_precedent','date_precedent'], axis=1, inplace=True)
-    dico_od_copie_adj=pd.concat([dico_od_copie,df_adj_cam1,df_adj_cam2],axis=1)
-    dico_od_a_corrige=dico_od_copie_adj.loc[dico_od_copie_adj['cam_suivant']==cam_ref_3].copy()#filtrer les r�sultats sur la cameras de fin
-    dico_od_a_corrige['temps_passage']=dico_od_a_corrige['date_suivant']-dico_od_a_corrige['date_cam_2']#calcul du temps de passages entre les cameras
-    dico_filtre=dico_od_a_corrige.loc[dico_od_a_corrige['temps_passage']>=pd.Timedelta('1 days')]
+    #on ne conserve que le trajets  qui est avant la cam1, et qui est l eplus proche
+    cam_avant_dc1=fichier_jointure.loc[fichier_jointure['created']<fichier_jointure['date_cam_1']].groupby(['immat', 'date_cam_1', 'date_cam_2'])['created'].max().reset_index().merge(
+    df_immats, on=['immat','created'])[['immat','date_cam_1', 'date_cam_2','created','camera_id']].rename(columns={'created':'date_avant_dc1',
+                                                                                                                  'camera_id':'cam_avant_dc1'})
+    cam_avant_dc1['temps_passg_1']=cam_avant_dc1.date_cam_1-cam_avant_dc1.date_avant_dc1 #on en aura besoin plus tard
     
-    #pour les lignes ayant 1 temps de passage sup � 1 jour, on va r�affecter d � A63
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','date_cam_2']).index.isin(
-    dico_filtre.set_index(['date_cam_1','immat','date_cam_2']).index.tolist()),'destination']='A63'
-    #on modifie o_d aussi
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','date_cam_2']).index.isin(
-    dico_filtre.set_index(['date_cam_1','immat','date_cam_2']).index.tolist()),'o_d']=(dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','date_cam_2']).index.isin(
-    dico_filtre.set_index(['date_cam_1','immat','date_cam_2']).index.tolist())].apply(lambda x : x['origine']+'-'+x['destination'], axis=1))
-    #puis on met � jour correction_o_d
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat','date_cam_2']).index.isin(
-    dico_filtre.set_index(['date_cam_1','immat','date_cam_2']).index.tolist()),'correction_o_d']=True
-    #pour les lignes ayant 1 temps de passage sup � 1 jour, on va r�affecter o � A63
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_suivant','immat']).index.tolist()),'origine']='A63'
-    #on modifie o_d aussi
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_suivant','immat']).index.tolist()),'o_d']=(dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_suivant','immat']).index.tolist())].apply(lambda x : x['origine']+'-'+x['destination'], axis=1))
-    #puis on met � jour correction_o_d
-    dico_od_origine.loc[dico_od_origine.set_index(['date_cam_1','immat']).index.isin(
-    dico_filtre.set_index(['date_suivant','immat']).index.tolist()),'correction_o_d']=True
+    #on ne conserve que le trajets  qui est apres la cam2, et qui est l eplus proche
+    cam_apres_dc2=fichier_jointure.loc[fichier_jointure['created']>fichier_jointure['date_cam_2']].groupby(['immat', 'date_cam_1', 'date_cam_2'])['created'].min().reset_index().merge(
+    df_immats, on=['immat','created'])[['immat','date_cam_1', 'date_cam_2','created','camera_id']].rename(columns={'created':'date_apres_dc2',
+                                                                                                                  'camera_id':'cam_apres_dc2'})
+    cam_apres_dc2['temps_passg_2']=cam_apres_dc2.date_apres_dc2-cam_apres_dc2.date_cam_2#on en aura besoin plus tard
+    
+    #on ramene les attributs sur la df de base des trajets
+    jointure_finale=dico_od_origine.merge(cam_avant_dc1, on=['immat','date_cam_1', 'date_cam_2'], how='left').merge(cam_apres_dc2, on=['immat','date_cam_1', 'date_cam_2'], how='left')
+    
+    #cas des PL qui ont ete vus à Cestas sens N->S puis à A63 sens S->N
+    jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2), 'correction_o_d']=True
+    jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2), 'correction_o_d_type']=np.where(
+        pd.notnull(jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2)]['correction_o_d_type']),
+        jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2)]['correction_o_d_type'],'correction_A63')
+    jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2), 'destination']='A63'
+    
+    #cas des PL qui ont ete vus à Cestas sens S->N à A63 sens N->S avant
+    jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1), 'correction_o_d']=True
+    jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1), 'correction_o_d_type']=np.where(pd.notnull(
+        jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1)]['correction_o_d_type']),
+             jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1)]['correction_o_d_type'],
+             'correction_A63')
+    jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1), 'origine']='A63'
+    
+    #cas des PL sui ont fait N->S puis S->N à la barrière de péage
+    jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
+                        (jointure_finale['destination']==voie_ref),'correction_o_d']=True
+    jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
+                        (jointure_finale['destination']==voie_ref),'correction_o_d_type']=np.where(pd.notnull(
+        jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
+                        (jointure_finale['destination']==voie_ref)]['correction_o_d_type']),
+             jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
+                        (jointure_finale['destination']==voie_ref)]['correction_o_d_type'],
+             'correction_A63')
+    jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
+                        (jointure_finale['destination']==voie_ref),'destination']='A63'
+    
+    jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
+                        (jointure_finale['origine']==voie_ref),'correction_o_d']=True
+    jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
+                        (jointure_finale['origine']==voie_ref),'correction_o_d_type']=np.where(pd.notnull(
+        jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
+                        (jointure_finale['origine']==voie_ref)]['correction_o_d_type']),
+             jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
+                        (jointure_finale['origine']==voie_ref)]['correction_o_d_type'],
+             'correction_A63')
+    jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
+                        (jointure_finale['origine']==voie_ref),'origine']='A63'
+    
+    jointure_finale.drop(['date_avant_dc1', 'cam_avant_dc1', 'temps_passg_1', 'date_apres_dc2','cam_apres_dc2', 'temps_passg_2'], axis=1, inplace=True)
 
-    return dico_od_origine
+    return jointure_finale
 
 def corriger_df_tps_parcours (dico_tps_max):
     """ fonction de correction de la df_tps_parcours issue de transit_temps_complet.
@@ -287,9 +275,9 @@ def correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsm
         columns={'tps_parcours_theoriq_y':'tps_parcours_theoriq_cestas'})
     #jointure avec temps reel
     df_transit_A63_redresse_tstps=(df_transit_A63_redresse_tpq_theoriq.merge(dixco_tpsmax_corrige, left_on=['o_d_cestas','date'],right_on=['o_d','date'],
-        how='left').rename(columns={'cameras_x':'cameras','o_d_x':'o_d','type_x':'type',
+        how='left').rename(columns={'cameras_x':'cameras','o_d_x':'o_d','type_x':'type','period_x':'period',
                                     'temps_x':'temps','tps_parcours_theoriq_x':'tps_parcours_theoriq',
-                                    'temps_y':'temps_cestas','type_y':'type_cestas'}).drop('o_d_y',axis=1))
+                                    'temps_y':'temps_cestas','type_y':'type_cestas'}).drop(['o_d_y','period_y'],axis=1))
     #Maj de l'attribut temps_filtre_cestas
     df_transit_A63_redresse_tstps['temps_filtre_cestas']=df_transit_A63_redresse_tstps.apply(lambda x : temps_pour_filtre(x['date_cam_1'],
         x['type_cestas'], x['temps_cestas'], x['tps_parcours_theoriq_cestas']), axis=1)

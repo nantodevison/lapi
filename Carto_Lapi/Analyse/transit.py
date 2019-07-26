@@ -6,9 +6,9 @@ Created on 21 juin 2019
 
 Module de d�termination du trafic de transit � partir de la classe des trajets du module trajet
 '''
-from trajets import trajet2passage
+
 from Import_Forme import liste_complete_trajet, liste_trajet_incomplet
-from trajets import trajet, PasDePlError, grouper_pl,filtre_et_forme_passage
+from trajets import trajet, PasDePlError, grouper_pl,filtre_et_forme_passage, cam_voisines, trajet2passage
 from Correction_transit import forme_df_cestas
 import pandas as pd
 import datetime as dt
@@ -58,12 +58,11 @@ def transit_marge0(df_transit_extrapole,df_transit_A63_redresse):
         df_transit_A63_redresse : df issue de Correction_transit.correction_temps_cestas
     """
     dico_df_transit={}
-    dico_df_transit['df_transit_airesA63_ss_filtre']=identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas')#identifier le transit pour PL passé par Cestas
-    dico_df_transit['df_transit_airesA63_ss_filtre']=forme_df_cestas(dico_df_transit['df_transit_airesA63_ss_filtre'])
+    dico_df_transit['df_transit_airesA63_ss_filtre']=forme_df_cestas(identifier_transit(df_transit_A63_redresse, 15,'temps_filtre_cestas','tps_parcours_cestas'))#identifier le transit pour PL passé par Cestas
     dico_df_transit['df_transit_airesA63_avec_filtre']= dico_df_transit['df_transit_airesA63_ss_filtre'].loc[
          dico_df_transit['df_transit_airesA63_ss_filtre']['filtre_tps']==1].copy()
     dico_df_transit['df_transit_pas_airesA63_ss_filtre']=df_transit_extrapole.loc[~df_transit_extrapole.set_index(['date_cam_1','immat']).index.isin(
-                df_transit_A63_redresse.set_index(['date_cam_1','immat']).index.tolist())]
+                df_transit_A63_redresse.set_index(['date_cam_1','immat']).index.tolist())].copy()
     
     dico_df_transit['df_transit_marge0_ss_filtre']=pd.concat([dico_df_transit['df_transit_airesA63_ss_filtre'],
                   dico_df_transit['df_transit_pas_airesA63_ss_filtre']],sort=False)
@@ -72,31 +71,6 @@ def transit_marge0(df_transit_extrapole,df_transit_A63_redresse):
         dico_df_transit['df_transit_marge0_ss_filtre']['filtre_tps']==1].copy()
     return dico_df_transit
 
-def cam_voisines(immat, date, camera, df) :
-    """
-    Retrouver les dates et camera de passages d'un vehicule avant et apres un passage donne
-    en entree : 
-        immat : string : immatribualtion
-        date : string : date de passage
-        camera : cam de passage
-        df : df contenant tous les passages de immats concernees (df 3 semianes ou extraction)
-    en sortie : 
-        cam_suivant : entier : camera suivante
-        date_suivant : Pd.Timestamp ou string type YYYY-MM-DD associe à cam suivant
-        cam_precedent : entier : camera precedente
-        date_precedent : Pd.Timestamp ou string type YYYY-MM-DD associe à cam precedent
-    """
-    passage_immat=df.loc[df['immat']==immat].reset_index().copy()
-    idx=passage_immat.loc[(passage_immat['created']==date) & (passage_immat['camera_id']==camera)].index
-    try :
-        cam_suivant, date_suivant=passage_immat.shift(-1).iloc[idx]['camera_id'].values[0], passage_immat.shift(-1).iloc[idx]['created'].values[0]
-    except IndexError :
-        cam_suivant, date_suivant=0, pd.NaT
-    try :
-        cam_precedent, date_precedent=passage_immat.shift(1).iloc[idx]['camera_id'].values[0], passage_immat.shift(1).iloc[idx]['created'].values[0]
-    except IndexError :
-        cam_precedent, date_precedent=0, pd.NaT
-    return cam_suivant,date_suivant, cam_precedent,date_precedent
     
 def transit_temps_complet(date_debut, nb_jours, df_3semaines,liste_trajet_loc=liste_complete_trajet):
     """
