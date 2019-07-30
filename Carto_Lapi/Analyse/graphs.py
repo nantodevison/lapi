@@ -15,9 +15,6 @@ from Import_Forme import dico_corrsp_camera_site
 from Resultats import indice_confiance_cam, PL_transit_dir_jo_cam
 
 
-
-
-
 def graph_passages_proches(jointure, groupe_pl_rappro):
     """
     Visualiser les stats sur les pasages trop proches
@@ -153,8 +150,10 @@ def graph_VL_PL_transit_j_cam(df_concat_pl_jo,df_pct_pl_transit, *cam) :
 
 def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo, *cam): 
     pour_graph_synth,lien_traf_gest_traf_lapi=indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam)
+    lien_traf_gest_traf_lapi['heure']=lien_traf_gest_traf_lapi.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'), axis=1)
+    pour_graph_synth['heure']=pour_graph_synth.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'), axis=1)
     #print(pour_graph_synth,lien_traf_gest_traf_lapi)
-    print(dico_corrsp_camera_site.items(),[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)])
+    #print(dico_corrsp_camera_site.items(),[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)])
     if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
         titre_interv=f'Nombre de PL et % de PL en transit sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
         titre_nb_pl=f'Nombre de PL selon la source sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
@@ -167,31 +166,31 @@ def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo, *cam):
             titre_nb_pl=f'Nombre de PL selon la source au droit de la caméra {cam[0]}'
               
     #graph d'intervalle de confiance
-    df_intervalle=pour_graph_synth.loc[pour_graph_synth['type'].isin(['LAPI', 'SIREDO recale'])]
+    df_intervalle=pour_graph_synth.loc[pour_graph_synth['type'].isin(['LAPI', 'SIREDO recale'])].copy()
     #pour legende
     lien_traf_gest_traf_lapi['legend_pct_transit']='Pourcentage PL transit'
     lien_traf_gest_traf_lapi['legend_i_conf']='Intervalle de confiance'
     line_trafic=alt.Chart(df_intervalle, title=titre_interv).mark_line().encode(
-        x=alt.X('heure',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
+        x=alt.X('hoursminutes(heure)',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
         y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
         color=alt.Color('type',legend=alt.Legend(title='source du nombre de PL',titleFontSize=14,labelFontSize=14)))
     area_pct_max=alt.Chart(lien_traf_gest_traf_lapi).mark_area(opacity=0.7, color='gray').encode(
-        x='heure',
+        x='hoursminutes(heure)',
         y=alt.Y('pct_pl_transit_max:Q',
                 axis=alt.Axis(title='Pourcentage de PL en transit',titleFontSize=14,labelFontSize=14),
                 scale=alt.Scale(domain=(0,100))), 
         y2='pct_pl_transit_min:Q',
         opacity=alt.Opacity('legend_i_conf'))
     line_pct=alt.Chart(lien_traf_gest_traf_lapi).mark_line(color='gray').encode(
-        x='heure',
+        x='hoursminutes(heure)',
         y='pct_pl_transit',
-        opacity=alt.Opacity('legend_pct_transit', legend=alt.Legend(title='Analyse du transit',titleFontSize=14,labelFontSize=14)))
+        opacity=alt.Opacity('legend_pct_transit', legend=alt.Legend(title='Analyse du transit LAPI',titleFontSize=14,labelFontSize=14)))
     pct=(area_pct_max+line_pct)
-    graph_interval=(line_trafic+pct).resolve_scale(y='independent').properties(width=800, height=400).properties(width=800, height=400).configure_title(fontSize=18)
+    graph_interval=(line_trafic+pct).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
     
     #graph comparaison nb_pl
     graph_nb_pl=alt.Chart(pour_graph_synth, title=titre_nb_pl).mark_line(opacity=0.7).encode(
-        x=alt.X('heure',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
+        x=alt.X('hoursminutes(heure)',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
         y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
         color=alt.Color('type',title='source du nombre de PL', legend=alt.Legend(titleFontSize=14,labelFontSize=14))).properties(
             width=800, height=400).configure_title(fontSize=18)
@@ -220,7 +219,7 @@ def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
             titre=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
     #ajout d'un attribut pour legende
     df_pct_pl_transit_multi_cam['legend']='Pourcentage PL en transit'
-    concat_dir_trafic=concat_dir_trafic.loc[concat_dir_trafic['type'].isin(['Tous PL','PL en transit'])]
+    concat_dir_trafic=concat_dir_trafic.loc[concat_dir_trafic['type'].isin(['Tous PL','PL en transit'])].copy()
     
     bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar(opacity=0.7).encode(
         x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
@@ -229,7 +228,7 @@ def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
     line_pct_pl_lapi=alt.Chart(df_pct_pl_transit_multi_cam).mark_line(color='green').encode(
         x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
         y=alt.Y('pct_pl_transit', axis=alt.Axis(title='% PL en transit',labelFontSize=14,labelColor='green',titleFontSize=14,titleColor='green',grid=False)),
-        opacity=alt.Opacity('legend', legend=alt.Legend(title='Données LAPI',titleFontSize=14,labelFontSize=14,labelLimit=300)))
+        opacity=alt.Opacity('legend', legend=alt.Legend(title='Donnees LAPI',titleFontSize=14,labelFontSize=14,labelLimit=300)))
     return (bar_nb_pl_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
 
 def graph_TV_jo_cam(df_pct_pl_transit, *cam):

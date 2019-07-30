@@ -6,7 +6,7 @@ Created on 1 juil. 2019
 Moduel avec des fonctions pour traiter les resultats : import / exports en json, pourcentage PL par acm, passage fictif rocade...
 '''
 import pandas as pd
-from Import_Forme import matrice_nb_jo_sup_31, matrice_nb_jo, matrice_nb_jo_inf_31, dico_correspondance, donnees_horaire
+from Import_Forme import matrice_nb_jo_sup_31, matrice_nb_jo, matrice_nb_jo_inf_31, dico_correspondance, donnees_horaire, donnees_gest
 
 
 
@@ -40,6 +40,63 @@ def pourcentage_pl_camera(df_pl,dico_passag):
     df_pct_pl_transit=df_concat_pl_jo.loc[df_concat_pl_jo['type']=='PL total'].merge(df_concat_pl_jo.loc[df_concat_pl_jo['type']=='PL transit'],on=['camera_id','heure'])
     df_pct_pl_transit['pct_pl_transit']=df_pct_pl_transit.apply(lambda x : pct_pl(x['nb_veh_y'],x['nb_veh_x']) ,axis=1)
     return df_concat_pl_jo,df_pct_pl_transit
+
+def nb_pl_reel_par_site_mjo(df_pct_pl_transit):
+    """
+    obtenir une df avec le nb de pl reel en transit, local et total issu du croisement des données dir et pct lapi
+    setr aux cartes QGis
+    en entree : 
+        df_pct_pl_transit : issu de ajout_cam_n10
+    en sortie :
+        df_finale_tous_sites : df avec par site (i.e parcamera ou groupement de camera) les infos citées ci-dessu
+        valeur_globale : float : pct_pl prenant en compte toutes les moyennes mjo sur toutes les cameras physiques sauf Rocade Ouest
+    """
+    #grouper les resultats par camera et calcul du pct_pl_transit
+    df_pct_pl_global=df_pct_pl_transit.groupby('camera_id').agg({'nb_veh_x':'sum','nb_veh_y':'sum'}).rename(columns=
+                                                                                                        {'nb_veh_x':'nb_pl_tot','nb_veh_y':'nb_pl_transit'})
+    df_pct_pl_global['pct_pl_transit']=df_pct_pl_global.nb_pl_transit/df_pct_pl_global.nb_pl_tot*100
+    
+    #creation df des sites globaux
+    df_lapi=[]
+    df_gest=[]
+    df_gest_temp=donnees_gest.set_index('camera')
+    liste_cam=[[1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13,15],[18,19],[20,21]] 
+    for i in liste_cam: 
+        lapi_tot=df_pct_pl_global.loc[i[0]]['nb_pl_tot']+df_pct_pl_global.loc[i[1]]['nb_pl_tot']
+        lapi_trans=df_pct_pl_global.loc[i[0]]['nb_pl_transit']+df_pct_pl_global.loc[i[1]]['nb_pl_transit']
+        lapi_pct=lapi_trans/lapi_tot*100
+        gest_tot=df_gest_temp.loc[i[0]].values[0]+df_gest_temp.loc[i[1]].values[0]
+        df_lapi.append([lapi_tot, lapi_trans, lapi_pct, tuple(i)])
+        df_gest.append([gest_tot,tuple(i)])
+    df_site_glob=pd.DataFrame(df_lapi, columns=['nb_pl_tot_lapi','nb_pl_transit_lapi','pct_pl_transit_lapi', 'camera_id'])
+    df_gest_glob=pd.DataFrame(df_gest, columns=['nb_pl_tot_gest','camera_id'])
+    
+    #creation df par sens
+    df_site_sens=df_pct_pl_global.reset_index().rename(columns={'nb_pl_tot':'nb_pl_tot_lapi',
+                                                                      'nb_pl_transit':'nb_pl_transit_lapi',
+                                                                      'pct_pl_transit':'pct_pl_transit_lapi'})
+    df_site_sens['camera_id']=df_site_sens.camera_id.apply(lambda x :tuple([x]))
+    df_gest_sens=df_gest_temp.reset_index().rename(columns={'camera':'camera_id','nb_pl':'nb_pl_tot_gest'})
+    df_gest_sens['camera_id']=df_gest_sens.camera_id.apply(lambda x : tuple([x]))
+    
+    #jointure
+    df_gest_lapi=pd.concat([df_site_sens,df_site_glob],axis=0,sort=False).merge(pd.concat([df_gest_sens,df_gest_glob],axis=0,sort=False), on='camera_id')
+    df_gest_lapi['nb_veh_transit']=round(df_gest_lapi.pct_pl_transit_lapi*df_gest_lapi.nb_pl_tot_gest*0.01)
+    df_gest_lapi['nb_veh_local']=df_gest_lapi.nb_pl_tot_gest-df_gest_lapi.nb_veh_transit
+    
+    #affecter les nom de sites
+    df_finale_tous_sites=pd.concat([pd.Series(['Rocade Ouest sens interieur','Rocade Ouest sens exterieur','Rocade Est sens interieur','Rocade Est sens exterieur','A10/N10 vers Paris','A10/N10 vers Bordeaux','A89 vers Lyon',
+            'A89 vers Bordeaux','A62 vers Toulouse','A62 vers Bordeaux','A10 vers Paris','A10 vers Bordeaux','A63 vers Bayonne','A63 vers Bordeaux',
+            'A660/A63 vers Arcachon','A660/A63 vers Bordeaux', 'N10 vers Paris', 'N10 vers Bordeaux','Rocade Ouest','Rocade Est', 'A10/N10', 'A89','A62','A10','A63','A660/A63','N10'],
+                        name='voie'),
+              df_gest_lapi],axis=1, sort=False).drop('camera_id',axis=1)
+    
+    #valeur globale uniquement sur les caméras réelles hormis Rocade Ouest
+    valeur_globale=df_finale_tous_sites.iloc[2:16].nb_pl_transit_lapi.sum()/df_finale_tous_sites.iloc[2:16].nb_pl_tot_lapi.sum()*100
+    
+    return df_finale_tous_sites, valeur_globale
+            
+    
 
 def ajout_cam_n10(df_concat_pl,df_pct_pl_transit ) : 
     """
@@ -161,11 +218,13 @@ def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam):
     lien_traf_gest_traf_lapi.rename(columns={'nb_pl':'nb_pl_siredo','nb_veh':'nb_pl_lapi','nb_pl_total':'nb_pl_siredo_total','nb_tv':'nb_tv_siredo'},inplace=True)
     lien_traf_gest_traf_lapi['nb_pl_transit_lapi']=lien_traf_gest_traf_lapi['nb_pl_lapi']*lien_traf_gest_traf_lapi['pct_pl_transit']*0.01
     lien_traf_gest_traf_lapi['pct_detec_lapi']=lien_traf_gest_traf_lapi['nb_pl_lapi']/lien_traf_gest_traf_lapi['nb_pl_siredo']
-    lien_traf_gest_traf_lapi['nb_pl_lapi_recale']=lien_traf_gest_traf_lapi['nb_pl_siredo']*(1-lien_traf_gest_traf_lapi['pct_detec_lapi'])
-    lien_traf_gest_traf_lapi['pct_pl_transit_max']=((lien_traf_gest_traf_lapi['nb_pl_transit_lapi']+lien_traf_gest_traf_lapi['nb_pl_lapi_recale']) / 
-                                                    (lien_traf_gest_traf_lapi['nb_pl_lapi']+lien_traf_gest_traf_lapi['nb_pl_lapi_recale']))*100
-    lien_traf_gest_traf_lapi['pct_pl_transit_min']=(lien_traf_gest_traf_lapi['nb_pl_transit_lapi']/ 
-                                                    (lien_traf_gest_traf_lapi['nb_pl_lapi']+lien_traf_gest_traf_lapi['nb_pl_lapi_recale']))*100
+    lien_traf_gest_traf_lapi['nb_pl_lapi_recale']=abs(lien_traf_gest_traf_lapi['nb_pl_siredo']*(1-lien_traf_gest_traf_lapi['pct_detec_lapi']))
+    lien_traf_gest_traf_lapi['pct_pl_transit_max']=lien_traf_gest_traf_lapi.apply(lambda x : 
+        ((x['nb_pl_transit_lapi']+x['nb_pl_lapi_recale']) / (x['nb_pl_lapi']+x['nb_pl_lapi_recale']))*100 if x['pct_detec_lapi'] <=1 else 
+        x['pct_pl_transit'],axis=1)
+    lien_traf_gest_traf_lapi['pct_pl_transit_min']=lien_traf_gest_traf_lapi.apply(lambda x : 
+        (x['nb_pl_transit_lapi']/(x['nb_pl_lapi']+x['nb_pl_lapi_recale']))*100 if x['pct_detec_lapi'] <=1 else
+        ((x['nb_pl_transit_lapi']-x['nb_pl_lapi_recale'])/ (x['nb_pl_lapi']-x['nb_pl_lapi_recale']))*100,axis=1)
                                                     
     #graphique
     pour_graph_synth_pl_lapi=df_concat_pl_jo_cam[['heure','nb_veh','type']].copy()
