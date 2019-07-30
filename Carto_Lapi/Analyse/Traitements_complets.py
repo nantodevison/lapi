@@ -4,38 +4,17 @@ Created on 23 juin 2019
 
 @author: martin.schoreisz
 
-Module de traitement complet des donn�es LAPI : import, mise en forme, trajets, transit.
+Module de traitement de regroupement de certaines fcontions
 obetntion d'une dataframe des trajets de transit 
 '''
 
 from trajets import trajet2passage
-from Import_Forme import import_et_mise_en_forme, liste_complete_trajet, liste_trajet_incomplet
-from transit import transit_temps_complet, jointure_temps_reel_theorique, identifier_transit, param_trajet_incomplet, transit_trajet_incomplet
-from Correction_transit import corriger_df_tps_parcours, predire_ts_trajets,corriger_tps_parcours_extrapole,correction_temps_cestas,forme_df_cestas,correction_trajet
+from Import_Forme import  liste_trajet_incomplet
+from transit import  jointure_temps_reel_theorique, identifier_transit, param_trajet_incomplet, transit_trajet_incomplet
+from Correction_transit import correction_trajet
 import pandas as pd
 import os
 
-def definir_transit():
-    """
-    regroupeement des fonctions permettant d'arriver au trafic de transit PL prenant en compte le temps de pause à Cestas
-    """
-    #importer les données et recuperer les données mise en forme
-    df_passages_immat_ok=import_et_mise_en_forme()[0]
-    #creer la datafrme de base des trajets susceptible d'etre en transit
-    dico_od,  dico_passag, dico_tps_max=transit_temps_complet('2019-01-23 00:00:00',22,df_passages_immat_ok)
-    #corriger le dico des temps de parcours
-    dixco_tpsmax_corrige=corriger_df_tps_parcours(dico_tps_max)
-    #joindre avec les temps theoriques
-    df_transit_tps_ref=jointure_temps_reel_theorique(dico_od,dixco_tpsmax_corrige,liste_complete_trajet)
-    #df des transit avec marge 0 ss extrapolation
-    df_transit_marge0_ss_extrapolation=identifier_transit(df_transit_tps_ref, 0)
-    #extrapole e, se basant sur du macine learning
-    df_transit_extrapole=predire_ts_trajets(df_transit_marge0_ss_extrapolation)
-    #mettre a jour e dico des temps max autorises
-    dixco_tpsmax_corrige=corriger_tps_parcours_extrapole(dixco_tpsmax_corrige,df_transit_extrapole)
-    #creation des attributs relatifs a Cestas, pour les PL sur une O-D liées à A63, non identifiés comme transit, et qui ont été vus à Cestas
-    df_transit_A63_redresse=correction_temps_cestas(df_transit_extrapole,df_passages_immat_ok,dixco_tpsmax_corrige)
-    return df_transit_A63_redresse, df_transit_extrapole, df_passages_immat_ok, dixco_tpsmax_corrige
 
 def appliquer_marge(liste_marges,df_transit_airesA63, df_transit_pas_airesA63):
     """

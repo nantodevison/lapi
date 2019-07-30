@@ -263,29 +263,6 @@ def affecter_type_nuit(df_passages_affectes):
     df.loc[df_passages_affectes['immat'].isin(groupe_filtre.index.tolist()),'l']=1
     return df
 
-def import_et_mise_en_forme(type_veh=1):
-    """
-    fonction globale d'enchaiement des traitements du module
-    en entree : 
-        type_veh le type de veihcule sur leqel on veut travailler (par defaut 1=PL, sinon O=VL, sinon2=VUL sinon error)
-    """
-    #importer les données
-    df_passages_source, df_plaques, df_immat=ouvrir_fichier_lapi_final('2019-01-22 23:00:00','2019-02-13 22:59:59')
-    #recaler les passages d'1h
-    df_passages_source=recalage_passage_1h(df_passages_source
-                                           )
-    #affecter le type de vehicule
-    df_passages_source=affecter_type(df_passages_source,df_immat)
-    df_passages_source=affecter_type_nuit(df_passages_source)
-    #filtrer que les PL
-    df_passages_pl=df_passages_source.loc[df_passages_source['l']==1].copy()
-    #supprimer les doublons
-    df_passages_pl=supprimer_doublons(df_passages_pl)
-    #suppr passages proches
-    df_passages_pl=recalage_cam10(df_passages_pl)
-    #filtre des immatriculations
-    df_passages_immat_ok, df_immat_suppr=filtre_plaque_non_valable(df_passages_pl, df_plaques)
-
     
     return df_passages_immat_ok, df_immat_suppr
     
