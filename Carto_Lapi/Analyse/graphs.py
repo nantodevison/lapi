@@ -174,14 +174,14 @@ def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo, *cam):
         x=alt.X('hoursminutes(heure)',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
         y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
         color=alt.Color('type',legend=alt.Legend(title='source du nombre de PL',titleFontSize=14,labelFontSize=14)))
-    area_pct_max=alt.Chart(lien_traf_gest_traf_lapi).mark_area(opacity=0.7, color='gray').encode(
+    area_pct_max=alt.Chart(lien_traf_gest_traf_lapi).mark_area(opacity=0.7, color='green').encode(
         x='hoursminutes(heure)',
         y=alt.Y('pct_pl_transit_max:Q',
-                axis=alt.Axis(title='Pourcentage de PL en transit',titleFontSize=14,labelFontSize=14),
+                axis=alt.Axis(title='Pourcentage de PL en transit',titleFontSize=14,labelFontSize=14,labelColor='green',titleColor='green'),
                 scale=alt.Scale(domain=(0,100))), 
         y2='pct_pl_transit_min:Q',
         opacity=alt.Opacity('legend_i_conf'))
-    line_pct=alt.Chart(lien_traf_gest_traf_lapi).mark_line(color='gray').encode(
+    line_pct=alt.Chart(lien_traf_gest_traf_lapi).mark_line(color='green').encode(
         x='hoursminutes(heure)',
         y='pct_pl_transit',
         opacity=alt.Opacity('legend_pct_transit', legend=alt.Legend(title='Analyse du transit LAPI',titleFontSize=14,labelFontSize=14)))
