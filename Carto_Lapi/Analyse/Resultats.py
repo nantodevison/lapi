@@ -250,14 +250,14 @@ def PL_transit_dir_jo_cam(df_pct_pl_transit, cam):
     if len(cam)>1 :
     #si le nombre de camera est sup à 1, il faut recalculer le %pl_transit pour l'ensemble des deux cameras, avant de l'appliquer à la somme des deux de la dir
         df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].groupby(['heure']).agg(
-            {'nb_veh_x':'sum','nb_veh_y':'sum'}).reset_index()
+            {'nb_veh_x':'sum','nb_veh_y':'sum'}).reset_index().copy()
         df_pct_pl_transit_multi_cam['pct_pl_transit']=df_pct_pl_transit_multi_cam['nb_veh_y']/df_pct_pl_transit_multi_cam['nb_veh_x']*100
         traf_dira_rocade_grp=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].groupby('heure').agg(
                 {'nb_pl':'sum','nb_pl_total':'sum','nb_tv':'sum'}).reset_index()
         dira_pct_pl_lapi=traf_dira_rocade_grp.merge(df_pct_pl_transit_multi_cam, on=['heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01                             
     else :
-        df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)] 
+        df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].copy()
         dira_pct_pl_lapi=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].merge(
             df_pct_pl_transit,left_on=['camera','heure'], right_on=['camera_id','heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01
