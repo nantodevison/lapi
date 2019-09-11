@@ -264,7 +264,6 @@ def affecter_type_nuit(df_passages_affectes):
     return df
 
     
-    return df_passages_immat_ok, df_immat_suppr
     
     
     
