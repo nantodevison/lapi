@@ -227,7 +227,8 @@ def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
         color=alt.Color('type',legend=alt.Legend(title='Type de PL',titleFontSize=14,labelFontSize=14),sort="descending"))
     line_pct_pl_lapi=alt.Chart(df_pct_pl_transit_multi_cam).mark_line(color='green').encode(
         x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
-        y=alt.Y('pct_pl_transit', axis=alt.Axis(title='% PL en transit',labelFontSize=14,labelColor='green',titleFontSize=14,titleColor='green',grid=False)),
+        y=alt.Y('pct_pl_transit', axis=alt.Axis(title='% PL en transit',labelFontSize=14,labelColor='green',titleFontSize=14,titleColor='green',grid=False),
+                scale=alt.Scale(domain=(0,100))),
         opacity=alt.Opacity('legend', legend=alt.Legend(title='Donnees LAPI',titleFontSize=14,labelFontSize=14,labelLimit=300)))
     return (bar_nb_pl_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
 
