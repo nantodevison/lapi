@@ -33,9 +33,9 @@ def mise_en_forme_dfs_trajets (fichier, type):
     return df_liste_trajets
 #correspondance camera_site
 dico_corrsp_camera_site={
-    'Rocade Est':[3,4], 'Rocade Ouest':[1,2], 'A10':[11,12], 'A10/N10':[5,6], 'A89':[7,8], 'A62':[9,10], 'A660':[18,19], 'A63':[13,15],'N10':[20,21],
+    'Rocade Est':[3,4], 'Rocade Ouest':[1,2], 'A10':[11,12], 'A10/N10':[5,6], 'N89':[7,8], 'A62':[9,10], 'A660':[18,19], 'A63':[13,15],'N10':[20,21],
 'Total':[3,4,5,6,7,8,9,10,11,12,13,15,18,19],'Rocade Ouest sens interieur':[1],'Rocade Ouest sens exterieur':[2],'Rocade Est sens exterieur':[4], 'Rocade Est sens interieur':[3], 'A10 vers Paris':[11], 'A10 vers Bordeaux':[12],
-   'A10/N10 vers Paris':[5], 'A10/N10 vers Bordeaux':[6], 'A89 vers Lyon':[11], 'A89 vers Bordeaux':[8], 'A62 vers Toulouse':[9], 'A62 vers Bordeaux':[10],
+   'A10/N10 vers Paris':[5], 'A10/N10 vers Bordeaux':[6], 'N89 vers Lyon':[7], 'N89 vers Bordeaux':[8], 'A62 vers Toulouse':[9], 'A62 vers Bordeaux':[10],
     'A660 vers Arcachon':[18], 'A660 vers Bordeaux':[19], 'A63 vers Bayonne':[13], 'A63 vers Bordeaux':[15], 'N10 vers Paris':[20], 'N10 vers Bordeaux':[21]}
 #attributs de liste des trajets
 liste_complete_trajet=mise_en_forme_dfs_trajets(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')

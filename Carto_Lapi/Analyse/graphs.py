@@ -14,7 +14,6 @@ import plotly.graph_objects as go
 from Import_Forme import dico_corrsp_camera_site
 from Resultats import indice_confiance_cam, PL_transit_dir_jo_cam
 
-
 def graph_passages_proches(jointure, groupe_pl_rappro):
     """
     Visualiser les stats sur les pasages trop proches
@@ -148,7 +147,7 @@ def graph_VL_PL_transit_j_cam(df_concat_pl_jo,df_pct_pl_transit, *cam) :
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
 
-def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo, *cam): 
+def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,intervall_conf=True, *cam): 
     pour_graph_synth,lien_traf_gest_traf_lapi=indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam)
     lien_traf_gest_traf_lapi['heure']=lien_traf_gest_traf_lapi.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'), axis=1)
     pour_graph_synth['heure']=pour_graph_synth.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'), axis=1)
@@ -183,9 +182,11 @@ def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo, *cam):
         opacity=alt.Opacity('legend_i_conf'))
     line_pct=alt.Chart(lien_traf_gest_traf_lapi).mark_line(color='green').encode(
         x='hoursminutes(heure)',
-        y='pct_pl_transit',
+        y=alt.Y('pct_pl_transit',
+                axis=alt.Axis(title='Pourcentage de PL en transit',titleFontSize=14,labelFontSize=14,labelColor='green',titleColor='green'),
+                scale=alt.Scale(domain=(0,100))),
         opacity=alt.Opacity('legend_pct_transit', legend=alt.Legend(title='Analyse du transit LAPI',titleFontSize=14,labelFontSize=14)))
-    pct=(area_pct_max+line_pct)
+    pct=(area_pct_max+line_pct) if intervall_conf else line_pct
     graph_interval=(line_trafic+pct).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
     
     #graph comparaison nb_pl
