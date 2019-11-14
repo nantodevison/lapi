@@ -255,7 +255,7 @@ def graph_TV_jo_cam(df_pct_pl_transit, *cam):
     bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar().encode(
         x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
         y=alt.Y('nb_pl:Q',stack=None, axis=alt.Axis(title='Nombre de vehicules',titleFontSize=14,labelFontSize=14)),
-        color=alt.Color('type',legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
+        color=alt.Color('type',sort=['Tous vehicules', 'Tous PL','PL en transit'],legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
         order=alt.Order('type', sort='descending')).properties(width=800, height=400).configure_title(fontSize=18)
     return bar_nb_pl_dir 
     
