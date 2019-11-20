@@ -233,11 +233,13 @@ def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
         opacity=alt.Opacity('legend', legend=alt.Legend(title='Donnees LAPI',titleFontSize=14,labelFontSize=14,labelLimit=300)))
     return (bar_nb_pl_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
 
-def graph_TV_jo_cam(df_pct_pl_transit, *cam):
+def graph_TV_jo_cam(df_pct_pl_transit,uvp, *cam):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du nb de vehicules, issus de resultat.pourcentage_pl_camera
+        uvp : booleen :  si on veut le graph ne UVP ou non
+        cam : integer : les cameras concernees
     en sortie : 
         bar_nb_pl_dir : chart altair avec le nb pl, nb pl transit, tv
     """
@@ -250,13 +252,21 @@ def graph_TV_jo_cam(df_pct_pl_transit, *cam):
             titre=f'Nombre de véhicules au droit des caméras {cam}'
         else : 
             titre=f'Nombre de véhicules au droit de la caméra {cam[0]}'
-    #ajout d'un attribut pour legende
-    
-    bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar().encode(
-        x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
-        y=alt.Y('nb_pl:Q',stack=None, axis=alt.Axis(title='Nombre de vehicules',titleFontSize=14,labelFontSize=14)),
-        color=alt.Color('type',sort=['Tous vehicules', 'Tous PL','PL en transit'],legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
-        order=alt.Order('type', sort='descending')).properties(width=800, height=400).configure_title(fontSize=18)
+
+    if not uvp : 
+        concat_dir_trafic=concat_dir_trafic.loc[concat_dir_trafic.type.isin(['Tous PL','PL en transit','Tous Vehicules'])].copy()
+        bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar().encode(
+            x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
+            y=alt.Y('nb_pl:Q',stack=None, axis=alt.Axis(title='Nombre de vehicules',titleFontSize=14,labelFontSize=14)),
+            color=alt.Color('type',sort=['Tous vehicules', 'Tous PL','PL en transit'],legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
+            order=alt.Order('type', sort='descending')).properties(width=800, height=400).configure_title(fontSize=18)
+    else : 
+        concat_dir_trafic=concat_dir_trafic.loc[concat_dir_trafic.type.isin(['UVP Tous PL','UVP PL en transit','UVP Tous Vehicules'])].copy()
+        bar_nb_pl_dir=alt.Chart(concat_dir_trafic, title=titre).mark_bar().encode(
+            x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
+            y=alt.Y('nb_pl:Q',stack=None, axis=alt.Axis(title='Nombre de vehicules',titleFontSize=14,labelFontSize=14)),
+            color=alt.Color('type',sort=['UVP Tous vehicules', 'UVP Tous PL','UVP PL en transit'],legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
+            order=alt.Order('type', sort='descending')).properties(width=800, height=400).configure_title(fontSize=18)
     return bar_nb_pl_dir 
     
 

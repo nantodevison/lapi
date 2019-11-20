@@ -59,7 +59,7 @@ matrice_nb_jo_inf_31=pd.read_json(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Trait
 donnees_gest_jour=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\Synthese_trafic_LAPI.csv')
 donnees_gest_jour['created']=pd.to_datetime(donnees_gest_jour.created)
 donnees_horaire=pd.read_csv(r'Q:\DAIT\TI\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trafics_horaire_mjo.csv')
-donnees_gest=donnees_horaire.groupby('camera')['nb_pl'].sum().reset_index()
+donnees_gest=donnees_horaire.groupby('camera').agg({'nb_pl':'sum','nb_tv':'sum',}).reset_index()
 #dico de correspondance pour fonction resultats.passage_fictif_od
 dico_correspondance=[['origine','A63',15],['destination','A63', 13],['origine','A62',10],['destination','A62', 9],['origine','A89', 8],['destination','A89', 7],
                     ['origine','N10', 6],['destination','N10', 5],['origine','A10', 12],['destination','A10', 11]]    

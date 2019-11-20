@@ -65,18 +65,19 @@ def nb_pl_reel_par_site_mjo(df_pct_pl_transit):
         lapi_tot=df_pct_pl_global.loc[i[0]]['nb_pl_tot']+df_pct_pl_global.loc[i[1]]['nb_pl_tot']
         lapi_trans=df_pct_pl_global.loc[i[0]]['nb_pl_transit']+df_pct_pl_global.loc[i[1]]['nb_pl_transit']
         lapi_pct=lapi_trans/lapi_tot*100
-        gest_tot=df_gest_temp.loc[i[0]].values[0]+df_gest_temp.loc[i[1]].values[0]
+        gest_pl_tot=df_gest_temp.loc[i[0]]['nb_pl']+df_gest_temp.loc[i[1]]['nb_pl']
+        gest_tv_tot=df_gest_temp.loc[i[0]]['nb_tv']+df_gest_temp.loc[i[1]]['nb_tv']
         df_lapi.append([lapi_tot, lapi_trans, lapi_pct, tuple(i)])
-        df_gest.append([gest_tot,tuple(i)])
+        df_gest.append([gest_pl_tot,gest_tv_tot,tuple(i)])
     df_site_glob=pd.DataFrame(df_lapi, columns=['nb_pl_tot_lapi','nb_pl_transit_lapi','pct_pl_transit_lapi', 'camera_id'])
-    df_gest_glob=pd.DataFrame(df_gest, columns=['nb_pl_tot_gest','camera_id'])
+    df_gest_glob=pd.DataFrame(df_gest, columns=['nb_pl_tot_gest','nb_tv_tot_gest','camera_id'])
     
     #creation df par sens
     df_site_sens=df_pct_pl_global.reset_index().rename(columns={'nb_pl_tot':'nb_pl_tot_lapi',
                                                                       'nb_pl_transit':'nb_pl_transit_lapi',
                                                                       'pct_pl_transit':'pct_pl_transit_lapi'})
     df_site_sens['camera_id']=df_site_sens.camera_id.apply(lambda x :tuple([x]))
-    df_gest_sens=df_gest_temp.reset_index().rename(columns={'camera':'camera_id','nb_pl':'nb_pl_tot_gest'})
+    df_gest_sens=df_gest_temp.reset_index().rename(columns={'camera':'camera_id','nb_pl':'nb_pl_tot_gest','nb_tv':'nb_tv_tot_gest'})
     df_gest_sens['camera_id']=df_gest_sens.camera_id.apply(lambda x : tuple([x]))
     
     #jointure
@@ -93,6 +94,9 @@ def nb_pl_reel_par_site_mjo(df_pct_pl_transit):
     
     #valeur globale uniquement sur les caméras réelles hormis Rocade Ouest
     valeur_globale=df_finale_tous_sites.iloc[2:16].nb_pl_transit_lapi.sum()/df_finale_tous_sites.iloc[2:16].nb_pl_tot_lapi.sum()*100
+    
+    #indicateur par rapport aux valeusr TV et UVP
+    df_finale_tous_sites['%PL_transit_pr_TV']=df_finale_tous_sites.nb_veh_transit*100/df_finale_tous_sites.nb_tv_tot_gest
     
     return df_finale_tous_sites, valeur_globale
             
@@ -236,8 +240,7 @@ def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam):
     pour_graph_synth_pl_siredo_brut['type']='SIREDO brut'
     pour_graph_synth=pd.concat([pour_graph_synth_pl_lapi,pour_graph_synth_pl_siredo_recale,pour_graph_synth_pl_siredo_brut],sort=False)
     return  pour_graph_synth, lien_traf_gest_traf_lapi                      
-                               
-    
+                                                        
 def PL_transit_dir_jo_cam(df_pct_pl_transit, cam):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
@@ -255,19 +258,31 @@ def PL_transit_dir_jo_cam(df_pct_pl_transit, cam):
         traf_dira_rocade_grp=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].groupby('heure').agg(
                 {'nb_pl':'sum','nb_pl_total':'sum','nb_tv':'sum'}).reset_index()
         dira_pct_pl_lapi=traf_dira_rocade_grp.merge(df_pct_pl_transit_multi_cam, on=['heure'])
-        dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01                             
+        dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01 
+        dira_pct_pl_lapi['uvp_pl_transit']=  dira_pct_pl_lapi.nb_pl_transit*2.5  
+        dira_pct_pl_lapi['uvp_pl']=  dira_pct_pl_lapi.nb_pl*2.5  
+        dira_pct_pl_lapi['uvp_tot']=  (dira_pct_pl_lapi.nb_pl*2.5) +  dira_pct_pl_lapi.nb_tv-dira_pct_pl_lapi.nb_pl                  
     else :
         df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].copy()
         dira_pct_pl_lapi=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].merge(
             df_pct_pl_transit,left_on=['camera','heure'], right_on=['camera_id','heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01
-    diratotal,diratransit, dira_tv=(dira_pct_pl_lapi[['heure','nb_pl']].copy(),
+        dira_pct_pl_lapi['uvp_pl_transit']=  dira_pct_pl_lapi.nb_pl_transit*2.5  
+        dira_pct_pl_lapi['uvp_pl']=  dira_pct_pl_lapi.nb_pl*2.5  
+        dira_pct_pl_lapi['uvp_tot']=  (dira_pct_pl_lapi.nb_pl*2.5) +  dira_pct_pl_lapi.nb_tv-dira_pct_pl_lapi.nb_pl  
+    diratotal,diratransit, dira_tv, uvp_pl_transit, uvp_pl, uvp_tv=(dira_pct_pl_lapi[['heure','nb_pl']].copy(),
                                     dira_pct_pl_lapi[['heure','nb_pl_transit']].rename(columns={'nb_pl_transit':'nb_pl'}).copy(),
-                                    dira_pct_pl_lapi[['heure','nb_tv']].copy().rename(columns={'nb_tv':'nb_pl'}))
+                                    dira_pct_pl_lapi[['heure','nb_tv']].copy().rename(columns={'nb_tv':'nb_pl'}),
+                                    dira_pct_pl_lapi[['heure','uvp_pl_transit']].copy().rename(columns={'uvp_pl_transit':'nb_pl'}),
+                                    dira_pct_pl_lapi[['heure','uvp_pl']].copy().rename(columns={'uvp_pl':'nb_pl'}),
+                                    dira_pct_pl_lapi[['heure','uvp_tot']].copy().rename(columns={'uvp_tot':'nb_pl'}))
     diratotal['type']='Tous PL'
     diratransit['type']='PL en transit'
     dira_tv['type']='Tous Vehicules'
-    concat_dir_trafic=pd.concat([diratotal,diratransit,dira_tv], axis=0, sort=False)
+    uvp_pl_transit['type']='UVP PL en transit'
+    uvp_pl['type']='UVP Tous PL'
+    uvp_tv['type']='UVP Tous Vehicules'
+    concat_dir_trafic=pd.concat([diratotal,diratransit,dira_tv,uvp_pl_transit,uvp_pl,uvp_tv], axis=0, sort=False)
     return concat_dir_trafic, df_pct_pl_transit_multi_cam
 
 def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
