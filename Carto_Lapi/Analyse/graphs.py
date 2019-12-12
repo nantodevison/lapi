@@ -147,7 +147,12 @@ def graph_VL_PL_transit_j_cam(df_concat_pl_jo,df_pct_pl_transit, *cam) :
     return (bar+line).resolve_scale(y='independent').properties(width=800) 
 
 
-def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,intervall_conf=True, *cam): 
+def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,intervall_conf, *cam): 
+    """
+    fgraph pour intervalle de confiance et affichage données de comptagesde PL.
+    en entrée : 
+        intervall_conf : booleen : Terue si on veut le zonage de l'intervalle de confiance, False si on ne le veut pas
+    """
     pour_graph_synth,lien_traf_gest_traf_lapi=indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam)
     lien_traf_gest_traf_lapi['heure']=lien_traf_gest_traf_lapi.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'), axis=1)
     pour_graph_synth['heure']=pour_graph_synth.apply(lambda x : pd.to_datetime(0)+pd.Timedelta(str(x['heure'])+'H'), axis=1)
@@ -163,16 +168,24 @@ def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,intervall_conf=Tr
         else : 
             titre_interv=f'Nombre de PL et % de PL en transit au droit de la caméra {cam[0]}'
             titre_nb_pl=f'Nombre de PL selon la source au droit de la caméra {cam[0]}'
-              
-    #graph d'intervalle de confiance
-    df_intervalle=pour_graph_synth.loc[pour_graph_synth['type'].isin(['LAPI', 'SIREDO recale'])].copy()
+    
+    #pour n'affcihier que "Comptage gestionnnaire" si Comptage gestionnnaire=Comptage gestionnnaire recale
+    if ((pour_graph_synth.loc[pour_graph_synth['type']=='Comptage gestionnnaire recalé'].nb_veh==pour_graph_synth.loc[
+        pour_graph_synth['type']=='Comptage gestionnnaire'].nb_veh).all()) :
+        pour_graph_synth=pour_graph_synth.loc[pour_graph_synth.type.isin(['LAPI','Comptage gestionnnaire'])].copy()
+        df_intervalle=pour_graph_synth.copy()
+    else : 
+        df_intervalle=pour_graph_synth.loc[pour_graph_synth['type'].isin(['LAPI', 'Comptage gestionnnaire recalé'])].copy()
+        
     #pour legende
     lien_traf_gest_traf_lapi['legend_pct_transit']='Pourcentage PL transit'
     lien_traf_gest_traf_lapi['legend_i_conf']='Intervalle de confiance'
     line_trafic=alt.Chart(df_intervalle, title=titre_interv).mark_line().encode(
         x=alt.X('hoursminutes(heure)',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
-        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
-        color=alt.Color('type',legend=alt.Legend(title='source du nombre de PL',titleFontSize=14,labelFontSize=14)))
+        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL',titleFontSize=14,labelFontSize=14)), 
+        color=alt.Color('type',
+                        sort=(['LAPI', 'Comptage gestionnnaire recale']),
+                        legend=alt.Legend(title='source du nombre de PL',titleFontSize=14,labelFontSize=14,labelLimit=400)))
     area_pct_max=alt.Chart(lien_traf_gest_traf_lapi).mark_area(opacity=0.7, color='green').encode(
         x='hoursminutes(heure)',
         y=alt.Y('pct_pl_transit_max:Q',
@@ -192,8 +205,9 @@ def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,intervall_conf=Tr
     #graph comparaison nb_pl
     graph_nb_pl=alt.Chart(pour_graph_synth, title=titre_nb_pl).mark_line(opacity=0.7).encode(
         x=alt.X('hoursminutes(heure)',axis=alt.Axis(title='Heure', titleFontSize=14,labelFontSize=14)),
-        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL SIREDO',titleFontSize=14,labelFontSize=14)), 
-        color=alt.Color('type',title='source du nombre de PL', legend=alt.Legend(titleFontSize=14,labelFontSize=14))).properties(
+        y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL',titleFontSize=14,labelFontSize=14)), 
+        color=alt.Color('type',sort=['LAPI','Comptage gestionnnaire','Comptage gestionnnaire recale'],title='source du nombre de PL', 
+                        legend=alt.Legend(titleFontSize=14,labelFontSize=14,labelLimit=400))).properties(
             width=800, height=400).configure_title(fontSize=18)
         
     return graph_interval,graph_nb_pl
@@ -233,17 +247,18 @@ def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
         opacity=alt.Opacity('legend', legend=alt.Legend(title='Donnees LAPI',titleFontSize=14,labelFontSize=14,labelLimit=300)))
     return (bar_nb_pl_dir+line_pct_pl_lapi).resolve_scale(y='independent').properties(width=800, height=400).configure_title(fontSize=18)
 
-def graph_TV_jo_cam(df_pct_pl_transit,uvp, *cam):
+def graph_TV_jo_cam(df_pct_pl_transit,uvp,coeff_uvp, *cam):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du nb de vehicules, issus de resultat.pourcentage_pl_camera
         uvp : booleen :  si on veut le graph ne UVP ou non
+        coeff_uvp : float : coefficientd'equivalence PL- UVP. utilse si uvp=True, sinon eu importe mais doit exister
         cam : integer : les cameras concernees
     en sortie : 
         bar_nb_pl_dir : chart altair avec le nb pl, nb pl transit, tv
     """
-    concat_dir_trafic=PL_transit_dir_jo_cam(df_pct_pl_transit, cam)[0]
+    concat_dir_trafic=PL_transit_dir_jo_cam(df_pct_pl_transit,coeff_uvp, cam)[0]
     #creation du titre
     if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
         titre=f'Nombre de véhicules sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'

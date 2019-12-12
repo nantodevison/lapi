@@ -235,17 +235,18 @@ def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam):
     pour_graph_synth_pl_lapi=pour_graph_synth_pl_lapi.loc[pour_graph_synth_pl_lapi['type']=='PL total'].copy()
     pour_graph_synth_pl_lapi['type']='LAPI'
     pour_graph_synth_pl_siredo_recale=traf_dira_rocade_cam[['heure', 'nb_pl']].rename(columns={'nb_pl':'nb_veh'}).copy()
-    pour_graph_synth_pl_siredo_recale['type']='SIREDO recale'
+    pour_graph_synth_pl_siredo_recale['type']='Comptage gestionnnaire recalé'
     pour_graph_synth_pl_siredo_brut=traf_dira_rocade_cam[['heure', 'nb_pl_total']].rename(columns={'nb_pl_total':'nb_veh'}).copy()
-    pour_graph_synth_pl_siredo_brut['type']='SIREDO brut'
+    pour_graph_synth_pl_siredo_brut['type']='Comptage gestionnnaire'
     pour_graph_synth=pd.concat([pour_graph_synth_pl_lapi,pour_graph_synth_pl_siredo_recale,pour_graph_synth_pl_siredo_brut],sort=False)
     return  pour_graph_synth, lien_traf_gest_traf_lapi                      
                                                         
-def PL_transit_dir_jo_cam(df_pct_pl_transit, cam):
+def PL_transit_dir_jo_cam(df_pct_pl_transit,coeff_uvp, cam):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du pct de pl en transit, issus de resultat.pourcentage_pl_camera
+        coeff_uvp : utilise pour calcul des uvp, float
         cam : list integer : numeros de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %P
     en sortie : 
         concat_dir_trafic : df avec heure, nb_pl et type_pl, par jour ouvre sur le(s) cameras desirees
@@ -259,17 +260,17 @@ def PL_transit_dir_jo_cam(df_pct_pl_transit, cam):
                 {'nb_pl':'sum','nb_pl_total':'sum','nb_tv':'sum'}).reset_index()
         dira_pct_pl_lapi=traf_dira_rocade_grp.merge(df_pct_pl_transit_multi_cam, on=['heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01 
-        dira_pct_pl_lapi['uvp_pl_transit']=  dira_pct_pl_lapi.nb_pl_transit*2.5  
-        dira_pct_pl_lapi['uvp_pl']=  dira_pct_pl_lapi.nb_pl*2.5  
-        dira_pct_pl_lapi['uvp_tot']=  (dira_pct_pl_lapi.nb_pl*2.5) +  dira_pct_pl_lapi.nb_tv-dira_pct_pl_lapi.nb_pl                  
+        dira_pct_pl_lapi['uvp_pl_transit']=  dira_pct_pl_lapi.nb_pl_transit*coeff_uvp 
+        dira_pct_pl_lapi['uvp_pl']=  dira_pct_pl_lapi.nb_pl*coeff_uvp  
+        dira_pct_pl_lapi['uvp_tot']=  (dira_pct_pl_lapi.nb_pl*coeff_uvp) +  dira_pct_pl_lapi.nb_tv-dira_pct_pl_lapi.nb_pl                  
     else :
         df_pct_pl_transit_multi_cam=df_pct_pl_transit.loc[df_pct_pl_transit['camera_id'].isin(cam)].copy()
         dira_pct_pl_lapi=donnees_horaire.loc[donnees_horaire['camera'].isin(cam)].merge(
             df_pct_pl_transit,left_on=['camera','heure'], right_on=['camera_id','heure'])
         dira_pct_pl_lapi['nb_pl_transit']=dira_pct_pl_lapi.nb_pl*dira_pct_pl_lapi.pct_pl_transit*0.01
-        dira_pct_pl_lapi['uvp_pl_transit']=  dira_pct_pl_lapi.nb_pl_transit*2.5  
-        dira_pct_pl_lapi['uvp_pl']=  dira_pct_pl_lapi.nb_pl*2.5  
-        dira_pct_pl_lapi['uvp_tot']=  (dira_pct_pl_lapi.nb_pl*2.5) +  dira_pct_pl_lapi.nb_tv-dira_pct_pl_lapi.nb_pl  
+        dira_pct_pl_lapi['uvp_pl_transit']=  dira_pct_pl_lapi.nb_pl_transit*coeff_uvp
+        dira_pct_pl_lapi['uvp_pl']=  dira_pct_pl_lapi.nb_pl*coeff_uvp  
+        dira_pct_pl_lapi['uvp_tot']=  (dira_pct_pl_lapi.nb_pl*coeff_uvp) +  dira_pct_pl_lapi.nb_tv-dira_pct_pl_lapi.nb_pl  
     diratotal,diratransit, dira_tv, uvp_pl_transit, uvp_pl, uvp_tv=(dira_pct_pl_lapi[['heure','nb_pl']].copy(),
                                     dira_pct_pl_lapi[['heure','nb_pl_transit']].rename(columns={'nb_pl_transit':'nb_pl'}).copy(),
                                     dira_pct_pl_lapi[['heure','nb_tv']].copy().rename(columns={'nb_tv':'nb_pl'}),
