@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from Import_Forme import dico_corrsp_camera_site
 from Resultats import indice_confiance_cam, PL_transit_dir_jo_cam
 
+
 def graph_passages_proches(jointure, groupe_pl_rappro):
     """
     Visualiser les stats sur les pasages trop proches

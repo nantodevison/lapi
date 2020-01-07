@@ -14,6 +14,7 @@ import Connexion_Transfert as ct
 from statistics import mode, StatisticsError
 import re
 
+
 def mise_en_forme_dfs_trajets (fichier, type):
     """
     mise en forme des dfs de liste de trajets possibles a partir des json

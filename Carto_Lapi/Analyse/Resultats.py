@@ -8,8 +8,6 @@ Moduel avec des fonctions pour traiter les resultats : import / exports en json,
 import pandas as pd
 from Import_Forme import matrice_nb_jo_sup_31, matrice_nb_jo, matrice_nb_jo_inf_31, dico_correspondance, donnees_horaire, donnees_gest
 
-
-
 def pourcentage_pl_camera(df_pl,dico_passag):
     """
     fonction de regroupement des nb de vl, pl, et pl en trasit, par heure et par camera
