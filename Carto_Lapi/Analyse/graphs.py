@@ -12,7 +12,7 @@ import pandas as pd
 import altair as alt
 import plotly.graph_objects as go
 from Import_Forme import dico_corrsp_camera_site
-from Resultats import indice_confiance_cam, PL_transit_dir_jo_cam
+from Resultats import indice_confiance_cam, PL_transit_dir_jo_cam,PL_transit_dir_jo_cam_normalise
 
 
 def graph_passages_proches(jointure, groupe_pl_rappro):
@@ -250,7 +250,7 @@ def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
 
 def graph_TV_jo_cam(df_pct_pl_transit,uvp,coeff_uvp, *cam):
     """
-    graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
+    graph de synthese du nombre de pl en trasit, TV et pl totaux par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du nb de vehicules, issus de resultat.pourcentage_pl_camera
         uvp : booleen :  si on veut le graph ne UVP ou non
@@ -284,7 +284,34 @@ def graph_TV_jo_cam(df_pct_pl_transit,uvp,coeff_uvp, *cam):
             color=alt.Color('type',sort=['UVP Tous vehicules', 'UVP Tous PL','UVP PL en transit'],legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
             order=alt.Order('type', sort='descending')).properties(width=800, height=400).configure_title(fontSize=18)
     return bar_nb_pl_dir 
-    
+
+def graph_TV_jo_cam_norm(df_pct_pl_transit,uvp,coeff_uvp, *cam):
+    """
+    graph de synthese de la proportion de pl en transit, TV, PL Locaux par heure. Base nb pl dir et pct_pl_transit lapi
+    en entree : 
+        df_pct_pl_transit : df du nb de vehicules, issus de resultat.pourcentage_pl_camera
+        uvp : booleen :  si on veut le graph ne UVP ou non
+        coeff_uvp : float : coefficientd'equivalence PL- UVP. utilse si uvp=True, sinon eu importe mais doit exister
+        cam : integer : les cameras concernees
+    en sortie : 
+        bar_nb_pl_dir_norm : chart altair avec la proportion de pl locaux, pl transit, tv
+    """
+    concat_dir_trafic_normalisee=PL_transit_dir_jo_cam_normalise(df_pct_pl_transit,coeff_uvp, cam)
+    #creation du titre
+    if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
+        titre=f'Proportion de vehicules sur {[voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)][0]}'
+    else :
+        if len(cam)>1 :
+            titre=f'Proportion de vehicules au droit des caméras {cam}'
+        else : 
+            titre=f'Proportion de vehicules au droit de la caméra {cam[0]}'   
+            
+    bar_nb_pl_dir_norm=alt.Chart(concat_dir_trafic_normalisee, title=titre).mark_bar().encode(
+        x=alt.X('heure:O',axis=alt.Axis(title='Heure',titleFontSize=14,labelFontSize=14)),
+        y=alt.Y('nb_pl:Q',stack='normalize', axis=alt.Axis(title='Proportions de vehicules',titleFontSize=14,labelFontSize=14,format='%')),
+        color=alt.Color('type',sort=['PL locaux','PL en transit','Vehicules Legers'],legend=alt.Legend(title='Type de vehicules',titleFontSize=14,labelFontSize=14)),
+        order=alt.Order('type', sort='ascending')).properties(width=800, height=400).configure_title(fontSize=18) 
+    return bar_nb_pl_dir_norm
 
 def graph_nb_veh_jour_camera(df, date_d, date_f, camera=4, type_v='TV') : 
     """

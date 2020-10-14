@@ -241,7 +241,7 @@ def indice_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,cam):
                                                         
 def PL_transit_dir_jo_cam(df_pct_pl_transit,coeff_uvp, cam):
     """
-    graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
+    Donnees pour graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du pct de pl en transit, issus de resultat.pourcentage_pl_camera
         coeff_uvp : utilise pour calcul des uvp, float
@@ -283,6 +283,26 @@ def PL_transit_dir_jo_cam(df_pct_pl_transit,coeff_uvp, cam):
     uvp_tv['type']='UVP Tous Vehicules'
     concat_dir_trafic=pd.concat([diratotal,diratransit,dira_tv,uvp_pl_transit,uvp_pl,uvp_tv], axis=0, sort=False)
     return concat_dir_trafic, df_pct_pl_transit_multi_cam
+
+def PL_transit_dir_jo_cam_normalise(df_pct_pl_transit,coeff_uvp, cam) : 
+    """
+    Donnees pour graph de synthese de la proportion TV, PL locaux, PL TRANSIT. Base concat_dir_trafic issue de PL_transit_dir_jo_cam()
+    en entree : 
+        df_pct_pl_transit : df du pct de pl en transit, issus de resultat.pourcentage_pl_camera
+        coeff_uvp : utilise pour calcul des uvp, float (NON ECRIT POUR LE MOMENT)
+        cam : list integer : numeros de la camera etudiee. on peut en passer plsueiurs et obtenir une somme des nb veh et une moyenne des %P
+    en sortie : 
+        concat_dir_trafic_normalisee : df avec heure, nb_pl et type_pl, par jour ouvre sur le(s) cameras desirees
+    """
+    concat_dir_trafic=PL_transit_dir_jo_cam(df_pct_pl_transit,coeff_uvp, cam)[0]
+    concat_dir_trafic_normalisee=concat_dir_trafic.set_index(['heure','type']).unstack(level=-1).reset_index(level='heure',col_level=1)['nb_pl']
+    concat_dir_trafic_normalisee['PL locaux']=concat_dir_trafic_normalisee['Tous PL']-concat_dir_trafic_normalisee['PL en transit']
+    concat_dir_trafic_normalisee['Vehicules Legers']=concat_dir_trafic_normalisee['Tous Vehicules']-concat_dir_trafic_normalisee['Tous PL']
+    concat_dir_trafic_normalisee=concat_dir_trafic_normalisee[['PL en transit','Vehicules Legers','PL locaux']].stack().reset_index()
+    concat_dir_trafic_normalisee.columns=['heure','type','nb_pl']
+    return concat_dir_trafic_normalisee
+    
+    
 
 def passages_fictif_rocade (liste_trajet, df_od,df_passages_transit,df_pl):
     """

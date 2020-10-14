@@ -1,0 +1,1897 @@
+,heure,type,nb_pl,cam_num,cam_nom
+0,0,PL en transit,188.78519455868394,"3,4",Rocade Est
+1,0,Vehicules Legers,623.0,"3,4",Rocade Est
+2,0,PL locaux,161.21480544131606,"3,4",Rocade Est
+3,1,PL en transit,217.66491336633663,"3,4",Rocade Est
+4,1,Vehicules Legers,456.0,"3,4",Rocade Est
+5,1,PL locaux,125.33508663366337,"3,4",Rocade Est
+6,2,PL en transit,186.2309148264984,"3,4",Rocade Est
+7,2,Vehicules Legers,344.0,"3,4",Rocade Est
+8,2,PL locaux,149.7690851735016,"3,4",Rocade Est
+9,3,PL en transit,186.36418632788872,"3,4",Rocade Est
+10,3,Vehicules Legers,403.0,"3,4",Rocade Est
+11,3,PL locaux,178.63581367211128,"3,4",Rocade Est
+12,4,PL en transit,215.49723091740907,"3,4",Rocade Est
+13,4,Vehicules Legers,680.0,"3,4",Rocade Est
+14,4,PL locaux,236.50276908259093,"3,4",Rocade Est
+15,5,PL en transit,325.04870277651344,"3,4",Rocade Est
+16,5,Vehicules Legers,1273.0,"3,4",Rocade Est
+17,5,PL locaux,391.95129722348656,"3,4",Rocade Est
+18,6,PL en transit,443.5994755817765,"3,4",Rocade Est
+19,6,Vehicules Legers,4195.0,"3,4",Rocade Est
+20,6,PL locaux,603.4005244182235,"3,4",Rocade Est
+21,7,PL en transit,300.87263634942957,"3,4",Rocade Est
+22,7,Vehicules Legers,6293.0,"3,4",Rocade Est
+23,7,PL locaux,481.12736365057043,"3,4",Rocade Est
+24,8,PL en transit,306.42229175979736,"3,4",Rocade Est
+25,8,Vehicules Legers,5578.0,"3,4",Rocade Est
+26,8,PL locaux,469.57770824020264,"3,4",Rocade Est
+27,9,PL en transit,514.9168162776781,"3,4",Rocade Est
+28,9,Vehicules Legers,4880.0,"3,4",Rocade Est
+29,9,PL locaux,633.0831837223219,"3,4",Rocade Est
+30,10,PL en transit,586.2001947577701,"3,4",Rocade Est
+31,10,Vehicules Legers,5006.0,"3,4",Rocade Est
+32,10,PL locaux,730.7998052422299,"3,4",Rocade Est
+33,11,PL en transit,612.2927226647357,"3,4",Rocade Est
+34,11,Vehicules Legers,5414.0,"3,4",Rocade Est
+35,11,PL locaux,716.7072773352643,"3,4",Rocade Est
+36,12,PL en transit,612.4552829635421,"3,4",Rocade Est
+37,12,Vehicules Legers,5588.0,"3,4",Rocade Est
+38,12,PL locaux,576.5447170364579,"3,4",Rocade Est
+39,13,PL en transit,597.0834359314329,"3,4",Rocade Est
+40,13,Vehicules Legers,5584.0,"3,4",Rocade Est
+41,13,PL locaux,555.9165640685671,"3,4",Rocade Est
+42,14,PL en transit,551.1801855989003,"3,4",Rocade Est
+43,14,Vehicules Legers,6011.0,"3,4",Rocade Est
+44,14,PL locaux,671.8198144010997,"3,4",Rocade Est
+45,15,PL en transit,530.1169652265543,"3,4",Rocade Est
+46,15,Vehicules Legers,6629.0,"3,4",Rocade Est
+47,15,PL locaux,641.8830347734457,"3,4",Rocade Est
+48,16,PL en transit,481.3880331753555,"3,4",Rocade Est
+49,16,Vehicules Legers,7453.0,"3,4",Rocade Est
+50,16,PL locaux,535.6119668246445,"3,4",Rocade Est
+51,17,PL en transit,383.0319323488579,"3,4",Rocade Est
+52,17,Vehicules Legers,7655.0,"3,4",Rocade Est
+53,17,PL locaux,427.9680676511421,"3,4",Rocade Est
+54,18,PL en transit,351.1008604880802,"3,4",Rocade Est
+55,18,Vehicules Legers,7091.0,"3,4",Rocade Est
+56,18,PL locaux,402.8991395119198,"3,4",Rocade Est
+57,19,PL en transit,447.24268704983103,"3,4",Rocade Est
+58,19,Vehicules Legers,5704.0,"3,4",Rocade Est
+59,19,PL locaux,304.75731295016897,"3,4",Rocade Est
+60,20,PL en transit,402.9417475728155,"3,4",Rocade Est
+61,20,Vehicules Legers,3596.0,"3,4",Rocade Est
+62,20,PL locaux,224.05825242718453,"3,4",Rocade Est
+63,21,PL en transit,343.338108278913,"3,4",Rocade Est
+64,21,Vehicules Legers,2151.0,"3,4",Rocade Est
+65,21,PL locaux,162.661891721087,"3,4",Rocade Est
+66,22,PL en transit,287.5146721102322,"3,4",Rocade Est
+67,22,Vehicules Legers,1725.0,"3,4",Rocade Est
+68,22,PL locaux,138.4853278897678,"3,4",Rocade Est
+69,23,PL en transit,238.6914073651156,"3,4",Rocade Est
+70,23,Vehicules Legers,1369.0,"3,4",Rocade Est
+71,23,PL locaux,139.3085926348844,"3,4",Rocade Est
+0,0,PL en transit,1.0864197530864197,"1,2",Rocade Ouest
+1,0,Vehicules Legers,426.0,"1,2",Rocade Ouest
+2,0,PL locaux,20.91358024691358,"1,2",Rocade Ouest
+3,1,PL en transit,1.4652014652014653,"1,2",Rocade Ouest
+4,1,Vehicules Legers,223.0,"1,2",Rocade Ouest
+5,1,PL locaux,22.534798534798533,"1,2",Rocade Ouest
+6,2,PL en transit,0.4977777777777777,"1,2",Rocade Ouest
+7,2,Vehicules Legers,172.0,"1,2",Rocade Ouest
+8,2,PL locaux,27.502222222222223,"1,2",Rocade Ouest
+9,3,PL en transit,1.7083333333333335,"1,2",Rocade Ouest
+10,3,Vehicules Legers,184.0,"1,2",Rocade Ouest
+11,3,PL locaux,39.291666666666664,"1,2",Rocade Ouest
+12,4,PL en transit,2.2708840227088403,"1,2",Rocade Ouest
+13,4,Vehicules Legers,535.0,"1,2",Rocade Ouest
+14,4,PL locaux,67.72911597729116,"1,2",Rocade Ouest
+15,5,PL en transit,5.0181818181818185,"1,2",Rocade Ouest
+16,5,Vehicules Legers,1290.0,"1,2",Rocade Ouest
+17,5,PL locaux,132.98181818181817,"1,2",Rocade Ouest
+18,6,PL en transit,10.28782287822878,"1,2",Rocade Ouest
+19,6,Vehicules Legers,3706.0,"1,2",Rocade Ouest
+20,6,PL locaux,261.7121771217712,"1,2",Rocade Ouest
+21,7,PL en transit,7.1060917180013705,"1,2",Rocade Ouest
+22,7,Vehicules Legers,8938.0,"1,2",Rocade Ouest
+23,7,PL locaux,350.8939082819986,"1,2",Rocade Ouest
+24,8,PL en transit,8.433121019108281,"1,2",Rocade Ouest
+25,8,Vehicules Legers,8993.0,"1,2",Rocade Ouest
+26,8,PL locaux,322.5668789808917,"1,2",Rocade Ouest
+27,9,PL en transit,18.685626911314984,"1,2",Rocade Ouest
+28,9,Vehicules Legers,6964.0,"1,2",Rocade Ouest
+29,9,PL locaux,427.314373088685,"1,2",Rocade Ouest
+30,10,PL en transit,23.73235460191982,"1,2",Rocade Ouest
+31,10,Vehicules Legers,5543.0,"1,2",Rocade Ouest
+32,10,PL locaux,443.26764539808016,"1,2",Rocade Ouest
+33,11,PL en transit,14.462521008403362,"1,2",Rocade Ouest
+34,11,Vehicules Legers,5681.0,"1,2",Rocade Ouest
+35,11,PL locaux,411.53747899159663,"1,2",Rocade Ouest
+36,12,PL en transit,7.634104541559554,"1,2",Rocade Ouest
+37,12,Vehicules Legers,6285.0,"1,2",Rocade Ouest
+38,12,PL locaux,294.36589545844043,"1,2",Rocade Ouest
+39,13,PL en transit,6.3002461033634125,"1,2",Rocade Ouest
+40,13,Vehicules Legers,6410.0,"1,2",Rocade Ouest
+41,13,PL locaux,313.6997538966366,"1,2",Rocade Ouest
+42,14,PL en transit,8.678758283920473,"1,2",Rocade Ouest
+43,14,Vehicules Legers,6544.0,"1,2",Rocade Ouest
+44,14,PL locaux,368.3212417160795,"1,2",Rocade Ouest
+45,15,PL en transit,15.966999232540292,"1,2",Rocade Ouest
+46,15,Vehicules Legers,6742.0,"1,2",Rocade Ouest
+47,15,PL locaux,349.0330007674597,"1,2",Rocade Ouest
+48,16,PL en transit,17.28426862925483,"1,2",Rocade Ouest
+49,16,Vehicules Legers,8481.0,"1,2",Rocade Ouest
+50,16,PL locaux,290.7157313707452,"1,2",Rocade Ouest
+51,17,PL en transit,17.550000000000004,"1,2",Rocade Ouest
+52,17,Vehicules Legers,8660.0,"1,2",Rocade Ouest
+53,17,PL locaux,189.45,"1,2",Rocade Ouest
+54,18,PL en transit,14.393602225312934,"1,2",Rocade Ouest
+55,18,Vehicules Legers,7951.0,"1,2",Rocade Ouest
+56,18,PL locaux,116.60639777468707,"1,2",Rocade Ouest
+57,19,PL en transit,11.685649202733487,"1,2",Rocade Ouest
+58,19,Vehicules Legers,6108.0,"1,2",Rocade Ouest
+59,19,PL locaux,83.31435079726651,"1,2",Rocade Ouest
+60,20,PL en transit,5.425170068027211,"1,2",Rocade Ouest
+61,20,Vehicules Legers,3614.0,"1,2",Rocade Ouest
+62,20,PL locaux,49.574829931972786,"1,2",Rocade Ouest
+63,21,PL en transit,4.505888376856119,"1,2",Rocade Ouest
+64,21,Vehicules Legers,2162.0,"1,2",Rocade Ouest
+65,21,PL locaux,35.49411162314388,"1,2",Rocade Ouest
+66,22,PL en transit,1.9867549668874174,"1,2",Rocade Ouest
+67,22,Vehicules Legers,1727.0,"1,2",Rocade Ouest
+68,22,PL locaux,28.013245033112582,"1,2",Rocade Ouest
+69,23,PL en transit,1.2165450121654502,"1,2",Rocade Ouest
+70,23,Vehicules Legers,1111.0,"1,2",Rocade Ouest
+71,23,PL locaux,23.78345498783455,"1,2",Rocade Ouest
+0,0,PL en transit,58.490730643402415,"11,12",A10
+1,0,Vehicules Legers,118.0,"11,12",A10
+2,0,PL locaux,47.509269356597585,"11,12",A10
+3,1,PL en transit,56.94973262032086,"11,12",A10
+4,1,Vehicules Legers,87.0,"11,12",A10
+5,1,PL locaux,47.05026737967914,"11,12",A10
+6,2,PL en transit,53.09246088193458,"11,12",A10
+7,2,Vehicules Legers,83.0,"11,12",A10
+8,2,PL locaux,32.90753911806542,"11,12",A10
+9,3,PL en transit,44.05663189269747,"11,12",A10
+10,3,Vehicules Legers,63.0,"11,12",A10
+11,3,PL locaux,33.94336810730253,"11,12",A10
+12,4,PL en transit,42.073510773130536,"11,12",A10
+13,4,Vehicules Legers,86.0,"11,12",A10
+14,4,PL locaux,43.926489226869464,"11,12",A10
+15,5,PL en transit,78.16372618207481,"11,12",A10
+16,5,Vehicules Legers,174.0,"11,12",A10
+17,5,PL locaux,79.83627381792519,"11,12",A10
+18,6,PL en transit,109.42208462332299,"11,12",A10
+19,6,Vehicules Legers,533.0,"11,12",A10
+20,6,PL locaux,120.57791537667701,"11,12",A10
+21,7,PL en transit,72.62068965517243,"11,12",A10
+22,7,Vehicules Legers,926.0,"11,12",A10
+23,7,PL locaux,113.37931034482757,"11,12",A10
+24,8,PL en transit,69.39006696428571,"11,12",A10
+25,8,Vehicules Legers,1016.0,"11,12",A10
+26,8,PL locaux,111.60993303571429,"11,12",A10
+27,9,PL en transit,101.53453038674031,"11,12",A10
+28,9,Vehicules Legers,1203.0,"11,12",A10
+29,9,PL locaux,117.46546961325969,"11,12",A10
+30,10,PL en transit,99.35633151030711,"11,12",A10
+31,10,Vehicules Legers,1253.0,"11,12",A10
+32,10,PL locaux,126.64366848969289,"11,12",A10
+33,11,PL en transit,111.6818181818182,"11,12",A10
+34,11,Vehicules Legers,1218.0,"11,12",A10
+35,11,PL locaux,135.3181818181818,"11,12",A10
+36,12,PL en transit,103.79329608938548,"11,12",A10
+37,12,Vehicules Legers,1129.0,"11,12",A10
+38,12,PL locaux,127.20670391061452,"11,12",A10
+39,13,PL en transit,97.36510376633358,"11,12",A10
+40,13,Vehicules Legers,1141.0,"11,12",A10
+41,13,PL locaux,126.63489623366642,"11,12",A10
+42,14,PL en transit,115.9989165763814,"11,12",A10
+43,14,Vehicules Legers,1308.0,"11,12",A10
+44,14,PL locaux,151.00108342361858,"11,12",A10
+45,15,PL en transit,123.3911714770798,"11,12",A10
+46,15,Vehicules Legers,1471.0,"11,12",A10
+47,15,PL locaux,143.6088285229202,"11,12",A10
+48,16,PL en transit,117.96957905907324,"11,12",A10
+49,16,Vehicules Legers,1566.0,"11,12",A10
+50,16,PL locaux,132.03042094092677,"11,12",A10
+51,17,PL en transit,104.9238699444885,"11,12",A10
+52,17,Vehicules Legers,1602.0,"11,12",A10
+53,17,PL locaux,136.0761300555115,"11,12",A10
+54,18,PL en transit,94.57058823529412,"11,12",A10
+55,18,Vehicules Legers,1493.0,"11,12",A10
+56,18,PL locaux,112.42941176470588,"11,12",A10
+57,19,PL en transit,109.06103286384976,"11,12",A10
+58,19,Vehicules Legers,1105.0,"11,12",A10
+59,19,PL locaux,92.93896713615024,"11,12",A10
+60,20,PL en transit,110.3551401869159,"11,12",A10
+61,20,Vehicules Legers,726.0,"11,12",A10
+62,20,PL locaux,81.6448598130841,"11,12",A10
+63,21,PL en transit,87.54519161243672,"11,12",A10
+64,21,Vehicules Legers,471.0,"11,12",A10
+65,21,PL locaux,57.454808387563276,"11,12",A10
+66,22,PL en transit,76.13409961685824,"11,12",A10
+67,22,Vehicules Legers,325.0,"11,12",A10
+68,22,PL locaux,47.86590038314176,"11,12",A10
+69,23,PL en transit,73.3593117408907,"11,12",A10
+70,23,Vehicules Legers,231.0,"11,12",A10
+71,23,PL locaux,47.6406882591093,"11,12",A10
+0,0,PL en transit,197.60636457973018,"5,6",A10/N10
+1,0,Vehicules Legers,429.0,"5,6",A10/N10
+2,0,PL locaux,172.39363542026982,"5,6",A10/N10
+3,1,PL en transit,233.52394988946207,"5,6",A10/N10
+4,1,Vehicules Legers,352.0,"5,6",A10/N10
+5,1,PL locaux,115.47605011053793,"5,6",A10/N10
+6,2,PL en transit,204.38781163434905,"5,6",A10/N10
+7,2,Vehicules Legers,308.0,"5,6",A10/N10
+8,2,PL locaux,117.61218836565095,"5,6",A10/N10
+9,3,PL en transit,200.42089440060124,"5,6",A10/N10
+10,3,Vehicules Legers,355.0,"5,6",A10/N10
+11,3,PL locaux,134.57910559939876,"5,6",A10/N10
+12,4,PL en transit,222.33025885153228,"5,6",A10/N10
+13,4,Vehicules Legers,581.0,"5,6",A10/N10
+14,4,PL locaux,173.66974114846772,"5,6",A10/N10
+15,5,PL en transit,333.9021488871834,"5,6",A10/N10
+16,5,Vehicules Legers,1414.0,"5,6",A10/N10
+17,5,PL locaux,297.0978511128166,"5,6",A10/N10
+18,6,PL en transit,413.2705649157583,"5,6",A10/N10
+19,6,Vehicules Legers,3893.0,"5,6",A10/N10
+20,6,PL locaux,391.7294350842417,"5,6",A10/N10
+21,7,PL en transit,279.4247594844799,"5,6",A10/N10
+22,7,Vehicules Legers,4306.0,"5,6",A10/N10
+23,7,PL locaux,377.5752405155201,"5,6",A10/N10
+24,8,PL en transit,251.30570394623473,"5,6",A10/N10
+25,8,Vehicules Legers,4347.0,"5,6",A10/N10
+26,8,PL locaux,361.69429605376524,"5,6",A10/N10
+27,9,PL en transit,418.3541596685702,"5,6",A10/N10
+28,9,Vehicules Legers,4077.0,"5,6",A10/N10
+29,9,PL locaux,462.6458403314298,"5,6",A10/N10
+30,10,PL en transit,481.59346249594114,"5,6",A10/N10
+31,10,Vehicules Legers,3984.0,"5,6",A10/N10
+32,10,PL locaux,500.40653750405886,"5,6",A10/N10
+33,11,PL en transit,513.4905700360246,"5,6",A10/N10
+34,11,Vehicules Legers,4039.0,"5,6",A10/N10
+35,11,PL locaux,508.50942996397544,"5,6",A10/N10
+36,12,PL en transit,517.2491145218416,"5,6",A10/N10
+37,12,Vehicules Legers,4061.0,"5,6",A10/N10
+38,12,PL locaux,447.75088547815835,"5,6",A10/N10
+39,13,PL en transit,500.2213472384803,"5,6",A10/N10
+40,13,Vehicules Legers,4277.0,"5,6",A10/N10
+41,13,PL locaux,441.7786527615197,"5,6",A10/N10
+42,14,PL en transit,475.8432573551562,"5,6",A10/N10
+43,14,Vehicules Legers,4647.0,"5,6",A10/N10
+44,14,PL locaux,487.1567426448438,"5,6",A10/N10
+45,15,PL en transit,465.0251261456081,"5,6",A10/N10
+46,15,Vehicules Legers,5146.0,"5,6",A10/N10
+47,15,PL locaux,475.9748738543919,"5,6",A10/N10
+48,16,PL en transit,436.9548432381844,"5,6",A10/N10
+49,16,Vehicules Legers,6227.0,"5,6",A10/N10
+50,16,PL locaux,409.0451567618156,"5,6",A10/N10
+51,17,PL en transit,348.5668419595903,"5,6",A10/N10
+52,17,Vehicules Legers,6801.0,"5,6",A10/N10
+53,17,PL locaux,369.4331580404097,"5,6",A10/N10
+54,18,PL en transit,346.4335492908422,"5,6",A10/N10
+55,18,Vehicules Legers,6149.0,"5,6",A10/N10
+56,18,PL locaux,335.5664507091578,"5,6",A10/N10
+57,19,PL en transit,440.08763523956725,"5,6",A10/N10
+58,19,Vehicules Legers,4602.0,"5,6",A10/N10
+59,19,PL locaux,298.91236476043275,"5,6",A10/N10
+60,20,PL en transit,412.4158942670786,"5,6",A10/N10
+61,20,Vehicules Legers,2791.0,"5,6",A10/N10
+62,20,PL locaux,248.5841057329214,"5,6",A10/N10
+63,21,PL en transit,369.49766511007346,"5,6",A10/N10
+64,21,Vehicules Legers,1656.0,"5,6",A10/N10
+65,21,PL locaux,157.50233488992654,"5,6",A10/N10
+66,22,PL en transit,301.4434014356709,"5,6",A10/N10
+67,22,Vehicules Legers,1232.0,"5,6",A10/N10
+68,22,PL locaux,126.55659856432908,"5,6",A10/N10
+69,23,PL en transit,261.9052369077307,"5,6",A10/N10
+70,23,Vehicules Legers,845.0,"5,6",A10/N10
+71,23,PL locaux,122.09476309226932,"5,6",A10/N10
+0,0,PL en transit,8.95687468290208,"7,8",N89
+1,0,Vehicules Legers,148.0,"7,8",N89
+2,0,PL locaux,17.043125317097918,"7,8",N89
+3,1,PL en transit,7.259552042160737,"7,8",N89
+4,1,Vehicules Legers,93.0,"7,8",N89
+5,1,PL locaux,22.74044795783926,"7,8",N89
+6,2,PL en transit,9.966850828729282,"7,8",N89
+7,2,Vehicules Legers,78.0,"7,8",N89
+8,2,PL locaux,31.03314917127072,"7,8",N89
+9,3,PL en transit,11.866156787762907,"7,8",N89
+10,3,Vehicules Legers,90.0,"7,8",N89
+11,3,PL locaux,46.133843212237096,"7,8",N89
+12,4,PL en transit,15.88674033149171,"7,8",N89
+13,4,Vehicules Legers,178.0,"7,8",N89
+14,4,PL locaux,65.11325966850829,"7,8",N89
+15,5,PL en transit,26.68252666119771,"7,8",N89
+16,5,Vehicules Legers,434.0,"7,8",N89
+17,5,PL locaux,112.31747333880229,"7,8",N89
+18,6,PL en transit,41.271144278606954,"7,8",N89
+19,6,Vehicules Legers,1631.0,"7,8",N89
+20,6,PL locaux,193.72885572139305,"7,8",N89
+21,7,PL en transit,24.49664429530202,"7,8",N89
+22,7,Vehicules Legers,2743.0,"7,8",N89
+23,7,PL locaux,225.50335570469798,"7,8",N89
+24,8,PL en transit,24.590423426988522,"7,8",N89
+25,8,Vehicules Legers,3152.0,"7,8",N89
+26,8,PL locaux,214.40957657301146,"7,8",N89
+27,9,PL en transit,36.36947791164659,"7,8",N89
+28,9,Vehicules Legers,2194.0,"7,8",N89
+29,9,PL locaux,246.63052208835342,"7,8",N89
+30,10,PL en transit,44.39051220350636,"7,8",N89
+31,10,Vehicules Legers,1857.0,"7,8",N89
+32,10,PL locaux,261.6094877964936,"7,8",N89
+33,11,PL en transit,44.37733689431514,"7,8",N89
+34,11,Vehicules Legers,1799.0,"7,8",N89
+35,11,PL locaux,238.62266310568486,"7,8",N89
+36,12,PL en transit,40.86917157084653,"7,8",N89
+37,12,Vehicules Legers,1777.0,"7,8",N89
+38,12,PL locaux,203.13082842915347,"7,8",N89
+39,13,PL en transit,41.66252873563218,"7,8",N89
+40,13,Vehicules Legers,1911.0,"7,8",N89
+41,13,PL locaux,199.33747126436782,"7,8",N89
+42,14,PL en transit,38.06182911120653,"7,8",N89
+43,14,Vehicules Legers,1961.0,"7,8",N89
+44,14,PL locaux,215.93817088879348,"7,8",N89
+45,15,PL en transit,36.218929677134014,"7,8",N89
+46,15,Vehicules Legers,2215.0,"7,8",N89
+47,15,PL locaux,206.781070322866,"7,8",N89
+48,16,PL en transit,30.42605801236329,"7,8",N89
+49,16,Vehicules Legers,2809.0,"7,8",N89
+50,16,PL locaux,183.57394198763672,"7,8",N89
+51,17,PL en transit,20.29773462783172,"7,8",N89
+52,17,Vehicules Legers,3363.0,"7,8",N89
+53,17,PL locaux,139.70226537216828,"7,8",N89
+54,18,PL en transit,21.916167664670663,"7,8",N89
+55,18,Vehicules Legers,3006.0,"7,8",N89
+56,18,PL locaux,98.08383233532933,"7,8",N89
+57,19,PL en transit,22.209302325581394,"7,8",N89
+58,19,Vehicules Legers,2019.0,"7,8",N89
+59,19,PL locaux,72.79069767441861,"7,8",N89
+60,20,PL en transit,19.17111459968603,"7,8",N89
+61,20,Vehicules Legers,1072.0,"7,8",N89
+62,20,PL locaux,51.828885400313965,"7,8",N89
+63,21,PL en transit,12.776119402985074,"7,8",N89
+64,21,Vehicules Legers,594.0,"7,8",N89
+65,21,PL locaux,35.223880597014926,"7,8",N89
+66,22,PL en transit,12.912621359223301,"7,8",N89
+67,22,Vehicules Legers,401.0,"7,8",N89
+68,22,PL locaux,22.0873786407767,"7,8",N89
+69,23,PL en transit,10.983847283406753,"7,8",N89
+70,23,Vehicules Legers,312.0,"7,8",N89
+71,23,PL locaux,19.016152716593247,"7,8",N89
+0,0,PL en transit,43.941176470588246,"9,10",A62
+1,0,Vehicules Legers,162.0,"9,10",A62
+2,0,PL locaux,39.058823529411754,"9,10",A62
+3,1,PL en transit,59.190537084399,"9,10",A62
+4,1,Vehicules Legers,114.0,"9,10",A62
+5,1,PL locaux,51.809462915601,"9,10",A62
+6,2,PL en transit,45.412844036697244,"9,10",A62
+7,2,Vehicules Legers,91.0,"9,10",A62
+8,2,PL locaux,53.587155963302756,"9,10",A62
+9,3,PL en transit,39.46886016451234,"9,10",A62
+10,3,Vehicules Legers,74.0,"9,10",A62
+11,3,PL locaux,68.53113983548766,"9,10",A62
+12,4,PL en transit,43.93280632411068,"9,10",A62
+13,4,Vehicules Legers,150.0,"9,10",A62
+14,4,PL locaux,86.06719367588931,"9,10",A62
+15,5,PL en transit,79.7703180212014,"9,10",A62
+16,5,Vehicules Legers,385.0,"9,10",A62
+17,5,PL locaux,135.2296819787986,"9,10",A62
+18,6,PL en transit,132.3193307226771,"9,10",A62
+19,6,Vehicules Legers,1528.0,"9,10",A62
+20,6,PL locaux,222.6806692773229,"9,10",A62
+21,7,PL en transit,61.90219224283305,"9,10",A62
+22,7,Vehicules Legers,2349.0,"9,10",A62
+23,7,PL locaux,242.09780775716695,"9,10",A62
+24,8,PL en transit,59.06849315068493,"9,10",A62
+25,8,Vehicules Legers,2478.0,"9,10",A62
+26,8,PL locaux,199.93150684931507,"9,10",A62
+27,9,PL en transit,94.25201938610662,"9,10",A62
+28,9,Vehicules Legers,2223.0,"9,10",A62
+29,9,PL locaux,277.7479806138934,"9,10",A62
+30,10,PL en transit,106.4051684356253,"9,10",A62
+31,10,Vehicules Legers,2022.0,"9,10",A62
+32,10,PL locaux,313.5948315643747,"9,10",A62
+33,11,PL en transit,95.61518135959645,"9,10",A62
+34,11,Vehicules Legers,1921.0,"9,10",A62
+35,11,PL locaux,311.3848186404035,"9,10",A62
+36,12,PL en transit,95.4467289719626,"9,10",A62
+37,12,Vehicules Legers,1845.0,"9,10",A62
+38,12,PL locaux,268.5532710280374,"9,10",A62
+39,13,PL en transit,98.03642206748796,"9,10",A62
+40,13,Vehicules Legers,2005.0,"9,10",A62
+41,13,PL locaux,247.96357793251204,"9,10",A62
+42,14,PL en transit,103.50111912459585,"9,10",A62
+43,14,Vehicules Legers,2154.0,"9,10",A62
+44,14,PL locaux,274.49888087540415,"9,10",A62
+45,15,PL en transit,108.9341085271318,"9,10",A62
+46,15,Vehicules Legers,2432.0,"9,10",A62
+47,15,PL locaux,276.0658914728682,"9,10",A62
+48,16,PL en transit,108.0890844102282,"9,10",A62
+49,16,Vehicules Legers,2905.0,"9,10",A62
+50,16,PL locaux,227.9109155897718,"9,10",A62
+51,17,PL en transit,96.71480144404332,"9,10",A62
+52,17,Vehicules Legers,3098.0,"9,10",A62
+53,17,PL locaux,185.2851985559567,"9,10",A62
+54,18,PL en transit,82.21774604793472,"9,10",A62
+55,18,Vehicules Legers,2908.0,"9,10",A62
+56,18,PL locaux,158.78225395206528,"9,10",A62
+57,19,PL en transit,99.43611793611794,"9,10",A62
+58,19,Vehicules Legers,2259.0,"9,10",A62
+59,19,PL locaux,117.56388206388206,"9,10",A62
+60,20,PL en transit,84.70324189526185,"9,10",A62
+61,20,Vehicules Legers,1247.0,"9,10",A62
+62,20,PL locaux,77.29675810473815,"9,10",A62
+63,21,PL en transit,72.89263157894737,"9,10",A62
+64,21,Vehicules Legers,703.0,"9,10",A62
+65,21,PL locaux,55.10736842105263,"9,10",A62
+66,22,PL en transit,81.12754555198285,"9,10",A62
+67,22,Vehicules Legers,486.0,"9,10",A62
+68,22,PL locaux,45.87245444801715,"9,10",A62
+69,23,PL en transit,56.31442663378545,"9,10",A62
+70,23,Vehicules Legers,358.0,"9,10",A62
+71,23,PL locaux,52.68557336621455,"9,10",A62
+0,0,PL en transit,163.9750939849624,"18,19",A660
+1,0,Vehicules Legers,-283.0,"18,19",A660
+2,0,PL locaux,119.0249060150376,"18,19",A660
+3,1,PL en transit,172.73883696780894,"18,19",A660
+4,1,Vehicules Legers,-253.0,"18,19",A660
+5,1,PL locaux,80.26116303219106,"18,19",A660
+6,2,PL en transit,151.46162221012523,"18,19",A660
+7,2,Vehicules Legers,-229.0,"18,19",A660
+8,2,PL locaux,77.53837778987477,"18,19",A660
+9,3,PL en transit,153.74343867166579,"18,19",A660
+10,3,Vehicules Legers,-239.0,"18,19",A660
+11,3,PL locaux,85.25656132833421,"18,19",A660
+12,4,PL en transit,184.34120082815735,"18,19",A660
+13,4,Vehicules Legers,-296.0,"18,19",A660
+14,4,PL locaux,111.65879917184265,"18,19",A660
+15,5,PL en transit,270.49151027703306,"18,19",A660
+16,5,Vehicules Legers,-460.0,"18,19",A660
+17,5,PL locaux,189.50848972296694,"18,19",A660
+18,6,PL en transit,356.55460588793926,"18,19",A660
+19,6,Vehicules Legers,-644.0,"18,19",A660
+20,6,PL locaux,287.44539411206074,"18,19",A660
+21,7,PL en transit,218.6539222148978,"18,19",A660
+22,7,Vehicules Legers,-531.0,"18,19",A660
+23,7,PL locaux,312.34607778510224,"18,19",A660
+24,8,PL en transit,209.06135717188135,"18,19",A660
+25,8,Vehicules Legers,-525.0,"18,19",A660
+26,8,PL locaux,315.93864282811865,"18,19",A660
+27,9,PL en transit,372.1594562802248,"18,19",A660
+28,9,Vehicules Legers,-808.0,"18,19",A660
+29,9,PL locaux,435.8405437197752,"18,19",A660
+30,10,PL en transit,502.87409700722384,"18,19",A660
+31,10,Vehicules Legers,-1025.0,"18,19",A660
+32,10,PL locaux,522.1259029927762,"18,19",A660
+33,11,PL en transit,450.5317582417583,"18,19",A660
+34,11,Vehicules Legers,-969.0,"18,19",A660
+35,11,PL locaux,518.4682417582417,"18,19",A660
+36,12,PL en transit,466.4587155963303,"18,19",A660
+37,12,Vehicules Legers,-892.0,"18,19",A660
+38,12,PL locaux,425.5412844036697,"18,19",A660
+39,13,PL en transit,459.4992175273866,"18,19",A660
+40,13,Vehicules Legers,-848.0,"18,19",A660
+41,13,PL locaux,388.5007824726134,"18,19",A660
+42,14,PL en transit,434.86535008976665,"18,19",A660
+43,14,Vehicules Legers,-840.0,"18,19",A660
+44,14,PL locaux,405.13464991023335,"18,19",A660
+45,15,PL en transit,434.2862041677657,"18,19",A660
+46,15,Vehicules Legers,-843.0,"18,19",A660
+47,15,PL locaux,408.7137958322343,"18,19",A660
+48,16,PL en transit,380.1365543179517,"18,19",A660
+49,16,Vehicules Legers,-739.0,"18,19",A660
+50,16,PL locaux,358.8634456820483,"18,19",A660
+51,17,PL en transit,283.0232010150444,"18,19",A660
+52,17,Vehicules Legers,-589.0,"18,19",A660
+53,17,PL locaux,305.9767989849556,"18,19",A660
+54,18,PL en transit,287.23946599916565,"18,19",A660
+55,18,Vehicules Legers,-574.0,"18,19",A660
+56,18,PL locaux,286.76053400083435,"18,19",A660
+57,19,PL en transit,351.23714979042586,"18,19",A660
+58,19,Vehicules Legers,-566.0,"18,19",A660
+59,19,PL locaux,214.76285020957414,"18,19",A660
+60,20,PL en transit,359.4367929168716,"18,19",A660
+61,20,Vehicules Legers,-505.0,"18,19",A660
+62,20,PL locaux,145.56320708312842,"18,19",A660
+63,21,PL en transit,281.2065858962411,"18,19",A660
+64,21,Vehicules Legers,-388.0,"18,19",A660
+65,21,PL locaux,106.79341410375889,"18,19",A660
+66,22,PL en transit,227.9729932483121,"18,19",A660
+67,22,Vehicules Legers,-312.0,"18,19",A660
+68,22,PL locaux,84.0270067516879,"18,19",A660
+69,23,PL en transit,178.14285714285714,"18,19",A660
+70,23,Vehicules Legers,-261.0,"18,19",A660
+71,23,PL locaux,82.85714285714286,"18,19",A660
+0,0,PL en transit,172.47403827932536,"13,15",A63
+1,0,Vehicules Legers,77.0,"13,15",A63
+2,0,PL locaux,81.52596172067464,"13,15",A63
+3,1,PL en transit,144.6737657308809,"13,15",A63
+4,1,Vehicules Legers,56.0,"13,15",A63
+5,1,PL locaux,76.32623426911911,"13,15",A63
+6,2,PL en transit,121.03737422137037,"13,15",A63
+7,2,Vehicules Legers,49.0,"13,15",A63
+8,2,PL locaux,68.96262577862963,"13,15",A63
+9,3,PL en transit,122.28022820685847,"13,15",A63
+10,3,Vehicules Legers,42.0,"13,15",A63
+11,3,PL locaux,72.71977179314153,"13,15",A63
+12,4,PL en transit,156.80432020330366,"13,15",A63
+13,4,Vehicules Legers,57.0,"13,15",A63
+14,4,PL locaux,90.19567979669634,"13,15",A63
+15,5,PL en transit,230.46387055710028,"13,15",A63
+16,5,Vehicules Legers,100.0,"13,15",A63
+17,5,PL locaux,130.53612944289972,"13,15",A63
+18,6,PL en transit,275.7294372294372,"13,15",A63
+19,6,Vehicules Legers,282.0,"13,15",A63
+20,6,PL locaux,202.27056277056278,"13,15",A63
+21,7,PL en transit,269.8448170937859,"13,15",A63
+22,7,Vehicules Legers,585.0,"13,15",A63
+23,7,PL locaux,245.15518290621412,"13,15",A63
+24,8,PL en transit,227.0222589023473,"13,15",A63
+25,8,Vehicules Legers,693.0,"13,15",A63
+26,8,PL locaux,208.9777410976527,"13,15",A63
+27,9,PL en transit,289.4760652931467,"13,15",A63
+28,9,Vehicules Legers,714.0,"13,15",A63
+29,9,PL locaux,255.5239347068533,"13,15",A63
+30,10,PL en transit,413.04297254664516,"13,15",A63
+31,10,Vehicules Legers,742.0,"13,15",A63
+32,10,PL locaux,355.95702745335484,"13,15",A63
+33,11,PL en transit,469.8110238453033,"13,15",A63
+34,11,Vehicules Legers,681.0,"13,15",A63
+35,11,PL locaux,340.1889761546967,"13,15",A63
+36,12,PL en transit,431.44252983786504,"13,15",A63
+37,12,Vehicules Legers,591.0,"13,15",A63
+38,12,PL locaux,329.55747016213496,"13,15",A63
+39,13,PL en transit,419.0971842923062,"13,15",A63
+40,13,Vehicules Legers,613.0,"13,15",A63
+41,13,PL locaux,289.9028157076938,"13,15",A63
+42,14,PL en transit,418.54580235933753,"13,15",A63
+43,14,Vehicules Legers,710.0,"13,15",A63
+44,14,PL locaux,261.45419764066247,"13,15",A63
+45,15,PL en transit,396.09448845844526,"13,15",A63
+46,15,Vehicules Legers,808.0,"13,15",A63
+47,15,PL locaux,274.90551154155474,"13,15",A63
+48,16,PL en transit,375.3838213994373,"13,15",A63
+49,16,Vehicules Legers,867.0,"13,15",A63
+50,16,PL locaux,294.6161786005627,"13,15",A63
+51,17,PL en transit,325.52525994575046,"13,15",A63
+52,17,Vehicules Legers,918.0,"13,15",A63
+53,17,PL locaux,259.47474005424954,"13,15",A63
+54,18,PL en transit,333.28914594503317,"13,15",A63
+55,18,Vehicules Legers,859.0,"13,15",A63
+56,18,PL locaux,215.71085405496683,"13,15",A63
+57,19,PL en transit,345.6376734258271,"13,15",A63
+58,19,Vehicules Legers,672.0,"13,15",A63
+59,19,PL locaux,174.36232657417293,"13,15",A63
+60,20,PL en transit,310.30964440499196,"13,15",A63
+61,20,Vehicules Legers,375.0,"13,15",A63
+62,20,PL locaux,149.69035559500804,"13,15",A63
+63,21,PL en transit,243.25444497078797,"13,15",A63
+64,21,Vehicules Legers,232.0,"13,15",A63
+65,21,PL locaux,102.74555502921203,"13,15",A63
+66,22,PL en transit,194.09145470134325,"13,15",A63
+67,22,Vehicules Legers,181.0,"13,15",A63
+68,22,PL locaux,76.90854529865675,"13,15",A63
+69,23,PL en transit,158.42450894165933,"13,15",A63
+70,23,Vehicules Legers,133.0,"13,15",A63
+71,23,PL locaux,72.57549105834067,"13,15",A63
+0,0,PL en transit,138.8206686930091,"20,21",N10
+1,0,Vehicules Legers,311.0,"20,21",N10
+2,0,PL locaux,125.17933130699089,"20,21",N10
+3,1,PL en transit,179.58403597526697,"20,21",N10
+4,1,Vehicules Legers,265.0,"20,21",N10
+5,1,PL locaux,65.41596402473303,"20,21",N10
+6,2,PL en transit,151.38157894736847,"20,21",N10
+7,2,Vehicules Legers,225.0,"20,21",N10
+8,2,PL locaux,84.61842105263153,"20,21",N10
+9,3,PL en transit,156.65376884422108,"20,21",N10
+10,3,Vehicules Legers,292.0,"20,21",N10
+11,3,PL locaux,100.34623115577892,"20,21",N10
+12,4,PL en transit,180.91368584758945,"20,21",N10
+13,4,Vehicules Legers,495.0,"20,21",N10
+14,4,PL locaux,129.08631415241055,"20,21",N10
+15,5,PL en transit,256.3797101449275,"20,21",N10
+16,5,Vehicules Legers,1240.0,"20,21",N10
+17,5,PL locaux,216.62028985507249,"20,21",N10
+18,6,PL en transit,303.3756097560975,"20,21",N10
+19,6,Vehicules Legers,3360.0,"20,21",N10
+20,6,PL locaux,271.6243902439025,"20,21",N10
+21,7,PL en transit,208.27566693613585,"20,21",N10
+22,7,Vehicules Legers,3380.0,"20,21",N10
+23,7,PL locaux,262.72433306386415,"20,21",N10
+24,8,PL en transit,182.2348541510845,"20,21",N10
+25,8,Vehicules Legers,3331.0,"20,21",N10
+26,8,PL locaux,249.7651458489155,"20,21",N10
+27,9,PL en transit,316.7492232578783,"20,21",N10
+28,9,Vehicules Legers,2874.0,"20,21",N10
+29,9,PL locaux,345.2507767421217,"20,21",N10
+30,10,PL en transit,384.05945788399885,"20,21",N10
+31,10,Vehicules Legers,2731.0,"20,21",N10
+32,10,PL locaux,371.94054211600115,"20,21",N10
+33,11,PL en transit,403.4920634920635,"20,21",N10
+34,11,Vehicules Legers,2821.0,"20,21",N10
+35,11,PL locaux,371.5079365079365,"20,21",N10
+36,12,PL en transit,416.8421670826604,"20,21",N10
+37,12,Vehicules Legers,2932.0,"20,21",N10
+38,12,PL locaux,317.1578329173396,"20,21",N10
+39,13,PL en transit,407.7648270787344,"20,21",N10
+40,13,Vehicules Legers,3136.0,"20,21",N10
+41,13,PL locaux,310.2351729212656,"20,21",N10
+42,14,PL en transit,359.9065368567455,"20,21",N10
+43,14,Vehicules Legers,3339.0,"20,21",N10
+44,14,PL locaux,336.0934631432545,"20,21",N10
+45,15,PL en transit,342.47886491279934,"20,21",N10
+46,15,Vehicules Legers,3675.0,"20,21",N10
+47,15,PL locaux,331.52113508720066,"20,21",N10
+48,16,PL en transit,320.9711588883062,"20,21",N10
+49,16,Vehicules Legers,4661.0,"20,21",N10
+50,16,PL locaux,275.0288411116938,"20,21",N10
+51,17,PL en transit,244.38137755102034,"20,21",N10
+52,17,Vehicules Legers,5199.0,"20,21",N10
+53,17,PL locaux,232.61862244897966,"20,21",N10
+54,18,PL en transit,254.7739035685099,"20,21",N10
+55,18,Vehicules Legers,4656.0,"20,21",N10
+56,18,PL locaux,220.2260964314901,"20,21",N10
+57,19,PL en transit,330.4702056231641,"20,21",N10
+58,19,Vehicules Legers,3497.0,"20,21",N10
+59,19,PL locaux,206.52979437683592,"20,21",N10
+60,20,PL en transit,302.21657754010687,"20,21",N10
+61,20,Vehicules Legers,2065.0,"20,21",N10
+62,20,PL locaux,166.78342245989313,"20,21",N10
+63,21,PL en transit,284.35324341682724,"20,21",N10
+64,21,Vehicules Legers,1185.0,"20,21",N10
+65,21,PL locaux,97.64675658317276,"20,21",N10
+66,22,PL en transit,225.22885958107057,"20,21",N10
+67,22,Vehicules Legers,907.0,"20,21",N10
+68,22,PL locaux,78.77114041892943,"20,21",N10
+69,23,PL en transit,188.2463963963964,"20,21",N10
+70,23,Vehicules Legers,614.0,"20,21",N10
+71,23,PL locaux,74.75360360360361,"20,21",N10
+0,0,PL en transit,0.3,1,Rocade Ouest sens interieur
+1,0,Vehicules Legers,222.0,1,Rocade Ouest sens interieur
+2,0,PL locaux,14.7,1,Rocade Ouest sens interieur
+3,1,PL en transit,1.05,1,Rocade Ouest sens interieur
+4,1,Vehicules Legers,136.0,1,Rocade Ouest sens interieur
+5,1,PL locaux,13.95,1,Rocade Ouest sens interieur
+6,2,PL en transit,0.68,1,Rocade Ouest sens interieur
+7,2,Vehicules Legers,99.0,1,Rocade Ouest sens interieur
+8,2,PL locaux,16.32,1,Rocade Ouest sens interieur
+9,3,PL en transit,2.24,1,Rocade Ouest sens interieur
+10,3,Vehicules Legers,105.0,1,Rocade Ouest sens interieur
+11,3,PL locaux,25.759999999999998,1,Rocade Ouest sens interieur
+12,4,PL en transit,0.46,1,Rocade Ouest sens interieur
+13,4,Vehicules Legers,311.0,1,Rocade Ouest sens interieur
+14,4,PL locaux,45.54,1,Rocade Ouest sens interieur
+15,5,PL en transit,0.78,1,Rocade Ouest sens interieur
+16,5,Vehicules Legers,790.0,1,Rocade Ouest sens interieur
+17,5,PL locaux,77.22,1,Rocade Ouest sens interieur
+18,6,PL en transit,2.84,1,Rocade Ouest sens interieur
+19,6,Vehicules Legers,2146.0,1,Rocade Ouest sens interieur
+20,6,PL locaux,139.16,1,Rocade Ouest sens interieur
+21,7,PL en transit,3.72,1,Rocade Ouest sens interieur
+22,7,Vehicules Legers,5124.0,1,Rocade Ouest sens interieur
+23,7,PL locaux,182.28,1,Rocade Ouest sens interieur
+24,8,PL en transit,1.71,1,Rocade Ouest sens interieur
+25,8,Vehicules Legers,5008.0,1,Rocade Ouest sens interieur
+26,8,PL locaux,169.29,1,Rocade Ouest sens interieur
+27,9,PL en transit,7.05,1,Rocade Ouest sens interieur
+28,9,Vehicules Legers,3738.0,1,Rocade Ouest sens interieur
+29,9,PL locaux,227.95,1,Rocade Ouest sens interieur
+30,10,PL en transit,7.23,1,Rocade Ouest sens interieur
+31,10,Vehicules Legers,2884.0,1,Rocade Ouest sens interieur
+32,10,PL locaux,233.77,1,Rocade Ouest sens interieur
+33,11,PL en transit,6.9,1,Rocade Ouest sens interieur
+34,11,Vehicules Legers,2918.0,1,Rocade Ouest sens interieur
+35,11,PL locaux,223.1,1,Rocade Ouest sens interieur
+36,12,PL en transit,3.36,1,Rocade Ouest sens interieur
+37,12,Vehicules Legers,3097.0,1,Rocade Ouest sens interieur
+38,12,PL locaux,164.64,1,Rocade Ouest sens interieur
+39,13,PL en transit,3.72,1,Rocade Ouest sens interieur
+40,13,Vehicules Legers,3299.0,1,Rocade Ouest sens interieur
+41,13,PL locaux,182.28,1,Rocade Ouest sens interieur
+42,14,PL en transit,2.11,1,Rocade Ouest sens interieur
+43,14,Vehicules Legers,3201.0,1,Rocade Ouest sens interieur
+44,14,PL locaux,208.89,1,Rocade Ouest sens interieur
+45,15,PL en transit,2.0,1,Rocade Ouest sens interieur
+46,15,Vehicules Legers,3201.0,1,Rocade Ouest sens interieur
+47,15,PL locaux,198.0,1,Rocade Ouest sens interieur
+48,16,PL en transit,12.81,1,Rocade Ouest sens interieur
+49,16,Vehicules Legers,3780.0,1,Rocade Ouest sens interieur
+50,16,PL locaux,170.19,1,Rocade Ouest sens interieur
+51,17,PL en transit,13.200000000000001,1,Rocade Ouest sens interieur
+52,17,Vehicules Legers,3854.0,1,Rocade Ouest sens interieur
+53,17,PL locaux,106.8,1,Rocade Ouest sens interieur
+54,18,PL en transit,13.94,1,Rocade Ouest sens interieur
+55,18,Vehicules Legers,3509.0,1,Rocade Ouest sens interieur
+56,18,PL locaux,68.06,1,Rocade Ouest sens interieur
+57,19,PL en transit,13.44,1,Rocade Ouest sens interieur
+58,19,Vehicules Legers,2844.0,1,Rocade Ouest sens interieur
+59,19,PL locaux,42.56,1,Rocade Ouest sens interieur
+60,20,PL en transit,2.4,1,Rocade Ouest sens interieur
+61,20,Vehicules Legers,1723.0,1,Rocade Ouest sens interieur
+62,20,PL locaux,27.6,1,Rocade Ouest sens interieur
+63,21,PL en transit,2.0,1,Rocade Ouest sens interieur
+64,21,Vehicules Legers,1057.0,1,Rocade Ouest sens interieur
+65,21,PL locaux,23.0,1,Rocade Ouest sens interieur
+66,22,PL en transit,1.6,1,Rocade Ouest sens interieur
+67,22,Vehicules Legers,756.0,1,Rocade Ouest sens interieur
+68,22,PL locaux,18.4,1,Rocade Ouest sens interieur
+69,23,PL en transit,1.35,1,Rocade Ouest sens interieur
+70,23,Vehicules Legers,536.0,1,Rocade Ouest sens interieur
+71,23,PL locaux,13.65,1,Rocade Ouest sens interieur
+0,0,PL en transit,0.63,2,Rocade Ouest sens exterieur
+1,0,Vehicules Legers,204.0,2,Rocade Ouest sens exterieur
+2,0,PL locaux,6.37,2,Rocade Ouest sens exterieur
+3,1,PL en transit,0.45,2,Rocade Ouest sens exterieur
+4,1,Vehicules Legers,87.0,2,Rocade Ouest sens exterieur
+5,1,PL locaux,8.55,2,Rocade Ouest sens exterieur
+6,2,PL en transit,0.0,2,Rocade Ouest sens exterieur
+7,2,Vehicules Legers,73.0,2,Rocade Ouest sens exterieur
+8,2,PL locaux,11.0,2,Rocade Ouest sens exterieur
+9,3,PL en transit,0.13,2,Rocade Ouest sens exterieur
+10,3,Vehicules Legers,79.0,2,Rocade Ouest sens exterieur
+11,3,PL locaux,12.87,2,Rocade Ouest sens exterieur
+12,4,PL en transit,1.2,2,Rocade Ouest sens exterieur
+13,4,Vehicules Legers,224.0,2,Rocade Ouest sens exterieur
+14,4,PL locaux,22.8,2,Rocade Ouest sens exterieur
+15,5,PL en transit,3.0,2,Rocade Ouest sens exterieur
+16,5,Vehicules Legers,500.0,2,Rocade Ouest sens exterieur
+17,5,PL locaux,57.0,2,Rocade Ouest sens exterieur
+18,6,PL en transit,6.5,2,Rocade Ouest sens exterieur
+19,6,Vehicules Legers,1560.0,2,Rocade Ouest sens exterieur
+20,6,PL locaux,123.5,2,Rocade Ouest sens exterieur
+21,7,PL en transit,3.44,2,Rocade Ouest sens exterieur
+22,7,Vehicules Legers,3814.0,2,Rocade Ouest sens exterieur
+23,7,PL locaux,168.56,2,Rocade Ouest sens exterieur
+24,8,PL en transit,4.8,2,Rocade Ouest sens exterieur
+25,8,Vehicules Legers,3985.0,2,Rocade Ouest sens exterieur
+26,8,PL locaux,155.2,2,Rocade Ouest sens exterieur
+27,9,PL en transit,10.55,2,Rocade Ouest sens exterieur
+28,9,Vehicules Legers,3226.0,2,Rocade Ouest sens exterieur
+29,9,PL locaux,200.45,2,Rocade Ouest sens exterieur
+30,10,PL en transit,15.82,2,Rocade Ouest sens exterieur
+31,10,Vehicules Legers,2659.0,2,Rocade Ouest sens exterieur
+32,10,PL locaux,210.18,2,Rocade Ouest sens exterieur
+33,11,PL en transit,7.84,2,Rocade Ouest sens exterieur
+34,11,Vehicules Legers,2763.0,2,Rocade Ouest sens exterieur
+35,11,PL locaux,188.16,2,Rocade Ouest sens exterieur
+36,12,PL en transit,4.0200000000000005,2,Rocade Ouest sens exterieur
+37,12,Vehicules Legers,3188.0,2,Rocade Ouest sens exterieur
+38,12,PL locaux,129.98,2,Rocade Ouest sens exterieur
+39,13,PL en transit,2.68,2,Rocade Ouest sens exterieur
+40,13,Vehicules Legers,3111.0,2,Rocade Ouest sens exterieur
+41,13,PL locaux,131.32,2,Rocade Ouest sens exterieur
+42,14,PL en transit,4.98,2,Rocade Ouest sens exterieur
+43,14,Vehicules Legers,3343.0,2,Rocade Ouest sens exterieur
+44,14,PL locaux,161.02,2,Rocade Ouest sens exterieur
+45,15,PL en transit,11.55,2,Rocade Ouest sens exterieur
+46,15,Vehicules Legers,3541.0,2,Rocade Ouest sens exterieur
+47,15,PL locaux,153.45,2,Rocade Ouest sens exterieur
+48,16,PL en transit,6.25,2,Rocade Ouest sens exterieur
+49,16,Vehicules Legers,4701.0,2,Rocade Ouest sens exterieur
+50,16,PL locaux,118.75,2,Rocade Ouest sens exterieur
+51,17,PL en transit,4.3500000000000005,2,Rocade Ouest sens exterieur
+52,17,Vehicules Legers,4806.0,2,Rocade Ouest sens exterieur
+53,17,PL locaux,82.65,2,Rocade Ouest sens exterieur
+54,18,PL en transit,2.94,2,Rocade Ouest sens exterieur
+55,18,Vehicules Legers,4442.0,2,Rocade Ouest sens exterieur
+56,18,PL locaux,46.06,2,Rocade Ouest sens exterieur
+57,19,PL en transit,1.95,2,Rocade Ouest sens exterieur
+58,19,Vehicules Legers,3264.0,2,Rocade Ouest sens exterieur
+59,19,PL locaux,37.05,2,Rocade Ouest sens exterieur
+60,20,PL en transit,2.75,2,Rocade Ouest sens exterieur
+61,20,Vehicules Legers,1891.0,2,Rocade Ouest sens exterieur
+62,20,PL locaux,22.25,2,Rocade Ouest sens exterieur
+63,21,PL en transit,1.95,2,Rocade Ouest sens exterieur
+64,21,Vehicules Legers,1105.0,2,Rocade Ouest sens exterieur
+65,21,PL locaux,13.05,2,Rocade Ouest sens exterieur
+66,22,PL en transit,0.6,2,Rocade Ouest sens exterieur
+67,22,Vehicules Legers,971.0,2,Rocade Ouest sens exterieur
+68,22,PL locaux,9.4,2,Rocade Ouest sens exterieur
+69,23,PL en transit,0.3,2,Rocade Ouest sens exterieur
+70,23,Vehicules Legers,575.0,2,Rocade Ouest sens exterieur
+71,23,PL locaux,9.7,2,Rocade Ouest sens exterieur
+0,0,PL en transit,109.2,4,Rocade Est sens exterieur
+1,0,Vehicules Legers,317.0,4,Rocade Est sens exterieur
+2,0,PL locaux,85.8,4,Rocade Est sens exterieur
+3,1,PL en transit,121.36,4,Rocade Est sens exterieur
+4,1,Vehicules Legers,214.0,4,Rocade Est sens exterieur
+5,1,PL locaux,42.64,4,Rocade Est sens exterieur
+6,2,PL en transit,102.96000000000001,4,Rocade Est sens exterieur
+7,2,Vehicules Legers,162.0,4,Rocade Est sens exterieur
+8,2,PL locaux,53.03999999999999,4,Rocade Est sens exterieur
+9,3,PL en transit,92.34,4,Rocade Est sens exterieur
+10,3,Vehicules Legers,162.0,4,Rocade Est sens exterieur
+11,3,PL locaux,69.66,4,Rocade Est sens exterieur
+12,4,PL en transit,96.88,4,Rocade Est sens exterieur
+13,4,Vehicules Legers,243.0,4,Rocade Est sens exterieur
+14,4,PL locaux,76.12,4,Rocade Est sens exterieur
+15,5,PL en transit,153.33,4,Rocade Est sens exterieur
+16,5,Vehicules Legers,494.0,4,Rocade Est sens exterieur
+17,5,PL locaux,115.66999999999999,4,Rocade Est sens exterieur
+18,6,PL en transit,213.92000000000002,4,Rocade Est sens exterieur
+19,6,Vehicules Legers,1382.0,4,Rocade Est sens exterieur
+20,6,PL locaux,168.07999999999998,4,Rocade Est sens exterieur
+21,7,PL en transit,175.5,4,Rocade Est sens exterieur
+22,7,Vehicules Legers,3330.0,4,Rocade Est sens exterieur
+23,7,PL locaux,214.5,4,Rocade Est sens exterieur
+24,8,PL en transit,170.15,4,Rocade Est sens exterieur
+25,8,Vehicules Legers,3825.0,4,Rocade Est sens exterieur
+26,8,PL locaux,244.85,4,Rocade Est sens exterieur
+27,9,PL en transit,257.76,4,Rocade Est sens exterieur
+28,9,Vehicules Legers,2676.0,4,Rocade Est sens exterieur
+29,9,PL locaux,279.24,4,Rocade Est sens exterieur
+30,10,PL en transit,273.68,4,Rocade Est sens exterieur
+31,10,Vehicules Legers,2464.0,4,Rocade Est sens exterieur
+32,10,PL locaux,348.32,4,Rocade Est sens exterieur
+33,11,PL en transit,319.48,4,Rocade Est sens exterieur
+34,11,Vehicules Legers,2730.0,4,Rocade Est sens exterieur
+35,11,PL locaux,332.52,4,Rocade Est sens exterieur
+36,12,PL en transit,320.65000000000003,4,Rocade Est sens exterieur
+37,12,Vehicules Legers,2813.0,4,Rocade Est sens exterieur
+38,12,PL locaux,284.34999999999997,4,Rocade Est sens exterieur
+39,13,PL en transit,299.52,4,Rocade Est sens exterieur
+40,13,Vehicules Legers,2948.0,4,Rocade Est sens exterieur
+41,13,PL locaux,276.48,4,Rocade Est sens exterieur
+42,14,PL en transit,289.8,4,Rocade Est sens exterieur
+43,14,Vehicules Legers,3168.0,4,Rocade Est sens exterieur
+44,14,PL locaux,340.2,4,Rocade Est sens exterieur
+45,15,PL en transit,270.16,4,Rocade Est sens exterieur
+46,15,Vehicules Legers,3597.0,4,Rocade Est sens exterieur
+47,15,PL locaux,343.84,4,Rocade Est sens exterieur
+48,16,PL en transit,234.9,4,Rocade Est sens exterieur
+49,16,Vehicules Legers,4159.0,4,Rocade Est sens exterieur
+50,16,PL locaux,287.1,4,Rocade Est sens exterieur
+51,17,PL en transit,189.88,4,Rocade Est sens exterieur
+52,17,Vehicules Legers,4138.0,4,Rocade Est sens exterieur
+53,17,PL locaux,214.12,4,Rocade Est sens exterieur
+54,18,PL en transit,186.69,4,Rocade Est sens exterieur
+55,18,Vehicules Legers,3893.0,4,Rocade Est sens exterieur
+56,18,PL locaux,194.31,4,Rocade Est sens exterieur
+57,19,PL en transit,257.67,4,Rocade Est sens exterieur
+58,19,Vehicules Legers,3046.0,4,Rocade Est sens exterieur
+59,19,PL locaux,151.32999999999998,4,Rocade Est sens exterieur
+60,20,PL en transit,227.91,4,Rocade Est sens exterieur
+61,20,Vehicules Legers,1858.0,4,Rocade Est sens exterieur
+62,20,PL locaux,93.09,4,Rocade Est sens exterieur
+63,21,PL en transit,204.05,4,Rocade Est sens exterieur
+64,21,Vehicules Legers,1102.0,4,Rocade Est sens exterieur
+65,21,PL locaux,60.94999999999999,4,Rocade Est sens exterieur
+66,22,PL en transit,174.79,4,Rocade Est sens exterieur
+67,22,Vehicules Legers,912.0,4,Rocade Est sens exterieur
+68,22,PL locaux,52.21000000000001,4,Rocade Est sens exterieur
+69,23,PL en transit,143.28,4,Rocade Est sens exterieur
+70,23,Vehicules Legers,684.0,4,Rocade Est sens exterieur
+71,23,PL locaux,55.72,4,Rocade Est sens exterieur
+0,0,PL en transit,79.05,3,Rocade Est sens interieur
+1,0,Vehicules Legers,306.0,3,Rocade Est sens interieur
+2,0,PL locaux,75.95,3,Rocade Est sens interieur
+3,1,PL en transit,94.87,3,Rocade Est sens interieur
+4,1,Vehicules Legers,242.0,3,Rocade Est sens interieur
+5,1,PL locaux,84.13,3,Rocade Est sens interieur
+6,2,PL en transit,82.8,3,Rocade Est sens interieur
+7,2,Vehicules Legers,182.0,3,Rocade Est sens interieur
+8,2,PL locaux,97.2,3,Rocade Est sens interieur
+9,3,PL en transit,95.41,3,Rocade Est sens interieur
+10,3,Vehicules Legers,241.0,3,Rocade Est sens interieur
+11,3,PL locaux,107.59,3,Rocade Est sens interieur
+12,4,PL en transit,119.97,3,Rocade Est sens interieur
+13,4,Vehicules Legers,437.0,3,Rocade Est sens interieur
+14,4,PL locaux,159.03,3,Rocade Est sens interieur
+15,5,PL en transit,174.72,3,Rocade Est sens interieur
+16,5,Vehicules Legers,779.0,3,Rocade Est sens interieur
+17,5,PL locaux,273.28,3,Rocade Est sens interieur
+18,6,PL en transit,232.75,3,Rocade Est sens interieur
+19,6,Vehicules Legers,2813.0,3,Rocade Est sens interieur
+20,6,PL locaux,432.25,3,Rocade Est sens interieur
+21,7,PL en transit,125.44,3,Rocade Est sens interieur
+22,7,Vehicules Legers,2963.0,3,Rocade Est sens interieur
+23,7,PL locaux,266.56,3,Rocade Est sens interieur
+24,8,PL en transit,133.57,3,Rocade Est sens interieur
+25,8,Vehicules Legers,1753.0,3,Rocade Est sens interieur
+26,8,PL locaux,227.43,3,Rocade Est sens interieur
+27,9,PL en transit,256.62,3,Rocade Est sens interieur
+28,9,Vehicules Legers,2204.0,3,Rocade Est sens interieur
+29,9,PL locaux,354.38,3,Rocade Est sens interieur
+30,10,PL en transit,312.75,3,Rocade Est sens interieur
+31,10,Vehicules Legers,2542.0,3,Rocade Est sens interieur
+32,10,PL locaux,382.25,3,Rocade Est sens interieur
+33,11,PL en transit,291.11,3,Rocade Est sens interieur
+34,11,Vehicules Legers,2684.0,3,Rocade Est sens interieur
+35,11,PL locaux,385.89,3,Rocade Est sens interieur
+36,12,PL en transit,292.0,3,Rocade Est sens interieur
+37,12,Vehicules Legers,2775.0,3,Rocade Est sens interieur
+38,12,PL locaux,292.0,3,Rocade Est sens interieur
+39,13,PL en transit,300.04,3,Rocade Est sens interieur
+40,13,Vehicules Legers,2636.0,3,Rocade Est sens interieur
+41,13,PL locaux,276.96,3,Rocade Est sens interieur
+42,14,PL en transit,260.92,3,Rocade Est sens interieur
+43,14,Vehicules Legers,2843.0,3,Rocade Est sens interieur
+44,14,PL locaux,332.08,3,Rocade Est sens interieur
+45,15,PL en transit,262.26,3,Rocade Est sens interieur
+46,15,Vehicules Legers,3032.0,3,Rocade Est sens interieur
+47,15,PL locaux,295.74,3,Rocade Est sens interieur
+48,16,PL en transit,247.5,3,Rocade Est sens interieur
+49,16,Vehicules Legers,3294.0,3,Rocade Est sens interieur
+50,16,PL locaux,247.5,3,Rocade Est sens interieur
+51,17,PL en transit,195.36,3,Rocade Est sens interieur
+52,17,Vehicules Legers,3517.0,3,Rocade Est sens interieur
+53,17,PL locaux,211.64,3,Rocade Est sens interieur
+54,18,PL en transit,160.39000000000001,3,Rocade Est sens interieur
+55,18,Vehicules Legers,3198.0,3,Rocade Est sens interieur
+56,18,PL locaux,212.60999999999999,3,Rocade Est sens interieur
+57,19,PL en transit,188.65,3,Rocade Est sens interieur
+58,19,Vehicules Legers,2658.0,3,Rocade Est sens interieur
+59,19,PL locaux,154.35,3,Rocade Est sens interieur
+60,20,PL en transit,171.36,3,Rocade Est sens interieur
+61,20,Vehicules Legers,1738.0,3,Rocade Est sens interieur
+62,20,PL locaux,134.64,3,Rocade Est sens interieur
+63,21,PL en transit,139.78,3,Rocade Est sens interieur
+64,21,Vehicules Legers,1049.0,3,Rocade Est sens interieur
+65,21,PL locaux,101.22,3,Rocade Est sens interieur
+66,22,PL en transit,113.43,3,Rocade Est sens interieur
+67,22,Vehicules Legers,813.0,3,Rocade Est sens interieur
+68,22,PL locaux,85.57,3,Rocade Est sens interieur
+69,23,PL en transit,94.87,3,Rocade Est sens interieur
+70,23,Vehicules Legers,685.0,3,Rocade Est sens interieur
+71,23,PL locaux,84.13,3,Rocade Est sens interieur
+0,0,PL en transit,21.93,11,A10 vers Paris
+1,0,Vehicules Legers,57.0,11,A10 vers Paris
+2,0,PL locaux,21.07,11,A10 vers Paris
+3,1,PL en transit,21.2,11,A10 vers Paris
+4,1,Vehicules Legers,48.0,11,A10 vers Paris
+5,1,PL locaux,18.8,11,A10 vers Paris
+6,2,PL en transit,22.94,11,A10 vers Paris
+7,2,Vehicules Legers,54.0,11,A10 vers Paris
+8,2,PL locaux,14.059999999999999,11,A10 vers Paris
+9,3,PL en transit,17.05,11,A10 vers Paris
+10,3,Vehicules Legers,35.0,11,A10 vers Paris
+11,3,PL locaux,13.95,11,A10 vers Paris
+12,4,PL en transit,13.76,11,A10 vers Paris
+13,4,Vehicules Legers,50.0,11,A10 vers Paris
+14,4,PL locaux,18.240000000000002,11,A10 vers Paris
+15,5,PL en transit,24.0,11,A10 vers Paris
+16,5,Vehicules Legers,92.0,11,A10 vers Paris
+17,5,PL locaux,36.0,11,A10 vers Paris
+18,6,PL en transit,42.24,11,A10 vers Paris
+19,6,Vehicules Legers,277.0,11,A10 vers Paris
+20,6,PL locaux,53.76,11,A10 vers Paris
+21,7,PL en transit,39.69,11,A10 vers Paris
+22,7,Vehicules Legers,624.0,11,A10 vers Paris
+23,7,PL locaux,41.31,11,A10 vers Paris
+24,8,PL en transit,32.68,11,A10 vers Paris
+25,8,Vehicules Legers,609.0,11,A10 vers Paris
+26,8,PL locaux,43.32,11,A10 vers Paris
+27,9,PL en transit,46.46,11,A10 vers Paris
+28,9,Vehicules Legers,657.0,11,A10 vers Paris
+29,9,PL locaux,54.54,11,A10 vers Paris
+30,10,PL en transit,45.58,11,A10 vers Paris
+31,10,Vehicules Legers,654.0,11,A10 vers Paris
+32,10,PL locaux,60.42,11,A10 vers Paris
+33,11,PL en transit,53.36,11,A10 vers Paris
+34,11,Vehicules Legers,615.0,11,A10 vers Paris
+35,11,PL locaux,62.64,11,A10 vers Paris
+36,12,PL en transit,48.4,11,A10 vers Paris
+37,12,Vehicules Legers,567.0,11,A10 vers Paris
+38,12,PL locaux,61.6,11,A10 vers Paris
+39,13,PL en transit,41.28,11,A10 vers Paris
+40,13,Vehicules Legers,562.0,11,A10 vers Paris
+41,13,PL locaux,54.72,11,A10 vers Paris
+42,14,PL en transit,52.5,11,A10 vers Paris
+43,14,Vehicules Legers,645.0,11,A10 vers Paris
+44,14,PL locaux,72.5,11,A10 vers Paris
+45,15,PL en transit,53.34,11,A10 vers Paris
+46,15,Vehicules Legers,706.0,11,A10 vers Paris
+47,15,PL locaux,73.66,11,A10 vers Paris
+48,16,PL en transit,47.52,11,A10 vers Paris
+49,16,Vehicules Legers,753.0,11,A10 vers Paris
+50,16,PL locaux,60.48,11,A10 vers Paris
+51,17,PL en transit,46.92,11,A10 vers Paris
+52,17,Vehicules Legers,755.0,11,A10 vers Paris
+53,17,PL locaux,55.08,11,A10 vers Paris
+54,18,PL en transit,40.94,11,A10 vers Paris
+55,18,Vehicules Legers,688.0,11,A10 vers Paris
+56,18,PL locaux,48.06,11,A10 vers Paris
+57,19,PL en transit,45.39,11,A10 vers Paris
+58,19,Vehicules Legers,492.0,11,A10 vers Paris
+59,19,PL locaux,43.61,11,A10 vers Paris
+60,20,PL en transit,46.980000000000004,11,A10 vers Paris
+61,20,Vehicules Legers,317.0,11,A10 vers Paris
+62,20,PL locaux,40.019999999999996,11,A10 vers Paris
+63,21,PL en transit,35.34,11,A10 vers Paris
+64,21,Vehicules Legers,210.0,11,A10 vers Paris
+65,21,PL locaux,21.659999999999997,11,A10 vers Paris
+66,22,PL en transit,32.64,11,A10 vers Paris
+67,22,Vehicules Legers,142.0,11,A10 vers Paris
+68,22,PL locaux,15.36,11,A10 vers Paris
+69,23,PL en transit,39.42,11,A10 vers Paris
+70,23,Vehicules Legers,102.0,11,A10 vers Paris
+71,23,PL locaux,14.579999999999998,11,A10 vers Paris
+0,0,PL en transit,37.17,12,A10 vers Bordeaux
+1,0,Vehicules Legers,61.0,12,A10 vers Bordeaux
+2,0,PL locaux,25.83,12,A10 vers Bordeaux
+3,1,PL en transit,35.84,12,A10 vers Bordeaux
+4,1,Vehicules Legers,39.0,12,A10 vers Bordeaux
+5,1,PL locaux,28.159999999999997,12,A10 vers Bordeaux
+6,2,PL en transit,30.38,12,A10 vers Bordeaux
+7,2,Vehicules Legers,29.0,12,A10 vers Bordeaux
+8,2,PL locaux,18.62,12,A10 vers Bordeaux
+9,3,PL en transit,27.26,12,A10 vers Bordeaux
+10,3,Vehicules Legers,28.0,12,A10 vers Bordeaux
+11,3,PL locaux,19.74,12,A10 vers Bordeaux
+12,4,PL en transit,28.62,12,A10 vers Bordeaux
+13,4,Vehicules Legers,36.0,12,A10 vers Bordeaux
+14,4,PL locaux,25.38,12,A10 vers Bordeaux
+15,5,PL en transit,53.9,12,A10 vers Bordeaux
+16,5,Vehicules Legers,82.0,12,A10 vers Bordeaux
+17,5,PL locaux,44.1,12,A10 vers Bordeaux
+18,6,PL en transit,68.34,12,A10 vers Bordeaux
+19,6,Vehicules Legers,256.0,12,A10 vers Bordeaux
+20,6,PL locaux,65.66,12,A10 vers Bordeaux
+21,7,PL en transit,30.45,12,A10 vers Bordeaux
+22,7,Vehicules Legers,302.0,12,A10 vers Bordeaux
+23,7,PL locaux,74.55,12,A10 vers Bordeaux
+24,8,PL en transit,35.7,12,A10 vers Bordeaux
+25,8,Vehicules Legers,407.0,12,A10 vers Bordeaux
+26,8,PL locaux,69.3,12,A10 vers Bordeaux
+27,9,PL en transit,55.46,12,A10 vers Bordeaux
+28,9,Vehicules Legers,546.0,12,A10 vers Bordeaux
+29,9,PL locaux,62.54,12,A10 vers Bordeaux
+30,10,PL en transit,54.0,12,A10 vers Bordeaux
+31,10,Vehicules Legers,599.0,12,A10 vers Bordeaux
+32,10,PL locaux,66.0,12,A10 vers Bordeaux
+33,11,PL en transit,57.64,12,A10 vers Bordeaux
+34,11,Vehicules Legers,603.0,12,A10 vers Bordeaux
+35,11,PL locaux,73.36,12,A10 vers Bordeaux
+36,12,PL en transit,54.45,12,A10 vers Bordeaux
+37,12,Vehicules Legers,562.0,12,A10 vers Bordeaux
+38,12,PL locaux,66.55,12,A10 vers Bordeaux
+39,13,PL en transit,56.32,12,A10 vers Bordeaux
+40,13,Vehicules Legers,579.0,12,A10 vers Bordeaux
+41,13,PL locaux,71.68,12,A10 vers Bordeaux
+42,14,PL en transit,63.9,12,A10 vers Bordeaux
+43,14,Vehicules Legers,663.0,12,A10 vers Bordeaux
+44,14,PL locaux,78.1,12,A10 vers Bordeaux
+45,15,PL en transit,71.4,12,A10 vers Bordeaux
+46,15,Vehicules Legers,765.0,12,A10 vers Bordeaux
+47,15,PL locaux,68.6,12,A10 vers Bordeaux
+48,16,PL en transit,72.42,12,A10 vers Bordeaux
+49,16,Vehicules Legers,813.0,12,A10 vers Bordeaux
+50,16,PL locaux,69.58,12,A10 vers Bordeaux
+51,17,PL en transit,58.38,12,A10 vers Bordeaux
+52,17,Vehicules Legers,847.0,12,A10 vers Bordeaux
+53,17,PL locaux,80.62,12,A10 vers Bordeaux
+54,18,PL en transit,53.1,12,A10 vers Bordeaux
+55,18,Vehicules Legers,805.0,12,A10 vers Bordeaux
+56,18,PL locaux,64.9,12,A10 vers Bordeaux
+57,19,PL en transit,64.41,12,A10 vers Bordeaux
+58,19,Vehicules Legers,613.0,12,A10 vers Bordeaux
+59,19,PL locaux,48.59,12,A10 vers Bordeaux
+60,20,PL en transit,65.1,12,A10 vers Bordeaux
+61,20,Vehicules Legers,409.0,12,A10 vers Bordeaux
+62,20,PL locaux,39.900000000000006,12,A10 vers Bordeaux
+63,21,PL en transit,51.92,12,A10 vers Bordeaux
+64,21,Vehicules Legers,261.0,12,A10 vers Bordeaux
+65,21,PL locaux,36.08,12,A10 vers Bordeaux
+66,22,PL en transit,43.32,12,A10 vers Bordeaux
+67,22,Vehicules Legers,183.0,12,A10 vers Bordeaux
+68,22,PL locaux,32.68,12,A10 vers Bordeaux
+69,23,PL en transit,32.83,12,A10 vers Bordeaux
+70,23,Vehicules Legers,129.0,12,A10 vers Bordeaux
+71,23,PL locaux,34.17,12,A10 vers Bordeaux
+0,0,PL en transit,106.26,5,A10/N10 vers Paris
+1,0,Vehicules Legers,238.0,5,A10/N10 vers Paris
+2,0,PL locaux,124.74,5,A10/N10 vers Paris
+3,1,PL en transit,142.8,5,A10/N10 vers Paris
+4,1,Vehicules Legers,203.0,5,A10/N10 vers Paris
+5,1,PL locaux,61.19999999999999,5,A10/N10 vers Paris
+6,2,PL en transit,122.5,5,A10/N10 vers Paris
+7,2,Vehicules Legers,149.0,5,A10/N10 vers Paris
+8,2,PL locaux,52.5,5,A10/N10 vers Paris
+9,3,PL en transit,103.54,5,A10/N10 vers Paris
+10,3,Vehicules Legers,121.0,5,A10/N10 vers Paris
+11,3,PL locaux,63.459999999999994,5,A10/N10 vers Paris
+12,4,PL en transit,96.99000000000001,5,A10/N10 vers Paris
+13,4,Vehicules Legers,156.0,5,A10/N10 vers Paris
+14,4,PL locaux,86.00999999999999,5,A10/N10 vers Paris
+15,5,PL en transit,134.26,5,A10/N10 vers Paris
+16,5,Vehicules Legers,318.0,5,A10/N10 vers Paris
+17,5,PL locaux,139.74,5,A10/N10 vers Paris
+18,6,PL en transit,200.20000000000002,5,A10/N10 vers Paris
+19,6,Vehicules Legers,857.0,5,A10/N10 vers Paris
+20,6,PL locaux,163.79999999999998,5,A10/N10 vers Paris
+21,7,PL en transit,157.78,5,A10/N10 vers Paris
+22,7,Vehicules Legers,1882.0,5,A10/N10 vers Paris
+23,7,PL locaux,164.22,5,A10/N10 vers Paris
+24,8,PL en transit,135.96,5,A10/N10 vers Paris
+25,8,Vehicules Legers,2119.0,5,A10/N10 vers Paris
+26,8,PL locaux,173.04,5,A10/N10 vers Paris
+27,9,PL en transit,211.03,5,A10/N10 vers Paris
+28,9,Vehicules Legers,1924.0,5,A10/N10 vers Paris
+29,9,PL locaux,237.97,5,A10/N10 vers Paris
+30,10,PL en transit,265.0,5,A10/N10 vers Paris
+31,10,Vehicules Legers,1868.0,5,A10/N10 vers Paris
+32,10,PL locaux,265.0,5,A10/N10 vers Paris
+33,11,PL en transit,302.12,5,A10/N10 vers Paris
+34,11,Vehicules Legers,2056.0,5,A10/N10 vers Paris
+35,11,PL locaux,278.88,5,A10/N10 vers Paris
+36,12,PL en transit,292.14,5,A10/N10 vers Paris
+37,12,Vehicules Legers,2219.0,5,A10/N10 vers Paris
+38,12,PL locaux,248.86,5,A10/N10 vers Paris
+39,13,PL en transit,274.86,5,A10/N10 vers Paris
+40,13,Vehicules Legers,2230.0,5,A10/N10 vers Paris
+41,13,PL locaux,234.14,5,A10/N10 vers Paris
+42,14,PL en transit,270.0,5,A10/N10 vers Paris
+43,14,Vehicules Legers,2653.0,5,A10/N10 vers Paris
+44,14,PL locaux,270.0,5,A10/N10 vers Paris
+45,15,PL en transit,261.66,5,A10/N10 vers Paris
+46,15,Vehicules Legers,3100.0,5,A10/N10 vers Paris
+47,15,PL locaux,272.34,5,A10/N10 vers Paris
+48,16,PL en transit,236.64000000000001,5,A10/N10 vers Paris
+49,16,Vehicules Legers,4052.0,5,A10/N10 vers Paris
+50,16,PL locaux,227.35999999999999,5,A10/N10 vers Paris
+51,17,PL en transit,195.33,5,A10/N10 vers Paris
+52,17,Vehicules Legers,4431.0,5,A10/N10 vers Paris
+53,17,PL locaux,187.67,5,A10/N10 vers Paris
+54,18,PL en transit,196.04,5,A10/N10 vers Paris
+55,18,Vehicules Legers,3849.0,5,A10/N10 vers Paris
+56,18,PL locaux,180.96,5,A10/N10 vers Paris
+57,19,PL en transit,262.55,5,A10/N10 vers Paris
+58,19,Vehicules Legers,2754.0,5,A10/N10 vers Paris
+59,19,PL locaux,182.45,5,A10/N10 vers Paris
+60,20,PL en transit,243.39000000000001,5,A10/N10 vers Paris
+61,20,Vehicules Legers,1637.0,5,A10/N10 vers Paris
+62,20,PL locaux,155.60999999999999,5,A10/N10 vers Paris
+63,21,PL en transit,234.75,5,A10/N10 vers Paris
+64,21,Vehicules Legers,953.0,5,A10/N10 vers Paris
+65,21,PL locaux,78.25,5,A10/N10 vers Paris
+66,22,PL en transit,186.20000000000002,5,A10/N10 vers Paris
+67,22,Vehicules Legers,749.0,5,A10/N10 vers Paris
+68,22,PL locaux,58.79999999999998,5,A10/N10 vers Paris
+69,23,PL en transit,171.0,5,A10/N10 vers Paris
+70,23,Vehicules Legers,505.0,5,A10/N10 vers Paris
+71,23,PL locaux,54.0,5,A10/N10 vers Paris
+0,0,PL en transit,88.96000000000001,6,A10/N10 vers Bordeaux
+1,0,Vehicules Legers,191.0,6,A10/N10 vers Bordeaux
+2,0,PL locaux,50.03999999999999,6,A10/N10 vers Bordeaux
+3,1,PL en transit,91.35000000000001,6,A10/N10 vers Bordeaux
+4,1,Vehicules Legers,149.0,6,A10/N10 vers Bordeaux
+5,1,PL locaux,53.64999999999999,6,A10/N10 vers Bordeaux
+6,2,PL en transit,83.79,6,A10/N10 vers Bordeaux
+7,2,Vehicules Legers,159.0,6,A10/N10 vers Bordeaux
+8,2,PL locaux,63.209999999999994,6,A10/N10 vers Bordeaux
+9,3,PL en transit,97.44,6,A10/N10 vers Bordeaux
+10,3,Vehicules Legers,234.0,6,A10/N10 vers Bordeaux
+11,3,PL locaux,70.56,6,A10/N10 vers Bordeaux
+12,4,PL en transit,125.67,6,A10/N10 vers Bordeaux
+13,4,Vehicules Legers,425.0,6,A10/N10 vers Bordeaux
+14,4,PL locaux,87.33,6,A10/N10 vers Bordeaux
+15,5,PL en transit,196.35,6,A10/N10 vers Bordeaux
+16,5,Vehicules Legers,1096.0,6,A10/N10 vers Bordeaux
+17,5,PL locaux,160.65,6,A10/N10 vers Bordeaux
+18,6,PL en transit,216.09,6,A10/N10 vers Bordeaux
+19,6,Vehicules Legers,3036.0,6,A10/N10 vers Bordeaux
+20,6,PL locaux,224.91,6,A10/N10 vers Bordeaux
+21,7,PL en transit,123.95,6,A10/N10 vers Bordeaux
+22,7,Vehicules Legers,2424.0,6,A10/N10 vers Bordeaux
+23,7,PL locaux,211.05,6,A10/N10 vers Bordeaux
+24,8,PL en transit,115.52,6,A10/N10 vers Bordeaux
+25,8,Vehicules Legers,2228.0,6,A10/N10 vers Bordeaux
+26,8,PL locaux,188.48000000000002,6,A10/N10 vers Bordeaux
+27,9,PL en transit,207.36,6,A10/N10 vers Bordeaux
+28,9,Vehicules Legers,2153.0,6,A10/N10 vers Bordeaux
+29,9,PL locaux,224.64,6,A10/N10 vers Bordeaux
+30,10,PL en transit,216.96,6,A10/N10 vers Bordeaux
+31,10,Vehicules Legers,2116.0,6,A10/N10 vers Bordeaux
+32,10,PL locaux,235.04,6,A10/N10 vers Bordeaux
+33,11,PL en transit,216.09,6,A10/N10 vers Bordeaux
+34,11,Vehicules Legers,1983.0,6,A10/N10 vers Bordeaux
+35,11,PL locaux,224.91,6,A10/N10 vers Bordeaux
+36,12,PL en transit,228.96,6,A10/N10 vers Bordeaux
+37,12,Vehicules Legers,1842.0,6,A10/N10 vers Bordeaux
+38,12,PL locaux,195.04,6,A10/N10 vers Bordeaux
+39,13,PL en transit,225.16,6,A10/N10 vers Bordeaux
+40,13,Vehicules Legers,2047.0,6,A10/N10 vers Bordeaux
+41,13,PL locaux,207.84,6,A10/N10 vers Bordeaux
+42,14,PL en transit,207.27,6,A10/N10 vers Bordeaux
+43,14,Vehicules Legers,1994.0,6,A10/N10 vers Bordeaux
+44,14,PL locaux,215.73,6,A10/N10 vers Bordeaux
+45,15,PL en transit,203.5,6,A10/N10 vers Bordeaux
+46,15,Vehicules Legers,2046.0,6,A10/N10 vers Bordeaux
+47,15,PL locaux,203.5,6,A10/N10 vers Bordeaux
+48,16,PL en transit,198.64000000000001,6,A10/N10 vers Bordeaux
+49,16,Vehicules Legers,2175.0,6,A10/N10 vers Bordeaux
+50,16,PL locaux,183.35999999999999,6,A10/N10 vers Bordeaux
+51,17,PL en transit,154.1,6,A10/N10 vers Bordeaux
+52,17,Vehicules Legers,2370.0,6,A10/N10 vers Bordeaux
+53,17,PL locaux,180.9,6,A10/N10 vers Bordeaux
+54,18,PL en transit,149.45000000000002,6,A10/N10 vers Bordeaux
+55,18,Vehicules Legers,2300.0,6,A10/N10 vers Bordeaux
+56,18,PL locaux,155.54999999999998,6,A10/N10 vers Bordeaux
+57,19,PL en transit,176.4,6,A10/N10 vers Bordeaux
+58,19,Vehicules Legers,1848.0,6,A10/N10 vers Bordeaux
+59,19,PL locaux,117.6,6,A10/N10 vers Bordeaux
+60,20,PL en transit,167.68,6,A10/N10 vers Bordeaux
+61,20,Vehicules Legers,1154.0,6,A10/N10 vers Bordeaux
+62,20,PL locaux,94.32,6,A10/N10 vers Bordeaux
+63,21,PL en transit,136.96,6,A10/N10 vers Bordeaux
+64,21,Vehicules Legers,703.0,6,A10/N10 vers Bordeaux
+65,21,PL locaux,77.03999999999999,6,A10/N10 vers Bordeaux
+66,22,PL en transit,115.29,6,A10/N10 vers Bordeaux
+67,22,Vehicules Legers,483.0,6,A10/N10 vers Bordeaux
+68,22,PL locaux,67.71,6,A10/N10 vers Bordeaux
+69,23,PL en transit,90.63,6,A10/N10 vers Bordeaux
+70,23,Vehicules Legers,340.0,6,A10/N10 vers Bordeaux
+71,23,PL locaux,68.37,6,A10/N10 vers Bordeaux
+0,0,PL en transit,4.2,7,N89 vers Lyon
+1,0,Vehicules Legers,88.0,7,N89 vers Lyon
+2,0,PL locaux,9.8,7,N89 vers Lyon
+3,1,PL en transit,3.99,7,N89 vers Lyon
+4,1,Vehicules Legers,59.0,7,N89 vers Lyon
+5,1,PL locaux,15.01,7,N89 vers Lyon
+6,2,PL en transit,5.72,7,N89 vers Lyon
+7,2,Vehicules Legers,47.0,7,N89 vers Lyon
+8,2,PL locaux,20.28,7,N89 vers Lyon
+9,3,PL en transit,3.96,7,N89 vers Lyon
+10,3,Vehicules Legers,28.0,7,N89 vers Lyon
+11,3,PL locaux,29.04,7,N89 vers Lyon
+12,4,PL en transit,4.68,7,N89 vers Lyon
+13,4,Vehicules Legers,53.0,7,N89 vers Lyon
+14,4,PL locaux,34.32,7,N89 vers Lyon
+15,5,PL en transit,7.2,7,N89 vers Lyon
+16,5,Vehicules Legers,126.0,7,N89 vers Lyon
+17,5,PL locaux,52.8,7,N89 vers Lyon
+18,6,PL en transit,11.4,7,N89 vers Lyon
+19,6,Vehicules Legers,399.0,7,N89 vers Lyon
+20,6,PL locaux,83.6,7,N89 vers Lyon
+21,7,PL en transit,15.290000000000001,7,N89 vers Lyon
+22,7,Vehicules Legers,1311.0,7,N89 vers Lyon
+23,7,PL locaux,123.71,7,N89 vers Lyon
+24,8,PL en transit,14.76,7,N89 vers Lyon
+25,8,Vehicules Legers,1801.0,7,N89 vers Lyon
+26,8,PL locaux,108.24,7,N89 vers Lyon
+27,9,PL en transit,20.25,7,N89 vers Lyon
+28,9,Vehicules Legers,1127.0,7,N89 vers Lyon
+29,9,PL locaux,114.75,7,N89 vers Lyon
+30,10,PL en transit,22.72,7,N89 vers Lyon
+31,10,Vehicules Legers,896.0,7,N89 vers Lyon
+32,10,PL locaux,119.28,7,N89 vers Lyon
+33,11,PL en transit,22.61,7,N89 vers Lyon
+34,11,Vehicules Legers,857.0,7,N89 vers Lyon
+35,11,PL locaux,110.39,7,N89 vers Lyon
+36,12,PL en transit,16.94,7,N89 vers Lyon
+37,12,Vehicules Legers,872.0,7,N89 vers Lyon
+38,12,PL locaux,104.06,7,N89 vers Lyon
+39,13,PL en transit,20.06,7,N89 vers Lyon
+40,13,Vehicules Legers,992.0,7,N89 vers Lyon
+41,13,PL locaux,97.94,7,N89 vers Lyon
+42,14,PL en transit,18.75,7,N89 vers Lyon
+43,14,Vehicules Legers,1032.0,7,N89 vers Lyon
+44,14,PL locaux,106.25,7,N89 vers Lyon
+45,15,PL en transit,18.56,7,N89 vers Lyon
+46,15,Vehicules Legers,1194.0,7,N89 vers Lyon
+47,15,PL locaux,97.44,7,N89 vers Lyon
+48,16,PL en transit,11.57,7,N89 vers Lyon
+49,16,Vehicules Legers,1522.0,7,N89 vers Lyon
+50,16,PL locaux,77.43,7,N89 vers Lyon
+51,17,PL en transit,8.19,7,N89 vers Lyon
+52,17,Vehicules Legers,1781.0,7,N89 vers Lyon
+53,17,PL locaux,54.81,7,N89 vers Lyon
+54,18,PL en transit,9.88,7,N89 vers Lyon
+55,18,Vehicules Legers,1577.0,7,N89 vers Lyon
+56,18,PL locaux,42.12,7,N89 vers Lyon
+57,19,PL en transit,11.28,7,N89 vers Lyon
+58,19,Vehicules Legers,1061.0,7,N89 vers Lyon
+59,19,PL locaux,35.72,7,N89 vers Lyon
+60,20,PL en transit,10.8,7,N89 vers Lyon
+61,20,Vehicules Legers,587.0,7,N89 vers Lyon
+62,20,PL locaux,29.2,7,N89 vers Lyon
+63,21,PL en transit,6.5,7,N89 vers Lyon
+64,21,Vehicules Legers,336.0,7,N89 vers Lyon
+65,21,PL locaux,18.5,7,N89 vers Lyon
+66,22,PL en transit,8.46,7,N89 vers Lyon
+67,22,Vehicules Legers,245.0,7,N89 vers Lyon
+68,22,PL locaux,9.54,7,N89 vers Lyon
+69,23,PL en transit,5.76,7,N89 vers Lyon
+70,23,Vehicules Legers,205.0,7,N89 vers Lyon
+71,23,PL locaux,10.24,7,N89 vers Lyon
+0,0,PL en transit,4.68,8,N89 vers Bordeaux
+1,0,Vehicules Legers,60.0,8,N89 vers Bordeaux
+2,0,PL locaux,7.32,8,N89 vers Bordeaux
+3,1,PL en transit,3.08,8,N89 vers Bordeaux
+4,1,Vehicules Legers,34.0,8,N89 vers Bordeaux
+5,1,PL locaux,7.92,8,N89 vers Bordeaux
+6,2,PL en transit,4.3500000000000005,8,N89 vers Bordeaux
+7,2,Vehicules Legers,31.0,8,N89 vers Bordeaux
+8,2,PL locaux,10.649999999999999,8,N89 vers Bordeaux
+9,3,PL en transit,8.0,8,N89 vers Bordeaux
+10,3,Vehicules Legers,62.0,8,N89 vers Bordeaux
+11,3,PL locaux,17.0,8,N89 vers Bordeaux
+12,4,PL en transit,11.34,8,N89 vers Bordeaux
+13,4,Vehicules Legers,125.0,8,N89 vers Bordeaux
+14,4,PL locaux,30.66,8,N89 vers Bordeaux
+15,5,PL en transit,19.75,8,N89 vers Bordeaux
+16,5,Vehicules Legers,308.0,8,N89 vers Bordeaux
+17,5,PL locaux,59.25,8,N89 vers Bordeaux
+18,6,PL en transit,29.400000000000002,8,N89 vers Bordeaux
+19,6,Vehicules Legers,1232.0,8,N89 vers Bordeaux
+20,6,PL locaux,110.6,8,N89 vers Bordeaux
+21,7,PL en transit,8.88,8,N89 vers Bordeaux
+22,7,Vehicules Legers,1432.0,8,N89 vers Bordeaux
+23,7,PL locaux,102.12,8,N89 vers Bordeaux
+24,8,PL en transit,9.28,8,N89 vers Bordeaux
+25,8,Vehicules Legers,1351.0,8,N89 vers Bordeaux
+26,8,PL locaux,106.72,8,N89 vers Bordeaux
+27,9,PL en transit,16.28,8,N89 vers Bordeaux
+28,9,Vehicules Legers,1067.0,8,N89 vers Bordeaux
+29,9,PL locaux,131.72,8,N89 vers Bordeaux
+30,10,PL en transit,21.32,8,N89 vers Bordeaux
+31,10,Vehicules Legers,961.0,8,N89 vers Bordeaux
+32,10,PL locaux,142.68,8,N89 vers Bordeaux
+33,11,PL en transit,22.5,8,N89 vers Bordeaux
+34,11,Vehicules Legers,942.0,8,N89 vers Bordeaux
+35,11,PL locaux,127.5,8,N89 vers Bordeaux
+36,12,PL en transit,23.37,8,N89 vers Bordeaux
+37,12,Vehicules Legers,905.0,8,N89 vers Bordeaux
+38,12,PL locaux,99.63,8,N89 vers Bordeaux
+39,13,PL en transit,22.14,8,N89 vers Bordeaux
+40,13,Vehicules Legers,919.0,8,N89 vers Bordeaux
+41,13,PL locaux,100.86,8,N89 vers Bordeaux
+42,14,PL en transit,19.35,8,N89 vers Bordeaux
+43,14,Vehicules Legers,929.0,8,N89 vers Bordeaux
+44,14,PL locaux,109.65,8,N89 vers Bordeaux
+45,15,PL en transit,17.78,8,N89 vers Bordeaux
+46,15,Vehicules Legers,1021.0,8,N89 vers Bordeaux
+47,15,PL locaux,109.22,8,N89 vers Bordeaux
+48,16,PL en transit,18.75,8,N89 vers Bordeaux
+49,16,Vehicules Legers,1287.0,8,N89 vers Bordeaux
+50,16,PL locaux,106.25,8,N89 vers Bordeaux
+51,17,PL en transit,11.64,8,N89 vers Bordeaux
+52,17,Vehicules Legers,1582.0,8,N89 vers Bordeaux
+53,17,PL locaux,85.36,8,N89 vers Bordeaux
+54,18,PL en transit,12.24,8,N89 vers Bordeaux
+55,18,Vehicules Legers,1429.0,8,N89 vers Bordeaux
+56,18,PL locaux,55.76,8,N89 vers Bordeaux
+57,19,PL en transit,11.040000000000001,8,N89 vers Bordeaux
+58,19,Vehicules Legers,958.0,8,N89 vers Bordeaux
+59,19,PL locaux,36.96,8,N89 vers Bordeaux
+60,20,PL en transit,8.370000000000001,8,N89 vers Bordeaux
+61,20,Vehicules Legers,485.0,8,N89 vers Bordeaux
+62,20,PL locaux,22.63,8,N89 vers Bordeaux
+63,21,PL en transit,6.44,8,N89 vers Bordeaux
+64,21,Vehicules Legers,258.0,8,N89 vers Bordeaux
+65,21,PL locaux,16.56,8,N89 vers Bordeaux
+66,22,PL en transit,4.76,8,N89 vers Bordeaux
+67,22,Vehicules Legers,156.0,8,N89 vers Bordeaux
+68,22,PL locaux,12.24,8,N89 vers Bordeaux
+69,23,PL en transit,5.18,8,N89 vers Bordeaux
+70,23,Vehicules Legers,107.0,8,N89 vers Bordeaux
+71,23,PL locaux,8.82,8,N89 vers Bordeaux
+0,0,PL en transit,25.2,9,A62 vers Toulouse
+1,0,Vehicules Legers,70.0,9,A62 vers Toulouse
+2,0,PL locaux,19.8,9,A62 vers Toulouse
+3,1,PL en transit,30.38,9,A62 vers Toulouse
+4,1,Vehicules Legers,43.0,9,A62 vers Toulouse
+5,1,PL locaux,18.62,9,A62 vers Toulouse
+6,2,PL en transit,19.36,9,A62 vers Toulouse
+7,2,Vehicules Legers,36.0,9,A62 vers Toulouse
+8,2,PL locaux,24.64,9,A62 vers Toulouse
+9,3,PL en transit,17.5,9,A62 vers Toulouse
+10,3,Vehicules Legers,41.0,9,A62 vers Toulouse
+11,3,PL locaux,32.5,9,A62 vers Toulouse
+12,4,PL en transit,24.12,9,A62 vers Toulouse
+13,4,Vehicules Legers,90.0,9,A62 vers Toulouse
+14,4,PL locaux,42.879999999999995,9,A62 vers Toulouse
+15,5,PL en transit,30.72,9,A62 vers Toulouse
+16,5,Vehicules Legers,232.0,9,A62 vers Toulouse
+17,5,PL locaux,65.28,9,A62 vers Toulouse
+18,6,PL en transit,66.3,9,A62 vers Toulouse
+19,6,Vehicules Legers,1008.0,9,A62 vers Toulouse
+20,6,PL locaux,103.7,9,A62 vers Toulouse
+21,7,PL en transit,33.2,9,A62 vers Toulouse
+22,7,Vehicules Legers,1330.0,9,A62 vers Toulouse
+23,7,PL locaux,132.8,9,A62 vers Toulouse
+24,8,PL en transit,29.19,9,A62 vers Toulouse
+25,8,Vehicules Legers,1288.0,9,A62 vers Toulouse
+26,8,PL locaux,109.81,9,A62 vers Toulouse
+27,9,PL en transit,47.32,9,A62 vers Toulouse
+28,9,Vehicules Legers,1162.0,9,A62 vers Toulouse
+29,9,PL locaux,121.68,9,A62 vers Toulouse
+30,10,PL en transit,49.28,9,A62 vers Toulouse
+31,10,Vehicules Legers,1052.0,9,A62 vers Toulouse
+32,10,PL locaux,126.72,9,A62 vers Toulouse
+33,11,PL en transit,48.5,9,A62 vers Toulouse
+34,11,Vehicules Legers,982.0,9,A62 vers Toulouse
+35,11,PL locaux,145.5,9,A62 vers Toulouse
+36,12,PL en transit,45.5,9,A62 vers Toulouse
+37,12,Vehicules Legers,912.0,9,A62 vers Toulouse
+38,12,PL locaux,129.5,9,A62 vers Toulouse
+39,13,PL en transit,56.1,9,A62 vers Toulouse
+40,13,Vehicules Legers,1005.0,9,A62 vers Toulouse
+41,13,PL locaux,130.9,9,A62 vers Toulouse
+42,14,PL en transit,52.38,9,A62 vers Toulouse
+43,14,Vehicules Legers,1014.0,9,A62 vers Toulouse
+44,14,PL locaux,141.62,9,A62 vers Toulouse
+45,15,PL en transit,52.92,9,A62 vers Toulouse
+46,15,Vehicules Legers,1090.0,9,A62 vers Toulouse
+47,15,PL locaux,136.07999999999998,9,A62 vers Toulouse
+48,16,PL en transit,50.84,9,A62 vers Toulouse
+49,16,Vehicules Legers,1200.0,9,A62 vers Toulouse
+50,16,PL locaux,113.16,9,A62 vers Toulouse
+51,17,PL en transit,50.75,9,A62 vers Toulouse
+52,17,Vehicules Legers,1330.0,9,A62 vers Toulouse
+53,17,PL locaux,94.25,9,A62 vers Toulouse
+54,18,PL en transit,42.92,9,A62 vers Toulouse
+55,18,Vehicules Legers,1274.0,9,A62 vers Toulouse
+56,18,PL locaux,73.08,9,A62 vers Toulouse
+57,19,PL en transit,41.6,9,A62 vers Toulouse
+58,19,Vehicules Legers,1075.0,9,A62 vers Toulouse
+59,19,PL locaux,62.4,9,A62 vers Toulouse
+60,20,PL en transit,34.56,9,A62 vers Toulouse
+61,20,Vehicules Legers,634.0,9,A62 vers Toulouse
+62,20,PL locaux,37.44,9,A62 vers Toulouse
+63,21,PL en transit,39.06,9,A62 vers Toulouse
+64,21,Vehicules Legers,335.0,9,A62 vers Toulouse
+65,21,PL locaux,23.939999999999998,9,A62 vers Toulouse
+66,22,PL en transit,52.44,9,A62 vers Toulouse
+67,22,Vehicules Legers,196.0,9,A62 vers Toulouse
+68,22,PL locaux,23.560000000000002,9,A62 vers Toulouse
+69,23,PL en transit,31.11,9,A62 vers Toulouse
+70,23,Vehicules Legers,130.0,9,A62 vers Toulouse
+71,23,PL locaux,29.89,9,A62 vers Toulouse
+0,0,PL en transit,19.38,10,A62 vers Bordeaux
+1,0,Vehicules Legers,92.0,10,A62 vers Bordeaux
+2,0,PL locaux,18.62,10,A62 vers Bordeaux
+3,1,PL en transit,27.900000000000002,10,A62 vers Bordeaux
+4,1,Vehicules Legers,71.0,10,A62 vers Bordeaux
+5,1,PL locaux,34.099999999999994,10,A62 vers Bordeaux
+6,2,PL en transit,25.85,10,A62 vers Bordeaux
+7,2,Vehicules Legers,55.0,10,A62 vers Bordeaux
+8,2,PL locaux,29.15,10,A62 vers Bordeaux
+9,3,PL en transit,22.04,10,A62 vers Bordeaux
+10,3,Vehicules Legers,33.0,10,A62 vers Bordeaux
+11,3,PL locaux,35.96,10,A62 vers Bordeaux
+12,4,PL en transit,20.16,10,A62 vers Bordeaux
+13,4,Vehicules Legers,60.0,10,A62 vers Bordeaux
+14,4,PL locaux,42.84,10,A62 vers Bordeaux
+15,5,PL en transit,47.6,10,A62 vers Bordeaux
+16,5,Vehicules Legers,153.0,10,A62 vers Bordeaux
+17,5,PL locaux,71.4,10,A62 vers Bordeaux
+18,6,PL en transit,66.6,10,A62 vers Bordeaux
+19,6,Vehicules Legers,520.0,10,A62 vers Bordeaux
+20,6,PL locaux,118.4,10,A62 vers Bordeaux
+21,7,PL en transit,27.6,10,A62 vers Bordeaux
+22,7,Vehicules Legers,1019.0,10,A62 vers Bordeaux
+23,7,PL locaux,110.4,10,A62 vers Bordeaux
+24,8,PL en transit,28.8,10,A62 vers Bordeaux
+25,8,Vehicules Legers,1190.0,10,A62 vers Bordeaux
+26,8,PL locaux,91.2,10,A62 vers Bordeaux
+27,9,PL en transit,46.69,10,A62 vers Bordeaux
+28,9,Vehicules Legers,1061.0,10,A62 vers Bordeaux
+29,9,PL locaux,156.31,10,A62 vers Bordeaux
+30,10,PL en transit,53.68,10,A62 vers Bordeaux
+31,10,Vehicules Legers,970.0,10,A62 vers Bordeaux
+32,10,PL locaux,190.32,10,A62 vers Bordeaux
+33,11,PL en transit,46.86,10,A62 vers Bordeaux
+34,11,Vehicules Legers,939.0,10,A62 vers Bordeaux
+35,11,PL locaux,166.14,10,A62 vers Bordeaux
+36,12,PL en transit,51.03,10,A62 vers Bordeaux
+37,12,Vehicules Legers,933.0,10,A62 vers Bordeaux
+38,12,PL locaux,137.97,10,A62 vers Bordeaux
+39,13,PL en transit,42.93,10,A62 vers Bordeaux
+40,13,Vehicules Legers,1000.0,10,A62 vers Bordeaux
+41,13,PL locaux,116.07,10,A62 vers Bordeaux
+42,14,PL en transit,51.52,10,A62 vers Bordeaux
+43,14,Vehicules Legers,1140.0,10,A62 vers Bordeaux
+44,14,PL locaux,132.48,10,A62 vers Bordeaux
+45,15,PL en transit,56.84,10,A62 vers Bordeaux
+46,15,Vehicules Legers,1342.0,10,A62 vers Bordeaux
+47,15,PL locaux,139.16,10,A62 vers Bordeaux
+48,16,PL en transit,56.76,10,A62 vers Bordeaux
+49,16,Vehicules Legers,1705.0,10,A62 vers Bordeaux
+50,16,PL locaux,115.24000000000001,10,A62 vers Bordeaux
+51,17,PL en transit,46.58,10,A62 vers Bordeaux
+52,17,Vehicules Legers,1768.0,10,A62 vers Bordeaux
+53,17,PL locaux,90.42,10,A62 vers Bordeaux
+54,18,PL en transit,40.0,10,A62 vers Bordeaux
+55,18,Vehicules Legers,1634.0,10,A62 vers Bordeaux
+56,18,PL locaux,85.0,10,A62 vers Bordeaux
+57,19,PL en transit,56.5,10,A62 vers Bordeaux
+58,19,Vehicules Legers,1184.0,10,A62 vers Bordeaux
+59,19,PL locaux,56.5,10,A62 vers Bordeaux
+60,20,PL en transit,50.4,10,A62 vers Bordeaux
+61,20,Vehicules Legers,613.0,10,A62 vers Bordeaux
+62,20,PL locaux,39.6,10,A62 vers Bordeaux
+63,21,PL en transit,34.45,10,A62 vers Bordeaux
+64,21,Vehicules Legers,368.0,10,A62 vers Bordeaux
+65,21,PL locaux,30.549999999999997,10,A62 vers Bordeaux
+66,22,PL en transit,31.11,10,A62 vers Bordeaux
+67,22,Vehicules Legers,290.0,10,A62 vers Bordeaux
+68,22,PL locaux,19.89,10,A62 vers Bordeaux
+69,23,PL en transit,24.96,10,A62 vers Bordeaux
+70,23,Vehicules Legers,228.0,10,A62 vers Bordeaux
+71,23,PL locaux,23.04,10,A62 vers Bordeaux
+0,0,PL en transit,63.800000000000004,18,A660 vers Arcachon
+1,0,PL locaux,52.199999999999996,18,A660 vers Arcachon
+2,1,PL en transit,65.88,18,A660 vers Arcachon
+3,1,PL locaux,42.120000000000005,18,A660 vers Arcachon
+4,2,PL en transit,68.4,18,A660 vers Arcachon
+5,2,PL locaux,51.599999999999994,18,A660 vers Arcachon
+6,3,PL en transit,79.8,18,A660 vers Arcachon
+7,3,PL locaux,60.2,18,A660 vers Arcachon
+8,4,PL en transit,96.25,18,A660 vers Arcachon
+9,4,PL locaux,78.75,18,A660 vers Arcachon
+10,5,PL en transit,142.04,18,A660 vers Arcachon
+11,5,PL locaux,125.96000000000001,18,A660 vers Arcachon
+12,6,PL en transit,190.12,18,A660 vers Arcachon
+13,6,PL locaux,197.88,18,A660 vers Arcachon
+14,7,PL en transit,94.18,18,A660 vers Arcachon
+15,7,PL locaux,182.82,18,A660 vers Arcachon
+16,8,PL en transit,73.28,18,A660 vers Arcachon
+17,8,PL locaux,155.72,18,A660 vers Arcachon
+18,9,PL en transit,161.28,18,A660 vers Arcachon
+19,9,PL locaux,222.72,18,A660 vers Arcachon
+20,10,PL en transit,273.0,18,A660 vers Arcachon
+21,10,PL locaux,273.0,18,A660 vers Arcachon
+22,11,PL en transit,217.12,18,A660 vers Arcachon
+23,11,PL locaux,254.88,18,A660 vers Arcachon
+24,12,PL en transit,224.4,18,A660 vers Arcachon
+25,12,PL locaux,215.6,18,A660 vers Arcachon
+26,13,PL en transit,220.02,18,A660 vers Arcachon
+27,13,PL locaux,165.98,18,A660 vers Arcachon
+28,14,PL en transit,196.56,18,A660 vers Arcachon
+29,14,PL locaux,181.44,18,A660 vers Arcachon
+30,15,PL en transit,202.99,18,A660 vers Arcachon
+31,15,PL locaux,180.01,18,A660 vers Arcachon
+32,16,PL en transit,184.8,18,A660 vers Arcachon
+33,16,PL locaux,151.2,18,A660 vers Arcachon
+34,17,PL en transit,147.84,18,A660 vers Arcachon
+35,17,PL locaux,116.16,18,A660 vers Arcachon
+36,18,PL en transit,133.5,18,A660 vers Arcachon
+37,18,PL locaux,133.5,18,A660 vers Arcachon
+38,19,PL en transit,145.6,18,A660 vers Arcachon
+39,19,PL locaux,114.4,18,A660 vers Arcachon
+40,20,PL en transit,140.70000000000002,18,A660 vers Arcachon
+41,20,PL locaux,69.29999999999998,18,A660 vers Arcachon
+42,21,PL en transit,116.64,18,A660 vers Arcachon
+43,21,PL locaux,45.36,18,A660 vers Arcachon
+44,22,PL en transit,97.3,18,A660 vers Arcachon
+45,22,PL locaux,41.7,18,A660 vers Arcachon
+46,23,PL en transit,76.23,18,A660 vers Arcachon
+47,23,PL locaux,44.769999999999996,18,A660 vers Arcachon
+0,0,PL en transit,100.2,19,A660 vers Bordeaux
+1,0,PL locaux,66.8,19,A660 vers Bordeaux
+2,1,PL en transit,108.75,19,A660 vers Bordeaux
+3,1,PL locaux,36.25,19,A660 vers Bordeaux
+4,2,PL en transit,82.84,19,A660 vers Bordeaux
+5,2,PL locaux,26.159999999999997,19,A660 vers Bordeaux
+6,3,PL en transit,74.25,19,A660 vers Bordeaux
+7,3,PL locaux,24.75,19,A660 vers Bordeaux
+8,4,PL en transit,88.33,19,A660 vers Bordeaux
+9,4,PL locaux,32.67,19,A660 vers Bordeaux
+10,5,PL en transit,126.72,19,A660 vers Bordeaux
+11,5,PL locaux,65.28,19,A660 vers Bordeaux
+12,6,PL en transit,163.84,19,A660 vers Bordeaux
+13,6,PL locaux,92.16,19,A660 vers Bordeaux
+14,7,PL en transit,121.92,19,A660 vers Bordeaux
+15,7,PL locaux,132.07999999999998,19,A660 vers Bordeaux
+16,8,PL en transit,136.16,19,A660 vers Bordeaux
+17,8,PL locaux,159.84,19,A660 vers Bordeaux
+18,9,PL en transit,212.0,19,A660 vers Bordeaux
+19,9,PL locaux,212.0,19,A660 vers Bordeaux
+20,10,PL en transit,229.92000000000002,19,A660 vers Bordeaux
+21,10,PL locaux,249.07999999999998,19,A660 vers Bordeaux
+22,11,PL en transit,233.59,19,A660 vers Bordeaux
+23,11,PL locaux,263.40999999999997,19,A660 vers Bordeaux
+24,12,PL en transit,244.08,19,A660 vers Bordeaux
+25,12,PL locaux,207.92,19,A660 vers Bordeaux
+26,13,PL en transit,235.62,19,A660 vers Bordeaux
+27,13,PL locaux,226.38,19,A660 vers Bordeaux
+28,14,PL en transit,235.62,19,A660 vers Bordeaux
+29,14,PL locaux,226.38,19,A660 vers Bordeaux
+30,15,PL en transit,230.0,19,A660 vers Bordeaux
+31,15,PL locaux,230.0,19,A660 vers Bordeaux
+32,16,PL en transit,193.44,19,A660 vers Bordeaux
+33,16,PL locaux,209.56,19,A660 vers Bordeaux
+34,17,PL en transit,130.0,19,A660 vers Bordeaux
+35,17,PL locaux,195.0,19,A660 vers Bordeaux
+36,18,PL en transit,153.5,19,A660 vers Bordeaux
+37,18,PL locaux,153.5,19,A660 vers Bordeaux
+38,19,PL en transit,205.02,19,A660 vers Bordeaux
+39,19,PL locaux,100.97999999999999,19,A660 vers Bordeaux
+40,20,PL en transit,218.3,19,A660 vers Bordeaux
+41,20,PL locaux,76.69999999999999,19,A660 vers Bordeaux
+42,21,PL en transit,164.98,19,A660 vers Bordeaux
+43,21,PL locaux,61.02000000000001,19,A660 vers Bordeaux
+44,22,PL en transit,129.75,19,A660 vers Bordeaux
+45,22,PL locaux,43.25,19,A660 vers Bordeaux
+46,23,PL en transit,102.2,19,A660 vers Bordeaux
+47,23,PL locaux,37.8,19,A660 vers Bordeaux
+0,0,PL en transit,44.160000000000004,13,A63 vers Bayonne
+1,0,Vehicules Legers,44.0,13,A63 vers Bayonne
+2,0,PL locaux,47.839999999999996,13,A63 vers Bayonne
+3,1,PL en transit,49.980000000000004,13,A63 vers Bayonne
+4,1,Vehicules Legers,34.0,13,A63 vers Bayonne
+5,1,PL locaux,48.019999999999996,13,A63 vers Bayonne
+6,2,PL en transit,50.88,13,A63 vers Bayonne
+7,2,Vehicules Legers,30.0,13,A63 vers Bayonne
+8,2,PL locaux,45.12,13,A63 vers Bayonne
+9,3,PL en transit,61.480000000000004,13,A63 vers Bayonne
+10,3,Vehicules Legers,22.0,13,A63 vers Bayonne
+11,3,PL locaux,54.519999999999996,13,A63 vers Bayonne
+12,4,PL en transit,75.06,13,A63 vers Bayonne
+13,4,Vehicules Legers,27.0,13,A63 vers Bayonne
+14,4,PL locaux,63.94,13,A63 vers Bayonne
+15,5,PL en transit,115.5,13,A63 vers Bayonne
+16,5,Vehicules Legers,44.0,13,A63 vers Bayonne
+17,5,PL locaux,94.5,13,A63 vers Bayonne
+18,6,PL en transit,148.41,13,A63 vers Bayonne
+19,6,Vehicules Legers,128.0,13,A63 vers Bayonne
+20,6,PL locaux,142.59,13,A63 vers Bayonne
+21,7,PL en transit,143.35,13,A63 vers Bayonne
+22,7,Vehicules Legers,296.0,13,A63 vers Bayonne
+23,7,PL locaux,161.65,13,A63 vers Bayonne
+24,8,PL en transit,78.69,13,A63 vers Bayonne
+25,8,Vehicules Legers,352.0,13,A63 vers Bayonne
+26,8,PL locaux,104.31,13,A63 vers Bayonne
+27,9,PL en transit,86.0,13,A63 vers Bayonne
+28,9,Vehicules Legers,354.0,13,A63 vers Bayonne
+29,9,PL locaux,114.0,13,A63 vers Bayonne
+30,10,PL en transit,206.96,13,A63 vers Bayonne
+31,10,Vehicules Legers,396.0,13,A63 vers Bayonne
+32,10,PL locaux,191.04,13,A63 vers Bayonne
+33,11,PL en transit,239.12,13,A63 vers Bayonne
+34,11,Vehicules Legers,346.0,13,A63 vers Bayonne
+35,11,PL locaux,187.88,13,A63 vers Bayonne
+36,12,PL en transit,197.37,13,A63 vers Bayonne
+37,12,Vehicules Legers,290.0,13,A63 vers Bayonne
+38,12,PL locaux,189.63,13,A63 vers Bayonne
+39,13,PL en transit,196.08,13,A63 vers Bayonne
+40,13,Vehicules Legers,306.0,13,A63 vers Bayonne
+41,13,PL locaux,147.92,13,A63 vers Bayonne
+42,14,PL en transit,200.97,13,A63 vers Bayonne
+43,14,Vehicules Legers,351.0,13,A63 vers Bayonne
+44,14,PL locaux,118.03,13,A63 vers Bayonne
+45,15,PL en transit,191.75,13,A63 vers Bayonne
+46,15,Vehicules Legers,407.0,13,A63 vers Bayonne
+47,15,PL locaux,133.25,13,A63 vers Bayonne
+48,16,PL en transit,189.98,13,A63 vers Bayonne
+49,16,Vehicules Legers,443.0,13,A63 vers Bayonne
+50,16,PL locaux,132.02,13,A63 vers Bayonne
+51,17,PL en transit,154.58,13,A63 vers Bayonne
+52,17,Vehicules Legers,472.0,13,A63 vers Bayonne
+53,17,PL locaux,107.41999999999999,13,A63 vers Bayonne
+54,18,PL en transit,133.2,13,A63 vers Bayonne
+55,18,Vehicules Legers,454.0,13,A63 vers Bayonne
+56,18,PL locaux,88.80000000000001,13,A63 vers Bayonne
+57,19,PL en transit,116.10000000000001,13,A63 vers Bayonne
+58,19,Vehicules Legers,367.0,13,A63 vers Bayonne
+59,19,PL locaux,98.89999999999999,13,A63 vers Bayonne
+60,20,PL en transit,110.58,13,A63 vers Bayonne
+61,20,Vehicules Legers,219.0,13,A63 vers Bayonne
+62,20,PL locaux,83.42,13,A63 vers Bayonne
+63,21,PL en transit,90.24,13,A63 vers Bayonne
+64,21,Vehicules Legers,146.0,13,A63 vers Bayonne
+65,21,PL locaux,50.760000000000005,13,A63 vers Bayonne
+66,22,PL en transit,71.04,13,A63 vers Bayonne
+67,22,Vehicules Legers,119.0,13,A63 vers Bayonne
+68,22,PL locaux,39.959999999999994,13,A63 vers Bayonne
+69,23,PL en transit,65.65,13,A63 vers Bayonne
+70,23,Vehicules Legers,85.0,13,A63 vers Bayonne
+71,23,PL locaux,35.349999999999994,13,A63 vers Bayonne
+0,0,PL en transit,129.6,15,A63 vers Bordeaux
+1,0,Vehicules Legers,33.0,15,A63 vers Bordeaux
+2,0,PL locaux,32.400000000000006,15,A63 vers Bordeaux
+3,1,PL en transit,95.94,15,A63 vers Bordeaux
+4,1,Vehicules Legers,22.0,15,A63 vers Bordeaux
+5,1,PL locaux,27.060000000000002,15,A63 vers Bordeaux
+6,2,PL en transit,70.5,15,A63 vers Bordeaux
+7,2,Vehicules Legers,19.0,15,A63 vers Bordeaux
+8,2,PL locaux,23.5,15,A63 vers Bordeaux
+9,3,PL en transit,59.25,15,A63 vers Bordeaux
+10,3,Vehicules Legers,20.0,15,A63 vers Bordeaux
+11,3,PL locaux,19.75,15,A63 vers Bordeaux
+12,4,PL en transit,81.0,15,A63 vers Bordeaux
+13,4,Vehicules Legers,30.0,15,A63 vers Bordeaux
+14,4,PL locaux,27.0,15,A63 vers Bordeaux
+15,5,PL en transit,113.25,15,A63 vers Bordeaux
+16,5,Vehicules Legers,56.0,15,A63 vers Bordeaux
+17,5,PL locaux,37.75,15,A63 vers Bordeaux
+18,6,PL en transit,125.29,15,A63 vers Bordeaux
+19,6,Vehicules Legers,154.0,15,A63 vers Bordeaux
+20,6,PL locaux,61.709999999999994,15,A63 vers Bordeaux
+21,7,PL en transit,126.0,15,A63 vers Bordeaux
+22,7,Vehicules Legers,289.0,15,A63 vers Bordeaux
+23,7,PL locaux,84.0,15,A63 vers Bordeaux
+24,8,PL en transit,149.27,15,A63 vers Bordeaux
+25,8,Vehicules Legers,341.0,15,A63 vers Bordeaux
+26,8,PL locaux,103.72999999999999,15,A63 vers Bordeaux
+27,9,PL en transit,200.1,15,A63 vers Bordeaux
+28,9,Vehicules Legers,360.0,15,A63 vers Bordeaux
+29,9,PL locaux,144.9,15,A63 vers Bordeaux
+30,10,PL en transit,204.05,15,A63 vers Bordeaux
+31,10,Vehicules Legers,346.0,15,A63 vers Bordeaux
+32,10,PL locaux,166.95,15,A63 vers Bordeaux
+33,11,PL en transit,229.8,15,A63 vers Bordeaux
+34,11,Vehicules Legers,335.0,15,A63 vers Bordeaux
+35,11,PL locaux,153.2,15,A63 vers Bordeaux
+36,12,PL en transit,235.62,15,A63 vers Bordeaux
+37,12,Vehicules Legers,301.0,15,A63 vers Bordeaux
+38,12,PL locaux,138.38,15,A63 vers Bordeaux
+39,13,PL en transit,222.65,15,A63 vers Bordeaux
+40,13,Vehicules Legers,307.0,15,A63 vers Bordeaux
+41,13,PL locaux,142.35,15,A63 vers Bordeaux
+42,14,PL en transit,216.6,15,A63 vers Bordeaux
+43,14,Vehicules Legers,359.0,15,A63 vers Bordeaux
+44,14,PL locaux,144.4,15,A63 vers Bordeaux
+45,15,PL en transit,204.14000000000001,15,A63 vers Bordeaux
+46,15,Vehicules Legers,401.0,15,A63 vers Bordeaux
+47,15,PL locaux,141.85999999999999,15,A63 vers Bordeaux
+48,16,PL en transit,187.92000000000002,15,A63 vers Bordeaux
+49,16,Vehicules Legers,424.0,15,A63 vers Bordeaux
+50,16,PL locaux,160.07999999999998,15,A63 vers Bordeaux
+51,17,PL en transit,171.19,15,A63 vers Bordeaux
+52,17,Vehicules Legers,446.0,15,A63 vers Bordeaux
+53,17,PL locaux,151.81,15,A63 vers Bordeaux
+54,18,PL en transit,199.47,15,A63 vers Bordeaux
+55,18,Vehicules Legers,405.0,15,A63 vers Bordeaux
+56,18,PL locaux,127.53,15,A63 vers Bordeaux
+57,19,PL en transit,228.75,15,A63 vers Bordeaux
+58,19,Vehicules Legers,305.0,15,A63 vers Bordeaux
+59,19,PL locaux,76.25,15,A63 vers Bordeaux
+60,20,PL en transit,199.5,15,A63 vers Bordeaux
+61,20,Vehicules Legers,156.0,15,A63 vers Bordeaux
+62,20,PL locaux,66.5,15,A63 vers Bordeaux
+63,21,PL en transit,151.70000000000002,15,A63 vers Bordeaux
+64,21,Vehicules Legers,86.0,15,A63 vers Bordeaux
+65,21,PL locaux,53.29999999999998,15,A63 vers Bordeaux
+66,22,PL en transit,121.60000000000001,15,A63 vers Bordeaux
+67,22,Vehicules Legers,62.0,15,A63 vers Bordeaux
+68,22,PL locaux,38.39999999999999,15,A63 vers Bordeaux
+69,23,PL en transit,92.3,15,A63 vers Bordeaux
+70,23,Vehicules Legers,48.0,15,A63 vers Bordeaux
+71,23,PL locaux,37.7,15,A63 vers Bordeaux
+0,0,PL en transit,84.23738872403561,20,N10 vers Paris
+1,0,Vehicules Legers,181.0,20,N10 vers Paris
+2,0,PL locaux,103.76261127596439,20,N10 vers Paris
+3,1,PL en transit,126.02427637721757,20,N10 vers Paris
+4,1,Vehicules Legers,155.0,20,N10 vers Paris
+5,1,PL locaux,37.975723622782425,20,N10 vers Paris
+6,2,PL en transit,101.47972972972975,20,N10 vers Paris
+7,2,Vehicules Legers,95.0,20,N10 vers Paris
+8,2,PL locaux,36.520270270270245,20,N10 vers Paris
+9,3,PL en transit,88.6414662084765,20,N10 vers Paris
+10,3,Vehicules Legers,86.0,20,N10 vers Paris
+11,3,PL locaux,47.3585337915235,20,N10 vers Paris
+12,4,PL en transit,84.36150234741784,20,N10 vers Paris
+13,4,Vehicules Legers,106.0,20,N10 vers Paris
+14,4,PL locaux,66.63849765258216,20,N10 vers Paris
+15,5,PL en transit,112.1878787878788,20,N10 vers Paris
+16,5,Vehicules Legers,226.0,20,N10 vers Paris
+17,5,PL locaux,101.8121212121212,20,N10 vers Paris
+18,6,PL en transit,158.98515769944345,20,N10 vers Paris
+19,6,Vehicules Legers,580.0,20,N10 vers Paris
+20,6,PL locaux,109.01484230055655,20,N10 vers Paris
+21,7,PL en transit,117.01888888888887,20,N10 vers Paris
+22,7,Vehicules Legers,1258.0,20,N10 vers Paris
+23,7,PL locaux,123.98111111111113,20,N10 vers Paris
+24,8,PL en transit,103.4063400576369,20,N10 vers Paris
+25,8,Vehicules Legers,1510.0,20,N10 vers Paris
+26,8,PL locaux,129.5936599423631,20,N10 vers Paris
+27,9,PL en transit,165.4915641978839,20,N10 vers Paris
+28,9,Vehicules Legers,1267.0,20,N10 vers Paris
+29,9,PL locaux,182.5084358021161,20,N10 vers Paris
+30,10,PL en transit,223.07640449438202,20,N10 vers Paris
+31,10,Vehicules Legers,1214.0,20,N10 vers Paris
+32,10,PL locaux,200.92359550561798,20,N10 vers Paris
+33,11,PL en transit,249.57482054113748,20,N10 vers Paris
+34,11,Vehicules Legers,1441.0,20,N10 vers Paris
+35,11,PL locaux,215.42517945886252,20,N10 vers Paris
+36,12,PL en transit,246.68994330050734,20,N10 vers Paris
+37,12,Vehicules Legers,1652.0,20,N10 vers Paris
+38,12,PL locaux,184.31005669949266,20,N10 vers Paris
+39,13,PL en transit,237.77354709418844,20,N10 vers Paris
+40,13,Vehicules Legers,1668.0,20,N10 vers Paris
+41,13,PL locaux,175.22645290581156,20,N10 vers Paris
+42,14,PL en transit,220.18533886583683,20,N10 vers Paris
+43,14,Vehicules Legers,2008.0,20,N10 vers Paris
+44,14,PL locaux,194.81466113416317,20,N10 vers Paris
+45,15,PL en transit,212.23998839233894,20,N10 vers Paris
+46,15,Vehicules Legers,2394.0,20,N10 vers Paris
+47,15,PL locaux,194.76001160766106,20,N10 vers Paris
+48,16,PL en transit,195.56107382550334,20,N10 vers Paris
+49,16,Vehicules Legers,3299.0,20,N10 vers Paris
+50,16,PL locaux,160.43892617449666,20,N10 vers Paris
+51,17,PL en transit,150.75907848496675,20,N10 vers Paris
+52,17,Vehicules Legers,3676.0,20,N10 vers Paris
+53,17,PL locaux,130.24092151503325,20,N10 vers Paris
+54,18,PL en transit,158.73309608540927,20,N10 vers Paris
+55,18,Vehicules Legers,3161.0,20,N10 vers Paris
+56,18,PL locaux,129.26690391459073,20,N10 vers Paris
+57,19,PL en transit,217.31184834123226,20,N10 vers Paris
+58,19,Vehicules Legers,2262.0,20,N10 vers Paris
+59,19,PL locaux,138.68815165876774,20,N10 vers Paris
+60,20,PL en transit,199.4039580908032,20,N10 vers Paris
+61,20,Vehicules Legers,1320.0,20,N10 vers Paris
+62,20,PL locaux,112.5960419091968,20,N10 vers Paris
+63,21,PL en transit,202.5624678663239,20,N10 vers Paris
+64,21,Vehicules Legers,743.0,20,N10 vers Paris
+65,21,PL locaux,53.437532133676086,20,N10 vers Paris
+66,22,PL en transit,154.23268870867122,20,N10 vers Paris
+67,22,Vehicules Legers,607.0,20,N10 vers Paris
+68,22,PL locaux,42.76731129132878,20,N10 vers Paris
+69,23,PL en transit,131.3123209169054,20,N10 vers Paris
+70,23,Vehicules Legers,403.0,20,N10 vers Paris
+71,23,PL locaux,39.687679083094594,20,N10 vers Paris
+0,0,PL en transit,52.69009584664536,21,N10 vers Bordeaux
+1,0,Vehicules Legers,130.0,21,N10 vers Bordeaux
+2,0,PL locaux,23.309904153354637,21,N10 vers Bordeaux
+3,1,PL en transit,55.029661016949134,21,N10 vers Bordeaux
+4,1,Vehicules Legers,110.0,21,N10 vers Bordeaux
+5,1,PL locaux,25.970338983050866,21,N10 vers Bordeaux
+6,2,PL en transit,54.13034188034189,21,N10 vers Bordeaux
+7,2,Vehicules Legers,130.0,21,N10 vers Bordeaux
+8,2,PL locaux,43.86965811965811,21,N10 vers Bordeaux
+9,3,PL en transit,69.76186213070726,21,N10 vers Bordeaux
+10,3,Vehicules Legers,206.0,21,N10 vers Bordeaux
+11,3,PL locaux,51.23813786929274,21,N10 vers Bordeaux
+12,4,PL en transit,95.58991373589913,21,N10 vers Bordeaux
+13,4,Vehicules Legers,389.0,21,N10 vers Bordeaux
+14,4,PL locaux,63.41008626410087,21,N10 vers Bordeaux
+15,5,PL en transit,143.92913752913753,21,N10 vers Bordeaux
+16,5,Vehicules Legers,1014.0,21,N10 vers Bordeaux
+17,5,PL locaux,115.07086247086247,21,N10 vers Bordeaux
+18,6,PL en transit,147.3475917817447,21,N10 vers Bordeaux
+19,6,Vehicules Legers,2780.0,21,N10 vers Bordeaux
+20,6,PL locaux,159.6524082182553,21,N10 vers Bordeaux
+21,7,PL en transit,92.31292517006803,21,N10 vers Bordeaux
+22,7,Vehicules Legers,2122.0,21,N10 vers Bordeaux
+23,7,PL locaux,137.687074829932,21,N10 vers Bordeaux
+24,8,PL en transit,79.22861586314153,21,N10 vers Bordeaux
+25,8,Vehicules Legers,1821.0,21,N10 vers Bordeaux
+26,8,PL locaux,119.77138413685847,21,N10 vers Bordeaux
+27,9,PL en transit,151.22440220723485,21,N10 vers Bordeaux
+28,9,Vehicules Legers,1607.0,21,N10 vers Bordeaux
+29,9,PL locaux,162.77559779276515,21,N10 vers Bordeaux
+30,10,PL en transit,162.1792852816475,21,N10 vers Bordeaux
+31,10,Vehicules Legers,1517.0,21,N10 vers Bordeaux
+32,10,PL locaux,169.8207147183525,21,N10 vers Bordeaux
+33,11,PL en transit,155.93712212817408,21,N10 vers Bordeaux
+34,11,Vehicules Legers,1380.0,21,N10 vers Bordeaux
+35,11,PL locaux,154.06287787182592,21,N10 vers Bordeaux
+36,12,PL en transit,170.76589595375725,21,N10 vers Bordeaux
+37,12,Vehicules Legers,1280.0,21,N10 vers Bordeaux
+38,12,PL locaux,132.23410404624275,21,N10 vers Bordeaux
+39,13,PL en transit,170.69654754694125,21,N10 vers Bordeaux
+40,13,Vehicules Legers,1468.0,21,N10 vers Bordeaux
+41,13,PL locaux,134.30345245305875,21,N10 vers Bordeaux
+42,14,PL en transit,141.4825174825175,21,N10 vers Bordeaux
+43,14,Vehicules Legers,1331.0,21,N10 vers Bordeaux
+44,14,PL locaux,139.5174825174825,21,N10 vers Bordeaux
+45,15,PL en transit,131.97198795180725,21,N10 vers Bordeaux
+46,15,Vehicules Legers,1281.0,21,N10 vers Bordeaux
+47,15,PL locaux,135.02801204819275,21,N10 vers Bordeaux
+48,16,PL en transit,126.4356074425392,21,N10 vers Bordeaux
+49,16,Vehicules Legers,1362.0,21,N10 vers Bordeaux
+50,16,PL locaux,113.5643925574608,21,N10 vers Bordeaux
+51,17,PL en transit,94.75314979001398,21,N10 vers Bordeaux
+52,17,Vehicules Legers,1523.0,21,N10 vers Bordeaux
+53,17,PL locaux,101.24685020998602,21,N10 vers Bordeaux
+54,18,PL en transit,95.93113141250879,21,N10 vers Bordeaux
+55,18,Vehicules Legers,1495.0,21,N10 vers Bordeaux
+56,18,PL locaux,91.06886858749121,21,N10 vers Bordeaux
+57,19,PL en transit,113.1673953778888,21,N10 vers Bordeaux
+58,19,Vehicules Legers,1235.0,21,N10 vers Bordeaux
+59,19,PL locaux,67.8326046221112,21,N10 vers Bordeaux
+60,20,PL en transit,102.55562784645412,21,N10 vers Bordeaux
+61,20,Vehicules Legers,745.0,21,N10 vers Bordeaux
+62,20,PL locaux,54.444372153545885,21,N10 vers Bordeaux
+63,21,PL en transit,83.96407185628743,21,N10 vers Bordeaux
+64,21,Vehicules Legers,442.0,21,N10 vers Bordeaux
+65,21,PL locaux,42.03592814371257,21,N10 vers Bordeaux
+66,22,PL en transit,71.8820512820513,21,N10 vers Bordeaux
+67,22,Vehicules Legers,300.0,21,N10 vers Bordeaux
+68,22,PL locaux,35.11794871794871,21,N10 vers Bordeaux
+69,23,PL en transit,57.72330097087379,21,N10 vers Bordeaux
+70,23,Vehicules Legers,211.0,21,N10 vers Bordeaux
+71,23,PL locaux,34.27669902912621,21,N10 vers Bordeaux
