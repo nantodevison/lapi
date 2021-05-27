@@ -214,16 +214,17 @@ def intervalle_confiance_cam(df_pct_pl_transit,df_concat_pl_jo,intervall_conf, *
     return graph_interval,graph_nb_pl
 
 
-def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam):
+def graph_PL_transit_dir_jo_cam(df_pct_pl_transit, *cam, coeff_uvp=3):
     """
     graph de synthese du nombre de pl en trasit par heure. Base nb pl dir et pct_pl_transit lapi
     en entree : 
         df_pct_pl_transit : df du pct de pl en transit, issu de resultat.pourcentage_pl_camera
+        coeff_uvp : coefficient de conversion en UVP, cf resultat.PL_transit_dir_jo_cam
     en sortie : 
         graph : chart altair avec le nb pl, nb pl transit, %PL transit
     """
     #import donnees
-    concat_dir_trafic, df_pct_pl_transit_multi_cam=PL_transit_dir_jo_cam(df_pct_pl_transit,cam)
+    concat_dir_trafic, df_pct_pl_transit_multi_cam=PL_transit_dir_jo_cam(df_pct_pl_transit,coeff_uvp,cam)
     
     #creation du titre
     if [voie for voie, cams in dico_corrsp_camera_site.items() if cams==list(cam)] :
@@ -468,3 +469,27 @@ def sankey(df, titre) :
     fig.update_layout({"title": {"text": titre,
                              "font": {"size": 30},'x':0.5}})
     return fig
+
+def graphNationaliteGeneral(titre, df):
+    """
+    produire un graph de bar trie descendant avec en abscise la nationalite et en ordonnee la part de PL par rapport au global
+    in : 
+       df : df des passage redresse, trajets.trajet2passage (represente les trajets globaux ou transit uniquement)
+       titre : le titre du graph
+    out : 
+        une chart altair
+    """
+    return alt.Chart(df.state_modif_nc.value_counts().reset_index().rename(columns={'index':'nationalite','state_modif_nc':'nbPl' })
+             , title=titre).transform_joinaggregate(
+        TotalPl='sum(nbPl)',
+    ).transform_calculate(
+        PercentOfTotal="datum.nbPl / datum.TotalPl"
+    ).mark_bar().encode(x=alt.X('nationalite',sort='-y'),
+                                y=alt.Y('PercentOfTotal:Q',axis=alt.Axis(title='Volume de PL',format='.0%')),
+                                color='nationalite')
+    
+def graphNationaliteRepartitionFrEtranger():
+    """
+    
+    """
+    pass
