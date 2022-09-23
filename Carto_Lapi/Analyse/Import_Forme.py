@@ -39,27 +39,27 @@ dico_corrsp_camera_site={
    'A10/N10 vers Paris':[5], 'A10/N10 vers Bordeaux':[6], 'N89 vers Lyon':[7], 'N89 vers Bordeaux':[8], 'A62 vers Toulouse':[9], 'A62 vers Bordeaux':[10],
     'A660 vers Arcachon':[18], 'A660 vers Bordeaux':[19], 'A63 vers Bayonne':[13], 'A63 vers Bordeaux':[15], 'N10 vers Paris':[20], 'N10 vers Bordeaux':[21]}
 #attributs de liste des trajets
-liste_complete_trajet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
-liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
-liste_trajet_rocade=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\liste_trajet_rocade.json', orient='index')
-param_cluster=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
+liste_complete_trajet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\trajets_possibles.json','complet')
+liste_trajet_incomplet=mise_en_forme_dfs_trajets(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\liste_trajet_incomplet.json','incomplet')
+liste_trajet_rocade=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\liste_trajet_rocade.json', orient='index')
+param_cluster=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\param_cluster.json', orient='index')
 #fichier des plaques, en df
-plaques_europ=pd.read_csv(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
+plaques_europ=pd.read_csv(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\plaques_europ.txt', sep=" ", header=None, names=['pays','re_plaque'])
 #matrices des nb de jours
-matrice_nb_jo=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo').replace('NC',np.NaN)
-matrice_nb_jo_samedi=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo_samedi=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo_samedi').replace('NC',np.NaN)
-matrice_nb_j_tot=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_j_tot=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_j_tot').replace('NC',np.NaN)
-matrice_nb_jo_sup_31=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo_sup_31=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
     index='origine', columns='destination',values='nb_jo_31_13').replace('NC',np.NaN)
-matrice_nb_jo_inf_31=pd.read_json(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
+matrice_nb_jo_inf_31=pd.read_json(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\nb_jours_mesures.json',orient='index').pivot(
    index='origine', columns='destination',values='nb_jo_23_31').replace('NC',np.NaN)
 #donnees de comptage gestionnaire
-donnees_gest_jour=pd.read_csv(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\Synthese_trafic_LAPI.csv')
+donnees_gest_jour=pd.read_csv(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\Synthese_trafic_LAPI.csv')
 donnees_gest_jour['created']=pd.to_datetime(donnees_gest_jour.created)
-donnees_horaire=pd.read_csv(r'C:\Users\martin.schoreisz\Box\(Patrimoine) TI (Caup-etudes)\DREAL33\2018\C17SI0073_LAPI\Traitements\python\trafics_horaire_mjo.csv')
+donnees_horaire=pd.read_csv(r'C:\Users\martin.schoreisz\Documents\temp\LAPI\C17SI0073_LAPI\Traitements\python\trafics_horaire_mjo.csv')
 donnees_gest=donnees_horaire.groupby('camera').agg({'nb_pl':'sum','nb_tv':'sum',}).reset_index()
 #dico de correspondance pour fonction resultats.passage_fictif_od
 dico_correspondance=[['origine','A63',15],['destination','A63', 13],['origine','A62',10],['destination','A62', 9],['origine','A89', 8],['destination','A89', 7],

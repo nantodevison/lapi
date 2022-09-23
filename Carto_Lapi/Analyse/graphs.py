@@ -488,8 +488,121 @@ def graphNationaliteGeneral(titre, df):
                                 y=alt.Y('PercentOfTotal:Q',axis=alt.Axis(title='Volume de PL',format='.0%')),
                                 color='nationalite')
     
-def graphNationaliteRepartitionFrEtranger():
+def graphNationaliteRepartitionFrEtranger(listCamera, lieu, df_concat_pl_joMoy):
     """
+    graph représentant 4 graphs : la part des pavillons franais et étrangers dans le trafic total et de transit, 
+    en stack et normalize
+    in : 
+        listCamera : list de caméras, issue de i_f.dico_corrsp_camera_site 
+        lieu : dénomination du lieu, issu de i_f.dico_corrsp_camera_site
+        df_concat_pl_joMoy : dataframe regroupant par calera_id, stat_fr_etr, type et heure le nombre moyen de PL sur un JO
+    """
+    titreTotal = f'Repartition des pavillons francais et etranger dans le trafic total PL sur {lieu}'
+    titreTransit = f'Repartition des pavillons francais et etranger dans le trafic de transit PL sur {lieu}'
+    dfPlTotal = df_concat_pl_joMoy.loc[(df_concat_pl_joMoy.camera_id.isin(listCamera)) & (df_concat_pl_joMoy.type == 'PL total')].groupby(
+        ['state_fr_etr', 'type', 'heure']).nb_veh.sum().reset_index()
+    dfPlTransit = df_concat_pl_joMoy.loc[(df_concat_pl_joMoy.camera_id.isin(listCamera)) & (df_concat_pl_joMoy.type == 'PL transit')].groupby(
+        ['state_fr_etr', 'type', 'heure']).nb_veh.sum().reset_index()
+    return alt.vconcat(
+        (alt.Chart(dfPlTotal).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL', titleFontSize=14, labelFontSize=14)),
+            color=alt.Color('state_fr_etr:N', legend=alt.Legend(title='Pavillon de PL', titleFontSize=14, labelFontSize=14), sort="descending"))|
+         alt.Chart(dfPlTotal).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', stack='normalize', axis=alt.Axis(title='Part de PL', titleFontSize=14, labelFontSize=14, format='.0%')),
+            color=alt.Color('state_fr_etr:N', legend=alt.Legend(title='Pavillon de PL', titleFontSize=14, labelFontSize=14), sort="descending"))).properties(
+            title=titreTotal),
+        (alt.Chart(dfPlTransit).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL', titleFontSize=14, labelFontSize=14)),
+            color=alt.Color('state_fr_etr:N', legend=alt.Legend(title='Pavillon de PL', titleFontSize=14, labelFontSize=14),sort="descending"))|
+         alt.Chart(dfPlTransit).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', stack='normalize', axis=alt.Axis(title='Part de PL', titleFontSize=14,labelFontSize=14, format='.0%')),
+            color=alt.Color('state_fr_etr:N', legend=alt.Legend(title='Pavillon de PL',titleFontSize=14,labelFontSize=14), sort="descending"))).properties(
+            title=titreTransit)).configure_title(fontSize=18, orient='top', anchor='middle')
     
+def graphNationaliteTransitLocal(listCamera, lieu, df_concat_pl_joMoy):
     """
-    pass
+    graph représentant 4 graphs : la part des du transit et du local au sein des pavillons franais et étrangers, 
+    en stack et normalize
+    in : 
+        listCamera : list de caméras, issue de i_f.dico_corrsp_camera_site 
+        lieu : dénomination du lieu, issu de i_f.dico_corrsp_camera_site
+        df_concat_pl_joMoy : dataframe regroupant par calera_id, stat_fr_etr, type et heure le nombre moyen de PL sur un JO
+    """
+    dfTRaficEtranger = df_concat_pl_joMoy.loc[(df_concat_pl_joMoy.state_fr_etr == 'Autre') & 
+                                                   (df_concat_pl_joMoy.camera_id.isin(listCamera))].copy().reset_index(
+                                                       drop=True).groupby(['state_fr_etr', 'type', 'heure']).nb_veh.sum().reset_index()
+    dfTraficFrancais = df_concat_pl_joMoy.loc[(df_concat_pl_joMoy.state_fr_etr == 'FR') &
+                                                       (df_concat_pl_joMoy.camera_id.isin(listCamera))].copy().reset_index(
+                                                           drop=True).groupby(['state_fr_etr', 'type', 'heure']).nb_veh.sum().reset_index()
+    dfPartTransitEtranger = dfTRaficEtranger.pivot(index='heure', columns='type', values='nb_veh').reset_index().assign(
+        PL_Local=lambda x: x['PL total']-x['PL transit'])[['heure', 'PL transit', 'PL_Local']
+                                                          ].rename(columns={'PL_Local': 'PL hors transit'}).set_index('heure').stack().reset_index().rename(
+        columns={0: 'nb_veh'})
+    dfPartTransitFrancis = dfTraficFrancais.pivot(index='heure', columns='type', values='nb_veh').reset_index().assign(
+        PL_Local=lambda x: x['PL total'] - x['PL transit'])[['heure', 'PL transit', 'PL_Local']].rename(
+        columns={'PL_Local': 'PL hors transit'}).set_index('heure').stack().reset_index().rename(columns={0: 'nb_veh'})
+    # graph PL etranger
+    graphPlEtranger = (alt.Chart(dfPartTransitEtranger).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL', titleFontSize=14, labelFontSize=14)),
+            color=alt.Color('type:N', legend=alt.Legend(title='Nature du trafic', titleFontSize=14, labelFontSize=14), sort="descending")) |
+     alt.Chart(dfPartTransitEtranger).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', stack='normalize', axis=alt.Axis(title='Part de PL', titleFontSize=14, labelFontSize=14, format='.0%')),
+            color=alt.Color('type:N', legend=alt.Legend(title='Nature du trafic', titleFontSize=14, labelFontSize=14), sort="descending"))).properties(
+        title=f'Repartition du trafic de transit au sein des PL etrangers sur {lieu}')
+    # graphPL Français
+    graphPlFrançais = (alt.Chart(dfPartTransitFrancis).mark_bar().encode(
+            x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+            y=alt.Y('nb_veh:Q', axis=alt.Axis(title='Nombre de PL', titleFontSize=14, labelFontSize=14)),
+            color=alt.Color('type:N', legend=alt.Legend(title='Nature du trafic', titleFontSize=14, labelFontSize=14), sort="descending")) |
+     alt.Chart(dfPartTransitFrancis).mark_bar().encode(
+         x=alt.X('heure:O', axis=alt.Axis(title='Heure', titleFontSize=14, labelFontSize=14)),
+         y=alt.Y('nb_veh:Q', stack='normalize', axis=alt.Axis(title='Part de PL', titleFontSize=14, labelFontSize=14, format='.0%')),
+         color=alt.Color('type:N', legend=alt.Legend(title='Nature du trafic', titleFontSize=14, labelFontSize=14), sort="descending"))).properties(
+        title=f'Repartition du trafic de transit au sein des PL francais sur {lieu}')
+    return alt.vconcat(graphPlEtranger, graphPlFrançais).configure_title(fontSize=18, orient='top', anchor='middle')
+
+
+def graphNationalitePartGenerale(df10PaysPlusRepresenteTransit, df10PaysPlusRepresenteGlobal, df6ZonesPlusRepresenteGlobal, df6ZonesPlusRepresenteTransit):
+    """
+    produire 2 graphs de comparaison des nationalités les plus représentées
+    in : 
+        df10PaysPlusRepresenteTransit : issu de nationalit.creerDataGroupeNationalite()
+        df10PaysPlusRepresenteGlobal : issu de nationalit.creerDataGroupeNationalite()
+        df6ZonesPlusRepresenteGlobal : issu de nationalit.creerDataGroupeNationalite()
+        df6ZonesPlusRepresenteTransit : issu de nationalit.creerDataGroupeNationalite()
+    """
+    baseGlobal = alt.Chart(df10PaysPlusRepresenteGlobal).mark_arc(outerRadius=120).encode(
+        theta=alt.Theta(field="Pourcentage du volume total", type="quantitative", stack=True),
+        color=alt.Color(field="Pays", type="nominal"))
+    textGlobal = baseGlobal.mark_text(radius=140, size=18, angle=45).encode(text="Pourcentage_text:N").properties(
+        title=["Répartition des 9 principaux pays d'origine", "des PL relevés par le dispositif LAPI"])
+    chartRepartitionGlobalPaysGeneral = baseGlobal + textGlobal
+    baseTransit = alt.Chart(df10PaysPlusRepresenteTransit).mark_arc(outerRadius=120).encode(
+        theta=alt.Theta(field="Pourcentage du volume total", type="quantitative", stack=True),
+        color=alt.Color(field="Pays", type="nominal"))
+    textTransit = baseTransit.mark_text(radius=140, size=15, angle=45).encode(text="Pourcentage_text:N").properties(
+        title=["Répartition des 10 principaux pays d'origine", "des PL en transit relevés par le dispositif LAPI"])
+    chartRepartitionTransitPaysGeneral = baseTransit + textTransit
+    baseGlobalZone = alt.Chart(df6ZonesPlusRepresenteGlobal).mark_arc(outerRadius=120).encode(
+        theta=alt.Theta(field="Pourcentage du volume total", type="quantitative", stack=True),
+        color=alt.Color(field="Pays", type="nominal", legend=alt.Legend(title="Zones")))
+    textGlobalZone = baseGlobalZone.mark_text(radius=140, size=18, angle=45).encode(text="Pourcentage_text:N").properties(
+        title=["Répartition des 6 principales zones d'origine", "des PL relevés par le dispositif LAPI"])
+    chartRepartitionGlobalZoneGeneral = baseGlobalZone + textGlobalZone
+    baseTransitZone = alt.Chart(df6ZonesPlusRepresenteTransit).mark_arc(outerRadius=120).encode(
+        theta=alt.Theta(field="Pourcentage du volume total", type="quantitative", stack=True),
+        color=alt.Color(field="Pays", type="nominal", legend=alt.Legend(title="Zones")))
+    textTransitZone = baseTransitZone.mark_text(radius=140, size=15, angle=45).encode(text="Pourcentage_text:N").properties(
+        title=["Répartition des 6 principales zones d'origine", "des PL en transit relevés par le dispositif LAPI"])
+    chartRepartitionTransitZoneGeneral = baseTransitZone + textTransitZone
+    return chartRepartitionGlobalPaysGeneral, chartRepartitionTransitPaysGeneral, chartRepartitionGlobalZoneGeneral, chartRepartitionTransitZoneGeneral
+
+
+
+
