@@ -87,20 +87,23 @@ def transit_temps_complet(date_debut, nb_jours, df_3semaines,liste_trajet_loc=li
 
     for date, duree in creer_liste_date(date_debut, nb_jours) :
         if date.weekday()==5 : # si on est le semadi on laisse la journee de dimanche passer et le pl repart
-            df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=32)]
+            df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=552)]
         else : 
-            df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=18)]
+            df_journee=df_3semaines.loc[date:date+pd.Timedelta(hours=552)]
         if date.hour==0 : print(f"date : {date} debut_traitement : {dt.datetime.now()}")
         for cameras in zip([15,12,8,10,19,6],range(6)) : #dans ce mode peu importe la camera d'arrivée, elle sont toutes analysées
-            try : 
-                if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
+            if 'dico_passag' in locals() : #si la varible existe deja on utilise pour filtrer le df_journee en enlevant les passages dejà pris dans une o_d (sinon double compte ente A63 - A10 et A660 -A10 par exemple 
+                try:
                     donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',df_filtre=dico_passag.loc[dico_passag['created']>=date].copy(),
-                                          liste_trajet=liste_trajet_loc)
-                else : 
+                                      liste_trajet=liste_trajet_loc)
+                except PasDePlError :
+                    continue
+            else : 
+                try:
                     donnees_trajet=trajet(df_journee,date,duree,cameras, typeTrajet='Global',liste_trajet=liste_trajet_loc)
-                df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max   
-            except PasDePlError :
-                continue
+                except PasDePlError:
+                    continue
+            df_trajet, df_passag, df_tps_max=donnees_trajet.df_transit, donnees_trajet.df_passag_transit, donnees_trajet.temps_parcours_max   
             
             if 'dico_passag' in locals() : #si la varible existe deja on la concatene avec le reste
                 dico_passag=pd.concat([dico_passag,df_passag], sort=False)

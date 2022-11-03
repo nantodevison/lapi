@@ -58,7 +58,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2), 'correction_o_d']=True
     jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2), 'correction_o_d_type']=np.where(
         pd.notnull(jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2)]['correction_o_d_type']),
-        jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2)]['correction_o_d_type'],'correction_A63')
+        jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2)]['correction_o_d_type'],'correction_A63_cas1')
     jointure_finale.loc[(jointure_finale['destination']==voie_ref) & (jointure_finale['cam_apres_dc2']==cam_ref_2), 'destination']='A63'
     
     #cas des PL qui ont ete vus à Cestas sens S->N à A63 sens N->S avant
@@ -66,7 +66,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
     jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1), 'correction_o_d_type']=np.where(pd.notnull(
         jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1)]['correction_o_d_type']),
              jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1)]['correction_o_d_type'],
-             'correction_A63')
+             'correction_A63_cas2')
     jointure_finale.loc[(jointure_finale['origine']==voie_ref) & (jointure_finale['cam_avant_dc1']==cam_ref_1), 'origine']='A63'
     
     #cas des PL sui ont fait N->S puis S->N à la barrière de péage
@@ -78,7 +78,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
                         (jointure_finale['destination']==voie_ref)]['correction_o_d_type']),
              jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
                         (jointure_finale['destination']==voie_ref)]['correction_o_d_type'],
-             'correction_A63')
+             'correction_A63_cas3')
     jointure_finale.loc[(jointure_finale['temps_passg_2'] > pd.Timedelta('1D')) & (jointure_finale['cam_apres_dc2']==19) & 
                         (jointure_finale['destination']==voie_ref),'destination']='A63'
     
@@ -90,7 +90,7 @@ def correction_trajet(df_3semaines, dico_od, voie_ref='A660', cam_ref_1=13, cam_
                         (jointure_finale['origine']==voie_ref)]['correction_o_d_type']),
              jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
                         (jointure_finale['origine']==voie_ref)]['correction_o_d_type'],
-             'correction_A63')
+             'correction_A63_cas4')
     jointure_finale.loc[(jointure_finale['temps_passg_1'] > pd.Timedelta('1D')) &(jointure_finale['cam_avant_dc1']==18) & 
                         (jointure_finale['origine']==voie_ref),'origine']='A63'
     

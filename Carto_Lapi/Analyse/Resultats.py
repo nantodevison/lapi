@@ -19,10 +19,10 @@ def pourcentage_pl_camera(df_pl,dico_passag):
 
     """
     def pct_pl(a,b):
-            try :
-                return round(a*100/b)
-            except ZeroDivisionError : 
-                return 0
+        try :
+            return round(a*100/b)
+        except ZeroDivisionError : 
+            return 0
     
         
     df_synthese_pl_tot=df_pl.groupby('camera_id').resample('H').count()['immat'].reset_index().rename(columns={'immat':'nb_veh'})
@@ -365,6 +365,8 @@ def passage_fictif_od(df_od,df_passage_transit_redresse,df_passages_immat_ok,dic
     passage_total = df_passages_immat_ok.copy()
     for i,params in enumerate(dico_correspondance) :
         df_filtre=df_od.loc[(df_od[params[0]]==params[1])].copy()
+        if df_filtre.empty:
+            continue
         trajets_rocade_non_vu=df_filtre.loc[df_filtre.apply(lambda x : params[2] not in x['cameras'],axis=1)].copy()
         if trajets_rocade_non_vu.empty:
             continue
@@ -372,7 +374,7 @@ def passage_fictif_od(df_od,df_passage_transit_redresse,df_passages_immat_ok,dic
         trajets_rocade_non_vu['camera_fictif']=params[2]
         trajets_rocade_non_vu.drop(['date_cam_1', 'id', 'date_cam_2','chiffree',
                'cameras', 'origine', 'destination', 'o_d', 'tps_parcours', 'period',
-               'date', 'temps', 'type', 'tps_parcours_theoriq', 'filtre_tps'],axis=1,inplace=True)
+               'date', 'temps', 'type', 'tps_parcours_theoriq', 'filtre_tps'],axis=1,inplace=True, errors='ignore')
         trajets_rocade_non_vu.rename(columns={'created_fictif':'created','camera_fictif':'camera_id'},inplace=True)
         trajets_rocade_non_vu['fictif']=params[0]
         trajets_rocade_non_vu['fiability']=999
