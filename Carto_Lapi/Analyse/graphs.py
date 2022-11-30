@@ -604,5 +604,37 @@ def graphNationalitePartGenerale(df10PaysPlusRepresenteTransit, df10PaysPlusRepr
     return chartRepartitionGlobalPaysGeneral, chartRepartitionTransitPaysGeneral, chartRepartitionGlobalZoneGeneral, chartRepartitionTransitZoneGeneral
 
 
-
+def graphNationaliteTransitLocalJour(dfDataCamembertQgis, listCameras, nomSite, largeur=350, hauteur=250):
+    """
+    production d'un graph circulaire représentant la part des PL etranger ou français, en transit ou local, sur une journée
+    complete, pour un site de mesure
+    in : 
+        dfDataCamembertQgis : données utilisées pour la carte avec les camemberts dans Qgis
+        (r'Cerema\\60-SO\\66-DM\\6615-PMD\\080-Dossiers\\LAPI\\C17SI0073_LAPI\\Nationalites\\Datas\\jourmoyen-graph_camembert.csv'
+             r'https://cerema.app.box.com//file//1056837283497')
+        listCameras : liste de cameras, cf i_f.dico_corrsp_camera_site
+        nomJour : string : nom du site de(s) camera(s), cf i_f.dico_corrsp_camera_site
+        largeur : int : largeur du graph
+        hauteur : int : hauteur du graph
+    out : 
+        dfChart : python altair chart circulaire
+    """
+    dicoCouleur = {'PL transit etranger': '#f84df6', 'PL local etranger': '#4f39e0', 'PL transit francais': '#ee96eb', 'PL local francais': '#7767e0'}
+    dfCircGraph = dfDataCamembertQgis.melt(
+        id_vars='camera_id', value_vars=['PL transit étranger', 'PL_local_etranger', 'PL transit français', 'PL_local_français'],
+        var_name='type', value_name='nb_veh').replace({'PL_local_etranger': 'PL local etranger', 'PL_local_français': 'PL local francais', 
+                                                       'PL transit étranger': 'PL transit etranger', 'PL transit français': 'PL transit francais'})
+    dfCircGraph['ordre'] = dfCircGraph.sort_values('type')['type'].rank(method='dense')
+    dfChart = dfCircGraph.loc[dfCircGraph.camera_id.isin(listCameras)].groupby('type').sum().reset_index()
+    titre = alt.TitleParams([f"Repartition des PL francais et etrangers, {nomSite}"],
+                            fontSize=14,
+                            subtitle=f"jour ouvre moyen ; trafic local et transit",
+                            subtitleFontSize=12)
+    chartCircle = alt.Chart(dfChart, title=titre,
+                            width=largeur, height=hauteur).mark_arc().encode(
+        theta=alt.Theta(field="nb_veh", type="quantitative"),
+        color=alt.Color(field="type", type="nominal",
+                        scale=alt.Scale(domain=[e for e in dicoCouleur.keys()],range=[e for e in dicoCouleur.values()]),
+                        legend=alt.Legend(title=['Type et nationalite', 'des PL'], titleFontSize=12, labelFontSize=12)))
+    return chartCircle
 

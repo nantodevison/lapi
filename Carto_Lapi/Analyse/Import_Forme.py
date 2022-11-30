@@ -10,8 +10,7 @@ Import des attributs de donn�es n�cessaires
 
 import pandas as pd
 import numpy as np
-import Connexion_Transfert as ct
-from statistics import mode, StatisticsError
+importfrom Connexions import Connexion_Transfert as ct statistics import mode, StatisticsError
 import re
 
 
@@ -67,8 +66,7 @@ dico_correspondance=[['origine','A63',15],['destination','A63', 13],['origine','
         
 def ouvrir_fichier_lapi_final(date_debut, date_fin) : 
     """ouvrir les donnees lapi depuis la Bdd 'lapi' sur le serveur partage GTI
-    l'ouvertur se fait par appel d'une connexionBdd Python (scripts de travail ici https://github.com/nantodevison/Outils/blob/master/Outils/Martin_Perso/Connexion_Transfert.py)
-    en entree : date_debut : string de type YYYY-MM-DD hh:mm:ss
+    l'ouvertur se fait par appel d'une connexionBdd Python (scripts de travail ici https://github.com/nantodevison/OutilsOutilsmaster/OutilsOutilsn_Perso/ConnexConnexion_Transfert    en entree : date_debut : string de type YYYY-MM-DD hh:mm:ss
                 date_fin: string de type YYYY-MM-DD hh:mm:ss
     en sortie : dataframe pandas des passages df_passage, des plaques d'immatriculation non cryptee df_plaque, des immats avec les attributs d'identification vl/pl
     """
